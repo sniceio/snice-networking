@@ -5,24 +5,33 @@ import io.snice.buffer.Buffers;
 import io.snice.networking.app.Bootstrap;
 import io.snice.networking.app.Environment;
 import io.snice.networking.app.NetworkApplication;
+import io.snice.networking.codec.gtp.GtpFramerFactory;
+import io.snice.networking.codec.gtp.GtpMessage;
 import io.snice.networking.common.ConnectionId;
 
 
-public class Pgw extends NetworkApplication<GtpConfig> {
+public class Pgw extends NetworkApplication<GtpMessage, GtpConfig> {
+
+
+    public Pgw() {
+        super(GtpMessage.class);
+    }
 
     @Override
-    public void run(final GtpConfig configuration, final Environment environment) {
+    public void run(final GtpConfig configuration, final Environment<GtpMessage, GtpConfig> environment) {
 
     }
 
     @Override
-    public void initialize(final Bootstrap<GtpConfig> bootstrap) {
+    public void initialize(final Bootstrap<GtpMessage, GtpConfig> bootstrap) {
 
-        final var hello = Buffers.wrap("hello");
+        bootstrap.registerFramer(new GtpFramerFactory());
 
         // only accept traffic from localhost, drop the rest.
         bootstrap.onConnection(Pgw::isFromLocalHost).accept(builder -> {
             builder.withDefaultStatisticsModule();
+            builder.match(gtp -> gtp.getVersion() == 2);
+            /*
             builder.match(b -> b.startsWith(hello)).consume((c, h) -> {
                 System.err.println("Got a hello...");
                 c.send(Buffers.wrap("world"));
@@ -40,6 +49,7 @@ public class Pgw extends NetworkApplication<GtpConfig> {
                     System.out.println("Hmm, not true");
                 }
             });
+            */
         });
 
         // drop the rest...

@@ -3,15 +3,15 @@ package io.snice.networking.app.impl;
 import io.snice.networking.app.Environment;
 import io.snice.networking.app.NetworkAppConfig;
 
-public class DefaultEnvironment <T extends NetworkAppConfig> implements Environment<T> {
-    private final T config;
+public class DefaultEnvironment <T, C extends NetworkAppConfig> implements Environment<T, C> {
+    private final C config;
 
-    public DefaultEnvironment(final T config) {
+    public DefaultEnvironment(final C config) {
         this.config = config;
     }
 
     @Override
-    public T getConfig() {
+    public C getConfig() {
         return config;
     }
 }

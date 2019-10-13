@@ -1,11 +1,11 @@
 package io.snice.networking.app.impl;
 
-import io.snice.buffer.Buffer;
 import io.snice.networking.app.Bootstrap;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.app.ConnectionContext.MessageProcessingBuilder;
 import io.snice.networking.app.MessagePipe;
 import io.snice.networking.app.NetworkAppConfig;
+import io.snice.networking.codec.FramerFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 
@@ -22,13 +22,15 @@ import java.util.stream.Collectors;
 import static io.snice.preconditions.PreConditions.assertArgument;
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
-public class NettyBootstrap<T extends NetworkAppConfig> implements Bootstrap<T> {
+public class NettyBootstrap<T, C extends NetworkAppConfig> implements Bootstrap<T, C> {
 
-    private final T config;
+    private FramerFactory<T> framerFactory;
 
-    private final List<ConnectionCtxBuilder<Connection, Buffer, ?>> rules = new ArrayList<>();
+    private final C config;
 
-    public NettyBootstrap(final T config) {
+    private final List<ConnectionCtxBuilder<Connection, T, ?>> rules = new ArrayList<>();
+
+    public NettyBootstrap(final C config) {
         this.config = config;
     }
 
@@ -36,15 +38,25 @@ public class NettyBootstrap<T extends NetworkAppConfig> implements Bootstrap<T> 
         return rules.stream().map(ConnectionCtxBuilder::build).collect(Collectors.toList());
     }
 
+    public FramerFactory<T> getFramerFactory() {
+        return framerFactory;
+    }
+
     @Override
-    public T getConfiguration() {
+    public C getConfiguration() {
         return config;
     }
 
     @Override
-    public ConnectionContext.Builder<Connection, Buffer, Buffer> onConnection(final Predicate<ConnectionId> condition) {
+    public void registerFramer(FramerFactory<T> framerFactory) {
+        assertNotNull(framerFactory, "The framerFactory cannot be null");
+        this.framerFactory = framerFactory;
+    }
+
+    @Override
+    public ConnectionContext.Builder<Connection, T, T> onConnection(final Predicate<ConnectionId> condition) {
         assertNotNull(condition, "The condition cannot be null");
-        final ConnectionCtxBuilder<Connection, Buffer, Buffer> builder = new ConnectionCtxBuilder<>(condition);
+        final ConnectionCtxBuilder<Connection, T, T> builder = new ConnectionCtxBuilder<>(condition);
         rules.add(builder);
         return builder;
     }

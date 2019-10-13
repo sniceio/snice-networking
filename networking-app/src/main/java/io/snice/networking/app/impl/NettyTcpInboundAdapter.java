@@ -101,7 +101,7 @@ public class NettyTcpInboundAdapter implements ChannelInboundHandler {
             return;
         }
 
-        connection = new ConnectionAdapter(new TcpConnection(channel, id, vipAddress), connCtx);
+        connection = new ConnectionAdapter(new TcpConnection(channel, id, vipAddress), null, connCtx);
     }
 
     private ConnectionContext<Connection, Buffer, ?> findContext(final ConnectionId id) {

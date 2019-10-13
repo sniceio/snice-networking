@@ -8,6 +8,8 @@ import io.netty.channel.socket.DatagramPacket;
 import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
 import io.snice.networking.app.ConnectionContext;
+import io.snice.networking.codec.Framer;
+import io.snice.networking.codec.FramerFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
@@ -36,12 +38,13 @@ import java.util.function.BiFunction;
  * channel will have it's own handler because it stores states that is unique
  * to only that channel and as such, it cannot be shared...
  */
-public class NettyUdpInboundAdapter implements ChannelInboundHandler {
+public class NettyUdpInboundAdapter<T> implements ChannelInboundHandler {
 
     private final Clock clock;
     private final Optional<URI> vipAddress;
     private final UUID uuid = UUID.randomUUID();
     private final List<ConnectionContext> ctxs;
+    private final FramerFactory<T> factory;
 
     private final Map<ConnectionId, ConnectionAdapter<UdpConnection, Buffer, ?>> adapters;
 
@@ -49,10 +52,11 @@ public class NettyUdpInboundAdapter implements ChannelInboundHandler {
 
     private InetSocketAddress localAddress;
 
-    public NettyUdpInboundAdapter(final Clock clock , final Optional<URI> vipAddress, final List<ConnectionContext> ctxs) {
+    public NettyUdpInboundAdapter(final Clock clock , final FramerFactory<T> factory, final Optional<URI> vipAddress, final List<ConnectionContext> ctxs) {
         this.clock = clock;
         this.vipAddress = vipAddress;
         this.ctxs = ctxs;
+        this.factory = factory;
 
         adapters = allocateInitialMapSize();
 
@@ -92,8 +96,12 @@ public class NettyUdpInboundAdapter implements ChannelInboundHandler {
 
             final var adapter = ensureConnection(ctx.channel(), id, connCtx);
             final var data = toBuffer(pkt);
+
+            final var object = adapter.frame(data);
+
             adapter.process(data);
         } catch (final ClassCastException e) {
+            e.printStackTrace();
             // WTF? This is for UDP!!! TODO: log warn, this should not happen...
             ctx.fireChannelRead(msg);
         }
@@ -111,7 +119,10 @@ public class NettyUdpInboundAdapter implements ChannelInboundHandler {
     }
 
     private ConnectionAdapter<UdpConnection, Buffer, ?> ensureConnection(final Channel channel, final ConnectionId id, final ConnectionContext<Connection, Buffer, ?> connCtx) {
-        return adapters.computeIfAbsent(id, cId -> new ConnectionAdapter(new UdpConnection(channel, id, vipAddress), connCtx));
+        return adapters.computeIfAbsent(id, cId -> {
+            final Framer<T> framer = factory.getFramer();
+            return new ConnectionAdapter(new UdpConnection(channel, id, vipAddress), framer, connCtx);
+        });
     }
 
     @Override

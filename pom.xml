@@ -58,6 +58,7 @@
         <module>networking-core</module>
         <module>networking-netty</module>
         <module>networking-app</module>
+        <module>codec-common</module>
         <module>codec-gtp</module>
         <module>networking-examples</module>
     </modules>
@@ -92,6 +93,14 @@
             <dependency>
                 <groupId>io.snice.networking</groupId>
                 <artifactId>networking-netty</artifactId>
+                <version>${project.version}</version>
+                <type>jar</type>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.snice.networking</groupId>
+                <artifactId>codec-common</artifactId>
                 <version>${project.version}</version>
                 <type>jar</type>
                 <scope>compile</scope>

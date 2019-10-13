@@ -30,6 +30,11 @@
 
         <dependency>
             <groupId>io.snice.networking</groupId>
+            <artifactId>codec-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.snice.networking</groupId>
             <artifactId>networking-netty</artifactId>
         </dependency>
 

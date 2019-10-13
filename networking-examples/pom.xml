@@ -71,6 +71,10 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.snice.networking</groupId>
+            <artifactId>codec-gtp</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

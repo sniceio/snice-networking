@@ -3,11 +3,11 @@ package io.snice.networking.app;
 /**
  * @author jonas@jonasborjesson.com
  */
-public interface Environment<T extends NetworkAppConfig> {
+public interface Environment<T, C extends NetworkAppConfig> {
 
     /**
      * Obtain the loaded configuration.
      */
-    T getConfig();
+    C getConfig();
 
 }

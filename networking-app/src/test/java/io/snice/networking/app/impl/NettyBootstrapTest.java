@@ -12,7 +12,7 @@ import static org.junit.Assert.assertThat;
 public class NettyBootstrapTest {
 
     private NetworkAppConfig conf;
-    private NettyBootstrap<NetworkAppConfig> bootstrap;
+    private NettyBootstrap<Buffer, NetworkAppConfig> bootstrap;
 
     @Before
     public void setup() throws Exception {
