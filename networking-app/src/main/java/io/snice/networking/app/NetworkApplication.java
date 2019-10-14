@@ -3,17 +3,18 @@ package io.snice.networking.app;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.snice.buffer.Buffer;
 import io.snice.generics.Generics;
 import io.snice.networking.app.impl.DefaultEnvironment;
 import io.snice.networking.app.impl.NettyBootstrap;
-import io.snice.networking.codec.FramerFactory;
+import io.snice.networking.codec.SerializationFactory;
 import io.snice.networking.config.NetworkInterfaceConfiguration;
 import io.snice.networking.config.NetworkInterfaceDeserializer;
-import io.snice.preconditions.PreConditions;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
@@ -27,14 +28,17 @@ public abstract class NetworkApplication<T, C extends NetworkAppConfig> {
         this.type = type;
     }
 
-    public abstract void run(C configuration, Environment<T, C> environment);
+    public void run(C configuration, Environment<T, C> environment) {
+        // sub-classes may override this method in order to setup additional
+        // resources etc as the application starts running.
+    }
 
     /**
      * As an application, you must override this method and setup your initial routing
      * of incoming messages. For those that are familiar with SIP Servlets (JSR116/289)
      * this would somewhat correspond with the DAR configuration.
      */
-    public abstract void initialize(final Bootstrap<T, C> bootstrap);
+    public abstract void initialize(final NetworkBootstrap<T, C> bootstrap);
 
     /**
      * Call this method from your {@code public static void main} entry point
@@ -45,32 +49,47 @@ public abstract class NetworkApplication<T, C extends NetworkAppConfig> {
         final NettyBootstrap<T, C> bootstrap = new NettyBootstrap<>(config);
         initialize(bootstrap);
         final List<ConnectionContext> connectionContexts = bootstrap.getConnectionContexts();
-        final FramerFactory<T> framerFactory = ensureFramerFactory(bootstrap);
-        env = buildEnvironment(bootstrap);
+        final SerializationFactory<T> serializationFactory = ensureSerializationFactory(bootstrap);
 
         final var network = NetworkStack.ofType(type)
-                .withFramerFactory(framerFactory)
+                .withSerializationFactory(serializationFactory)
                 .withConfiguration(config)
                 .withConnectionContexts(connectionContexts)
                 .withApplication(this)
                 .build();
+
+        env = buildEnvironment(network, bootstrap);
         network.start();
 
         // call application
-        run(config, env);
+        run(config, env); // TODO: app can throw exception. Handle it.
         network.sync();
-
     }
 
-    private FramerFactory<T> ensureFramerFactory(NettyBootstrap<T, C> bootstrap) {
-        final FramerFactory<T> framerFactory = bootstrap.getFramerFactory();
-        assertNotNull(framerFactory, "You must specify the framer factory in order to convert the incoming byte" +
+    private SerializationFactory<T> ensureSerializationFactory(NettyBootstrap<T, C> bootstrap) {
+        final var factory = bootstrap.getSerializationFactory();
+        if (factory != null) {
+            return factory;
+        }
+
+        return (SerializationFactory<T>)findDefaultSerializationFactory();
+    }
+
+    private SerializationFactory<?> findDefaultSerializationFactory() {
+        if (type == String.class) {
+            return () -> b -> Optional.of(b.toString());
+        }
+
+        if (type == Buffer.class) {
+            return () -> Optional::of;
+        }
+
+        throw new IllegalArgumentException("You must specify the framer factory in order to convert the incoming byte" +
                 "stream across the network into your network stacks object type of " + type.getSimpleName());
-        return framerFactory;
     }
 
-    private Environment<T, C> buildEnvironment(final NettyBootstrap<T, C> bootstrap) {
-        return new DefaultEnvironment(bootstrap.getConfiguration());
+    private Environment<T, C> buildEnvironment(final NetworkStack<T, C> stack, final NettyBootstrap<T, C> bootstrap) {
+        return new DefaultEnvironment(stack, bootstrap.getConfiguration());
     }
 
     protected Class<C> getConfigurationClass() {

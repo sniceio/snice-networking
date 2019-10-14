@@ -1,11 +1,11 @@
 package io.snice.networking.app.impl;
 
-import io.snice.networking.app.Bootstrap;
+import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.app.ConnectionContext.MessageProcessingBuilder;
 import io.snice.networking.app.MessagePipe;
 import io.snice.networking.app.NetworkAppConfig;
-import io.snice.networking.codec.FramerFactory;
+import io.snice.networking.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 
@@ -22,9 +22,9 @@ import java.util.stream.Collectors;
 import static io.snice.preconditions.PreConditions.assertArgument;
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
-public class NettyBootstrap<T, C extends NetworkAppConfig> implements Bootstrap<T, C> {
+public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBootstrap<T, C> {
 
-    private FramerFactory<T> framerFactory;
+    private SerializationFactory<T> serializationFactory;
 
     private final C config;
 
@@ -38,8 +38,8 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements Bootstrap<
         return rules.stream().map(ConnectionCtxBuilder::build).collect(Collectors.toList());
     }
 
-    public FramerFactory<T> getFramerFactory() {
-        return framerFactory;
+    public SerializationFactory<T> getSerializationFactory() {
+        return serializationFactory;
     }
 
     @Override
@@ -48,9 +48,9 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements Bootstrap<
     }
 
     @Override
-    public void registerFramer(FramerFactory<T> framerFactory) {
-        assertNotNull(framerFactory, "The framerFactory cannot be null");
-        this.framerFactory = framerFactory;
+    public void registerSerializationFactory(SerializationFactory<T> serializationFactory) {
+        assertNotNull(serializationFactory, "The serializationFactory cannot be null");
+        this.serializationFactory = serializationFactory;
     }
 
     @Override
@@ -71,7 +71,7 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements Bootstrap<
             this.condition = condition;
         }
 
-        public ConnectionContext build() {
+        public ConnectionContext<C, T> build() {
             System.out.println("Building the connetion context");
             final List<MessagePipe<C, T, ?>> rules;
             if (confBuilderConsumer != null) {
@@ -83,7 +83,7 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements Bootstrap<
                 rules = List.of();
             }
 
-            return new NettyConnectionContext<>(condition, dropFunction, rules);
+            return new NettyConnectionContext<C, T>(condition, dropFunction, rules);
         }
 
         @Override

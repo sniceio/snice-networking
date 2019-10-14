@@ -9,7 +9,7 @@ import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.codec.Framer;
-import io.snice.networking.codec.FramerFactory;
+import io.snice.networking.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
@@ -44,15 +44,15 @@ public class NettyUdpInboundAdapter<T> implements ChannelInboundHandler {
     private final Optional<URI> vipAddress;
     private final UUID uuid = UUID.randomUUID();
     private final List<ConnectionContext> ctxs;
-    private final FramerFactory<T> factory;
+    private final SerializationFactory<T> factory;
 
-    private final Map<ConnectionId, ConnectionAdapter<UdpConnection, Buffer, ?>> adapters;
+    private final Map<ConnectionId, ConnectionAdapter<UdpConnection<T>, T>> adapters;
 
     private final ConnectionContext defaultCtx;
 
     private InetSocketAddress localAddress;
 
-    public NettyUdpInboundAdapter(final Clock clock , final FramerFactory<T> factory, final Optional<URI> vipAddress, final List<ConnectionContext> ctxs) {
+    public NettyUdpInboundAdapter(final Clock clock , final SerializationFactory<T> factory, final Optional<URI> vipAddress, final List<ConnectionContext> ctxs) {
         this.clock = clock;
         this.vipAddress = vipAddress;
         this.ctxs = ctxs;
@@ -74,7 +74,7 @@ public class NettyUdpInboundAdapter<T> implements ChannelInboundHandler {
      *
      * TODO: pass in some configuration object...
      */
-    private static Map<ConnectionId, ConnectionAdapter<UdpConnection, Buffer, ?>> allocateInitialMapSize() {
+    private Map<ConnectionId, ConnectionAdapter<UdpConnection<T>, T>> allocateInitialMapSize() {
         return new HashMap<>();
     }
 
@@ -96,10 +96,8 @@ public class NettyUdpInboundAdapter<T> implements ChannelInboundHandler {
 
             final var adapter = ensureConnection(ctx.channel(), id, connCtx);
             final var data = toBuffer(pkt);
+            adapter.frame(data).ifPresent(adapter::process);
 
-            final var object = adapter.frame(data);
-
-            adapter.process(data);
         } catch (final ClassCastException e) {
             e.printStackTrace();
             // WTF? This is for UDP!!! TODO: log warn, this should not happen...
@@ -114,11 +112,11 @@ public class NettyUdpInboundAdapter<T> implements ChannelInboundHandler {
         return Buffers.wrap(b);
     }
 
-    private ConnectionContext<Connection, Buffer, ?> findContext(final ConnectionId id) {
+    private ConnectionContext<Connection, T> findContext(final ConnectionId id) {
         return ctxs.stream().filter(ctx -> ctx.test(id)).findFirst().orElse(defaultCtx);
     }
 
-    private ConnectionAdapter<UdpConnection, Buffer, ?> ensureConnection(final Channel channel, final ConnectionId id, final ConnectionContext<Connection, Buffer, ?> connCtx) {
+    private ConnectionAdapter<UdpConnection<T>, T> ensureConnection(final Channel channel, final ConnectionId id, final ConnectionContext<Connection, T> connCtx) {
         return adapters.computeIfAbsent(id, cId -> {
             final Framer<T> framer = factory.getFramer();
             return new ConnectionAdapter(new UdpConnection(channel, id, vipAddress), framer, connCtx);

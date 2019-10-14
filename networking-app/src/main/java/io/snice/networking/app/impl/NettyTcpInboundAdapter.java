@@ -25,7 +25,7 @@ import java.util.UUID;
  * to only that channel and as such, it cannot be shared...
  *
  */
-public class NettyTcpInboundAdapter implements ChannelInboundHandler {
+public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
 
     private final Clock clock;
     private final Optional<URI> vipAddress;
@@ -43,7 +43,7 @@ public class NettyTcpInboundAdapter implements ChannelInboundHandler {
      * a local and remote peer since this is after all a connection oriented
      * protocol.
      */
-    private ConnectionAdapter<TcpConnection, Buffer, ?> connection;
+    private ConnectionAdapter<TcpConnection, T> connection;
 
     public NettyTcpInboundAdapter(final Clock clock , final Optional<URI> vipAddress, final List<ConnectionContext> ctxs) {
         this.clock = clock;
@@ -104,7 +104,7 @@ public class NettyTcpInboundAdapter implements ChannelInboundHandler {
         connection = new ConnectionAdapter(new TcpConnection(channel, id, vipAddress), null, connCtx);
     }
 
-    private ConnectionContext<Connection, Buffer, ?> findContext(final ConnectionId id) {
+    private ConnectionContext<Connection, T> findContext(final ConnectionId id) {
         return ctxs.stream().filter(ctx -> ctx.test(id)).findFirst().orElse(defaultCtx);
     }
 
@@ -128,7 +128,7 @@ public class NettyTcpInboundAdapter implements ChannelInboundHandler {
             final int toWrite = Math.min(availableBytes, availableBytes);
             final byte[] data = new byte[toWrite];
             buffer.readBytes(data);
-            connection.process(Buffers.wrap(data));
+            connection.frame(Buffers.wrap(data)).ifPresent(connection::process);
         }
     }
 

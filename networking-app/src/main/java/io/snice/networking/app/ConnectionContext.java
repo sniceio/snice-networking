@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public interface ConnectionContext<C extends Connection, T, R> extends Predicate<ConnectionId> {
+public interface ConnectionContext<C extends Connection, T> extends Predicate<ConnectionId> {
 
     boolean isDrop();
 

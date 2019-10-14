@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class NettyConnectionContext<C extends Connection, T, R> implements ConnectionContext<C, T, R> {
+public class NettyConnectionContext<C extends Connection, T> implements ConnectionContext<C, T> {
 
     private final Predicate<ConnectionId> condition;
     private final Function<C, T> dropFunction;

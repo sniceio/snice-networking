@@ -22,7 +22,7 @@ import java.util.Optional;
 /**
  * @author jonas@jonasborjesson.com
  */
-public abstract class AbstractConnection implements Connection {
+public abstract class AbstractConnection<T> implements Connection<T> {
 
     private final ConnectionId id;
     private final Channel channel;

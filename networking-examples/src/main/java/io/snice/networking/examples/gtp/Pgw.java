@@ -1,11 +1,9 @@
 package io.snice.networking.examples.gtp;
 
-import io.snice.buffer.Buffer;
-import io.snice.buffer.Buffers;
-import io.snice.networking.app.Bootstrap;
+import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.app.Environment;
 import io.snice.networking.app.NetworkApplication;
-import io.snice.networking.codec.gtp.GtpFramerFactory;
+import io.snice.networking.codec.gtp.GtpSerializationFactory;
 import io.snice.networking.codec.gtp.GtpMessage;
 import io.snice.networking.common.ConnectionId;
 
@@ -23,9 +21,9 @@ public class Pgw extends NetworkApplication<GtpMessage, GtpConfig> {
     }
 
     @Override
-    public void initialize(final Bootstrap<GtpMessage, GtpConfig> bootstrap) {
+    public void initialize(final NetworkBootstrap<GtpMessage, GtpConfig> bootstrap) {
 
-        bootstrap.registerFramer(new GtpFramerFactory());
+        bootstrap.registerSerializationFactory(new GtpSerializationFactory());
 
         // only accept traffic from localhost, drop the rest.
         bootstrap.onConnection(Pgw::isFromLocalHost).accept(builder -> {

@@ -2,8 +2,12 @@ package io.snice.networking.app;
 
 import io.snice.buffer.Buffer;
 import io.snice.networking.app.impl.NettyNetworkStack;
-import io.snice.networking.codec.FramerFactory;
+import io.snice.networking.codec.SerializationFactory;
+import io.snice.networking.common.Connection;
+import io.snice.networking.common.IllegalTransportException;
+import io.snice.networking.common.Transport;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -26,7 +30,7 @@ public interface NetworkStack<T, C extends NetworkAppConfig> {
     }
 
     interface FramerFactoryStep<T> {
-        ConfigurationStep<T> withFramerFactory(FramerFactory<T> framerFactory);
+        ConfigurationStep<T> withSerializationFactory(SerializationFactory<T> serializationFactory);
     }
 
 
@@ -50,6 +54,19 @@ public interface NetworkStack<T, C extends NetworkAppConfig> {
      * @return
      */
     CompletionStage<Void> sync();
+
+    /**
+     * Connect to a remote address using the supplied {@link Transport}.
+     *
+     * @param remoteAddress
+     * @param transport
+     * @return a {@link CompletionStage} that, once completed, will contain the {@link } that
+     *         is connected to the remote address.
+     * @throws IllegalTransportException in case the underlying {@link NetworkStack} isn't configured with
+     *         the specified {@link Transport}
+     */
+    CompletionStage<Connection<C>> connect(Transport transport, InetSocketAddress remoteAddress)
+            throws IllegalTransportException;
 
     /**
      * Shutdown the stack. This method is blocking and will return once

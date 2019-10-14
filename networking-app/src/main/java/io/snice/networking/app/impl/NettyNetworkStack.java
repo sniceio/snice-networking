@@ -5,7 +5,7 @@ import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkStack;
-import io.snice.networking.codec.FramerFactory;
+import io.snice.networking.codec.SerializationFactory;
 import io.snice.networking.common.Transport;
 import io.snice.networking.netty.NettyNetworkLayer;
 import io.snice.time.Clock;
@@ -24,16 +24,16 @@ import static io.snice.preconditions.PreConditions.ensureNotNull;
 public class NettyNetworkStack<T, C extends NetworkAppConfig> implements NetworkStack<T, C> {
 
     private final Class<T> type;
-    private final FramerFactory<T> framerFactory;
+    private final SerializationFactory<T> serializationFactory;
     private final C config;
     private final NetworkApplication<T, C> app;
     private final List<ConnectionContext> ctxs;
     private NettyNetworkLayer network;
     private final Clock clock = new SystemClock();
 
-    private NettyNetworkStack(final Class<T> type, final C config, final FramerFactory<T> framerFactory, final NetworkApplication<T, C> app, final List<ConnectionContext> ctxs) {
+    private NettyNetworkStack(final Class<T> type, final C config, final SerializationFactory<T> framerFactory, final NetworkApplication<T, C> app, final List<ConnectionContext> ctxs) {
         this.type = type;
-        this.framerFactory = framerFactory;
+        this.serializationFactory = framerFactory;
         this.config = config;
         this.app = app;
         this.ctxs = ctxs;
@@ -58,7 +58,7 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
     @Override
     public void start() {
         network = NettyNetworkLayer.with(config.getNetworkInterfaces())
-                .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, framerFactory, Optional.empty(), ctxs), Transport.udp)
+                .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, serializationFactory, Optional.empty(), ctxs), Transport.udp)
                 .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, Optional.empty(), ctxs), Transport.tcp)
                 .build();
         network.start();
@@ -77,14 +77,14 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
     private static class Builder<T, C extends NetworkAppConfig> implements NetworkStack.Builder<T, C> {
 
         private final Class<T> type;
-        private final FramerFactory<T> framerFactory;
+        private final SerializationFactory<T> serializationFactory;
         private final C config;
         private NetworkApplication application;
         private List<ConnectionContext> ctxs;
 
-        private Builder(final Class<T> type, final FramerFactory<T> framerFactory, final C config) {
+        private Builder(final Class<T> type, final SerializationFactory<T> serializationFactory, final C config) {
             this.type = type;
-            this.framerFactory = framerFactory;
+            this.serializationFactory = serializationFactory;
             this.config = config;
         }
 
@@ -106,7 +106,7 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
         @Override
         public NetworkStack<T, C> build() {
             ensureNotNull(application, "You must specify the Sip Application");
-            return new NettyNetworkStack(type, config, framerFactory, application, ctxs);
+            return new NettyNetworkStack(type, config, serializationFactory, application, ctxs);
         }
     }
 }
