@@ -11,8 +11,6 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import static io.snice.preconditions.PreConditions.assertNotNull;
-
 public interface NetworkStack<T, C extends NetworkAppConfig> {
 
     /**
@@ -65,7 +63,7 @@ public interface NetworkStack<T, C extends NetworkAppConfig> {
      * @throws IllegalTransportException in case the underlying {@link NetworkStack} isn't configured with
      *         the specified {@link Transport}
      */
-    CompletionStage<Connection<C>> connect(Transport transport, InetSocketAddress remoteAddress)
+    CompletionStage<Connection<T>> connect(Transport transport, InetSocketAddress remoteAddress)
             throws IllegalTransportException;
 
     /**

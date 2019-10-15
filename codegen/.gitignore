@@ -7,13 +7,8 @@
 *.iml
 .idea
 
-# Python
-venv
-*.pyc
-
 # Where maven compiles by default
 target
-dependency-reduced-pom.xml
 
 # Java Files that should be ignored
 *.class
@@ -26,4 +21,5 @@ dependency-reduced-pom.xml
 # Backup files
 *.bak
 
-*.log
+venv
+*.pyc

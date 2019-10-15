@@ -6,17 +6,19 @@ import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkStack;
 import io.snice.networking.codec.SerializationFactory;
+import io.snice.networking.common.Connection;
+import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
 import io.snice.networking.netty.NettyNetworkLayer;
 import io.snice.time.Clock;
 import io.snice.time.SystemClock;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import static io.snice.preconditions.PreConditions.assertArgument;
-import static io.snice.preconditions.PreConditions.assertArray;
 import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
 
@@ -45,7 +47,7 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
             assertNotNull(framerFactory, "The Framer Factory cannot be null");
             return new ConfigurationStep<T>() {
                 @Override
-                public <C extends NetworkAppConfig> Builder<T, C> withConfiguration(C config) {
+                public <C extends NetworkAppConfig> Builder<T, C> withConfiguration(final C config) {
                     assertNotNull(config, "The configuration for the network stack cannot be null");
                     return new Builder(type, framerFactory, config);
                 }
@@ -67,6 +69,11 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
     @Override
     public CompletionStage<Void> sync() {
         return network.sync();
+    }
+
+    @Override
+    public CompletionStage<Connection<T>> connect(final Transport transport, final InetSocketAddress remoteAddress) throws IllegalTransportException {
+        return network.connect(transport, remoteAddress);
     }
 
     @Override

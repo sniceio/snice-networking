@@ -37,6 +37,13 @@ public abstract class NetworkApplication<T, C extends NetworkAppConfig> {
      * As an application, you must override this method and setup your initial routing
      * of incoming messages. For those that are familiar with SIP Servlets (JSR116/289)
      * this would somewhat correspond with the DAR configuration.
+     *
+     * TODO: this is really only needed for the server when you listen on incoming connection.
+     * If you are only acting as a client, you shouldn't need this but rather setup the rules
+     * on the connection and it's chain when you establish that connection.
+     *
+     * So, make this one optional and then in the {@link Environment} you rather return a similar
+     * builder object as the bootstrap has etc etc.
      */
     public abstract void initialize(final NetworkBootstrap<T, C> bootstrap);
 

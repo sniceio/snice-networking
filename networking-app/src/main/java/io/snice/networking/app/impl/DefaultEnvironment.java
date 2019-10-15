@@ -26,8 +26,7 @@ public class DefaultEnvironment <T, C extends NetworkAppConfig> implements Envir
     }
 
     @Override
-    public CompletionStage<Connection<C>> connect(Transport transport, InetSocketAddress remoteAddress) throws IllegalTransportException {
-        System.err.println("Connect!!!");
-        return null;
+    public CompletionStage<Connection<T>> connect(final Transport transport, final InetSocketAddress remoteAddress) throws IllegalTransportException {
+        return stack.connect(transport, remoteAddress);
     }
 }

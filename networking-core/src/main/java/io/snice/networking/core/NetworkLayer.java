@@ -6,13 +6,12 @@ import io.snice.networking.common.Transport;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 /**
  * @author jonas@jonasborjesson.com
  */
-public interface NetworkLayer {
+public interface NetworkLayer<T> {
 
     /**
      * Start the {@link NetworkLayer}, which will call {@link NetworkInterface#up()} on all
@@ -37,7 +36,7 @@ public interface NetworkLayer {
      * @param transport
      * @return
      */
-    CompletableFuture<Connection> connect(Transport transport, InetSocketAddress address);
+    CompletionStage<Connection<T>> connect(Transport transport, InetSocketAddress address);
 
     /**
      * Return a {@link CompletionStage} that will complete once the {@link NetworkLayer} has

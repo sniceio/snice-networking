@@ -58,7 +58,7 @@ import static io.snice.preconditions.PreConditions.ensureNotNull;
  * 
  * @author jonas@jonasborjesson.com
  */
-public class NettyNetworkLayer implements NetworkLayer {
+public class NettyNetworkLayer<T> implements NetworkLayer<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyNetworkLayer.class);
 
@@ -90,7 +90,7 @@ public class NettyNetworkLayer implements NetworkLayer {
 
     @Override
     public void start() {
-        final List<CompletableFuture<Void>> futures = new CopyOnWriteArrayList<>();
+        final List<CompletionStage<Void>> futures = new CopyOnWriteArrayList<>();
         this.interfaces.forEach(i -> futures.add(i.up()));
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
@@ -106,7 +106,7 @@ public class NettyNetworkLayer implements NetworkLayer {
     }
 
     @Override
-    public CompletableFuture<Connection> connect(final Transport transport, final InetSocketAddress address) {
+    public CompletionStage<Connection<T>> connect(final Transport transport, final InetSocketAddress address) {
         return this.defaultInterface.connect(transport, address);
     }
 

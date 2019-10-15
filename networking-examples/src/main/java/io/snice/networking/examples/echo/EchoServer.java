@@ -1,8 +1,8 @@
 package io.snice.networking.examples.echo;
 
-import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.app.NetworkApplication;
+import io.snice.networking.app.NetworkBootstrap;
 
 /**
  * This is a simple echo server that deals with Strings. I.e., it expects to receive
@@ -22,14 +22,14 @@ public class EchoServer extends NetworkApplication<String, NetworkAppConfig> {
     }
 
     @Override
-    public void initialize(NetworkBootstrap<String, NetworkAppConfig> bootstrap) {
+    public void initialize(final NetworkBootstrap<String, NetworkAppConfig> bootstrap) {
         bootstrap.onConnection(con -> true).accept(builder -> {
-            builder.match(s -> s.startsWith("hello")).consume((connection, str) -> connection.send("hello world!"));
-            builder.match(s -> true).consume((c, str) -> c.send(str));
+            builder.match(s -> s.startsWith("hello")).consume((connection, str) -> connection.send("hello world!\n"));
+            builder.match(s -> true).map(String::strip).consume((c, str) -> c.send(str));
         });
     }
 
-    public static void main(String... args) throws Exception {
+    public static void main(final String... args) throws Exception {
         new EchoServer().run(args);
     }
 }

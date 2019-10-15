@@ -38,6 +38,10 @@ public interface GtpMessage {
 
     List<? extends InfoElement> getInfoElements();
 
+    default int getMessageTypeDecimal() {
+        return getHeader().getMessageTypeDecimal();
+    }
+
     default int getVersion() {
         return getHeader().getVersion();
     }

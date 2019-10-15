@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
  * 
  * @author jonas@jonasborjesson.com
  */
-public interface ListeningPoint {
+public interface ListeningPoint<T> {
 
     int getLocalPort();
 
@@ -56,7 +56,7 @@ public interface ListeningPoint {
      * @param remoteAddress
      * @return
      */
-    CompletableFuture<Connection> connect(final InetSocketAddress remoteAddress);
+    CompletableFuture<Connection<T>> connect(final InetSocketAddress remoteAddress);
 
     // because you can't override toString
     default String toStringRepresentation() {

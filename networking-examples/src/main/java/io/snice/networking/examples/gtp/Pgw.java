@@ -1,10 +1,10 @@
 package io.snice.networking.examples.gtp;
 
-import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.app.Environment;
 import io.snice.networking.app.NetworkApplication;
-import io.snice.networking.codec.gtp.GtpSerializationFactory;
+import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.codec.gtp.GtpMessage;
+import io.snice.networking.codec.gtp.GtpSerializationFactory;
 import io.snice.networking.common.ConnectionId;
 
 
@@ -26,9 +26,10 @@ public class Pgw extends NetworkApplication<GtpMessage, GtpConfig> {
         bootstrap.registerSerializationFactory(new GtpSerializationFactory());
 
         // only accept traffic from localhost, drop the rest.
-        bootstrap.onConnection(Pgw::isFromLocalHost).accept(builder -> {
+        bootstrap.onConnection(id -> true).accept(builder -> {
             builder.withDefaultStatisticsModule();
-            builder.match(gtp -> gtp.getVersion() == 2);
+            builder.match(gtp -> gtp.getVersion() == 2 && gtp.getMessageTypeDecimal() == 1).consume(echo -> System.out.println("Got echo request"));
+            builder.match(gtp -> gtp.getVersion() == 2 && gtp.getMessageTypeDecimal() == 32).consume(crs -> System.out.println("Got Create Session Request"));
             /*
             builder.match(b -> b.startsWith(hello)).consume((c, h) -> {
                 System.err.println("Got a hello...");
@@ -51,7 +52,7 @@ public class Pgw extends NetworkApplication<GtpMessage, GtpConfig> {
         });
 
         // drop the rest...
-        bootstrap.onConnection(id -> true).drop();
+        // bootstrap.onConnection(id -> true).drop();
 
     }
 

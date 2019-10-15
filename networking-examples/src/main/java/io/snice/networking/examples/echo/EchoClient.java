@@ -1,9 +1,9 @@
 package io.snice.networking.examples.echo;
 
-import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.app.Environment;
-import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.app.NetworkApplication;
+import io.snice.networking.app.NetworkBootstrap;
+import io.snice.networking.common.Transport;
 
 /**
  * This is a simple echo server that deals with Strings. I.e., it expects to receive
@@ -16,23 +16,30 @@ import io.snice.networking.app.NetworkApplication;
  * it finds to match, it has a default match-all that does the echo part.
  *
  */
-public class EchoClient extends NetworkApplication<String, NetworkAppConfig> {
+public class EchoClient extends NetworkApplication<String, EchoClientConfig> {
 
     public EchoClient() {
         super(String.class);
     }
 
-    public void run(NetworkAppConfig config, Environment<String, NetworkAppConfig> environment) {
+    @Override
+    public void run(final EchoClientConfig config, final Environment<String, EchoClientConfig> environment) {
+        environment.connect(Transport.udp, config.getEchoServerIp(), config.getEchoServerPort())
+                .thenAccept(connection -> {
+                    connection.send("hello");
+                });
     }
 
     @Override
-    public void initialize(NetworkBootstrap<String, NetworkAppConfig> bootstrap) {
+    public void initialize(final NetworkBootstrap<String, EchoClientConfig> bootstrap) {
 
         // we are just a client so we will drop any connection attempts made to us.
-        bootstrap.onConnection(con -> true).drop();
+        bootstrap.onConnection(con -> true).accept(builder -> {
+            builder.match(s -> true).consume(System.out::println);
+        });
     }
 
-    public static void main(String... args) throws Exception {
+    public static void main(final String... args) throws Exception {
         new EchoClient().run(args);
     }
 }

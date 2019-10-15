@@ -5,7 +5,17 @@ import io.snice.networking.app.NetworkAppConfig;
 
 public class EchoClientConfig extends NetworkAppConfig {
 
-    @JsonProperty
-    private String echoServerAddress;
+    @JsonProperty("remoteHost")
+    private String echoServerIp;
 
+    @JsonProperty("remoteIp")
+    private int echoServerPort;
+
+    public String getEchoServerIp() {
+        return echoServerIp;
+    }
+
+    public int getEchoServerPort() {
+        return echoServerPort;
+    }
 }

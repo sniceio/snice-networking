@@ -30,7 +30,7 @@ import static io.snice.preconditions.PreConditions.ensureNotNull;
 /**
  * @author jonas@jonasborjesson.com
  */
-public final class NettyNetworkInterface implements NetworkInterface, ChannelFutureListener {
+public final class NettyNetworkInterface<T> implements NetworkInterface<T>, ChannelFutureListener {
 
     private final Logger logger = LoggerFactory.getLogger(NettyNetworkInterface.class);
 
@@ -129,7 +129,7 @@ public final class NettyNetworkInterface implements NetworkInterface, ChannelFut
      *                                   the specified {@link Transport}
      */
     @Override
-    public CompletionStage<Connection> connect(final Transport transport, final InetSocketAddress remoteAddress)
+    public CompletionStage<Connection<T>> connect(final Transport transport, final InetSocketAddress remoteAddress)
             throws IllegalTransportException {
         final ListeningPoint lp = listeningPointsByTransport[transport.ordinal()];
         if (lp == null) {
