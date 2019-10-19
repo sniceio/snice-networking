@@ -1,14 +1,29 @@
 package io.snice.networking.examples.gtp;
 
 import io.snice.networking.app.Environment;
+import io.snice.networking.app.MessagePipe;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
+import io.snice.networking.app.SingleMessagePipe;
 import io.snice.networking.codec.gtp.GtpMessage;
 import io.snice.networking.codec.gtp.GtpSerializationFactory;
+import io.snice.networking.codec.gtp.control.Gtp2Message;
+import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 
 
 public class Pgw extends NetworkApplication<GtpMessage, GtpConfig> {
+
+    private final static SingleMessagePipe<GtpMessage, Gtp2Message> echoPipe;
+    private static MessagePipe<Connection, GtpMessage, Gtp2Message> echoPipe2;
+
+    static {
+        // for all echo messages, simply reply back
+        echoPipe = SingleMessagePipe.transform(GtpMessage::toGtp2Message);
+
+        echoPipe2 = MessagePipe.transform(GtpMessage::toGtp2Message);
+        echoPipe2 = echoPipe2.consume((c, echo) -> c.send("pong"));
+    }
 
 
     public Pgw() {
@@ -28,6 +43,11 @@ public class Pgw extends NetworkApplication<GtpMessage, GtpConfig> {
         // only accept traffic from localhost, drop the rest.
         bootstrap.onConnection(id -> true).accept(builder -> {
             builder.withDefaultStatisticsModule();
+
+            builder.match(GtpMessage::isGtpVersion2).withPipe(echoPipe).consume((c, gtp) -> {
+
+            });
+
             builder.match(gtp -> gtp.getVersion() == 2 && gtp.getMessageTypeDecimal() == 1).consume(echo -> System.out.println("Got echo request"));
             builder.match(gtp -> gtp.getVersion() == 2 && gtp.getMessageTypeDecimal() == 32).consume(crs -> System.out.println("Got Create Session Request"));
             /*

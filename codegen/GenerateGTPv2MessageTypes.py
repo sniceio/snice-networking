@@ -16,7 +16,7 @@ def append_interface(value, name, interfaces):
     if is_selected(value):
         interfaces.append(name)
 
-def loadCsv(file_name = 'GTPv2_Information_Elements.tsv'):
+def loadCsv(file_name = 'GTPv2_Message_Types.tsv'):
     elements = []
     with open(file_name) as file:
         reader = csv.reader(file, delimiter = '\t')
@@ -69,10 +69,10 @@ def render(elements, template):
 if __name__ == '__main__':
     elements = loadCsv()
     print(json.dumps(elements, indent = 3) )
-    res = render(elements, 'gtpv2_information_elements.liquid')
+    res = render(elements, 'gtpv2_message_types.liquid')
     print(res)
 
     # java_file = '../pkts-3gppitu/src/main/java/io/pkts/tgpp/Gtp2InformationElements.java'
-    java_file = 'Gtp2InformationElements2.java'
+    java_file = 'Gtp2MessageTypes.java'
     with open(java_file, 'w') as java:
         java.write(res)

@@ -29,4 +29,9 @@ public class MessagePipeTest {
         assertThat(pipe.apply("asdf", "hello world"), CoreMatchers.is(11));
         assertThat(pipe2.apply("asdf", "hello world"), CoreMatchers.is("count 11"));
     }
+
+    @Test
+    public void testBranchingPipe() throws Exception {
+
+    }
 }

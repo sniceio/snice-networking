@@ -5,6 +5,7 @@ import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
@@ -15,14 +16,49 @@ import static io.snice.preconditions.PreConditions.ensureNotNull;
  */
 public interface MessagePipe<C, T, R> extends BiFunction<C, T, R>, BiPredicate<C, T> {
 
+	static <C, T, R> MessagePipe<C, T, R> transform(final Function<T, R> f) {
+		ensureNotNull(f, "The function cannot be null");
+		return new DefaultMessagePipe((c, t) -> true).map(f);
+	}
+
+	/**
+	 * Create a new {@link MessagePipe} that consumes values of the given stype.
+	 *
+	 * @param inType the type this {@link MessagePipe} will consume.
+	 * @param <T>    the type
+	 * @return the next step in this process of building up a valid {@link MessagePipe}
+	 */
+	static <T> OutTypeStep<T> consumes(final Class<T> inType) {
+		ensureNotNull(inType, "The input type cannot be null");
+		return null;
+	}
+
+	interface OutTypeStep<T> {
+		<R> MappingStep<T, R> produces(final Class<R> outType);
+	}
+
 	static <C, T> MessagePipe<C, T, T> match(final BiPredicate<C, T> condition) {
 		ensureNotNull(condition, "The condition cannot be null");
 		return new DefaultMessagePipe(condition);
 	}
 
+	static <T> MessagePipe<?, T, T> match(final Predicate<T> condition) {
+		ensureNotNull(condition, "The condition cannot be null");
+		final BiPredicate<? extends Object, T> biCondition = (o, t) -> condition.test(t);
+		return new DefaultMessagePipe(biCondition);
+	}
+
 	static <C, T, R> MessagePipe<C, T, R> of(final Class<T> inType, final Class<R> outType, final BiPredicate<C, T> condition) {
 		ensureNotNull(condition, "The condition cannot be null");
 		return new DefaultMessagePipe(condition);
+	}
+
+	interface MappingStep<T, R> {
+		MessagePipe<T, T, R> map(Function<? super T, ? extends R> f);
+	}
+
+	interface BiMappingStep<C, T, R> {
+		MessagePipe<C, T, R> map(Function<? super T, ? extends R> f);
 	}
 
 	MessagePipe<C, T, R> consume(Consumer<R> f);

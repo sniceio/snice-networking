@@ -4,13 +4,10 @@ import io.snice.buffer.ReadableBuffer;
 import io.snice.networking.codec.gtp.GtpMessage;
 import io.snice.networking.codec.gtp.control.impl.Gtp2MessageImpl;
 
-public interface Gtp2Message extends GtpMessage {
+public interface Gtp1Message extends GtpMessage {
 
-    static Gtp2Message frame(final Gtp2Header header, final ReadableBuffer buffer) {
-        return Gtp2MessageImpl.frame(header, buffer);
+    static Gtp1Message frame(final Gtp1Header header, final ReadableBuffer buffer) {
+        throw new RuntimeException("Not yet implemented");
     }
-
-    boolean isHello();
-
 
 }

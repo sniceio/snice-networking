@@ -33,6 +33,18 @@ public interface GtpMessage {
         }
     }
 
+    default boolean isGtpVersion1() {
+        return getVersion() == 1;
+    }
+
+    default boolean isGtpVersion2() {
+        return getVersion() == 2;
+    }
+
+    default Gtp2Message toGtp2Message() {
+        throw new ClassCastException("Unable to cast a " + getClass().getName() + " into a " + Gtp2Message.class.getName());
+    }
+
 
     GtpHeader getHeader();
 
