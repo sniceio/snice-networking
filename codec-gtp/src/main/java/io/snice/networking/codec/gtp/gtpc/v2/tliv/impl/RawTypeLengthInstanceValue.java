@@ -1,20 +1,28 @@
-package io.snice.networking.codec.gtp.control.impl;
+package io.snice.networking.codec.gtp.gtpc.v2.tliv.impl;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.ReadableBuffer;
-import io.snice.networking.codec.gtp.control.TypeLengthInstanceValue;
+import io.snice.networking.codec.gtp.gtpc.v2.tliv.TypeLengthInstanceValue;
 
 import static io.snice.preconditions.PreConditions.assertArgument;
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
-public class TypeLengthInstanceValueImpl implements TypeLengthInstanceValue {
+/**
+ * The {@link RawTypeLengthInstanceValue} represents a framed, but otherwise unparsed,
+ * TLIV. In many cases, an application dealing with GTP does not need to check every
+ * IE (information element) in detail and as such, can essentially leave it alone
+ * and may e.g. write it back out to socket raw. If, however, the application
+ * need to parse the value out, then use the {@link #ensure()} method, which
+ * will force it to be fully parsed.
+ */
+public class RawTypeLengthInstanceValue implements TypeLengthInstanceValue {
 
     private static final byte EXTENSION_TYPE = (byte) 0xFE;
 
     private final Buffer header;
     private final Buffer value;
 
-    private TypeLengthInstanceValueImpl(final Buffer header, final Buffer value) {
+    protected RawTypeLengthInstanceValue(final Buffer header, final Buffer value) {
         this.header = header;
         this.value = value;
     }
@@ -38,7 +46,7 @@ public class TypeLengthInstanceValueImpl implements TypeLengthInstanceValue {
         final int length = header.getUnsignedShort(1);
         final Buffer value = buffer.readBytes(length);
 
-        return new TypeLengthInstanceValueImpl(header, value);
+        return new RawTypeLengthInstanceValue(header, value);
     }
 
     @Override
@@ -54,5 +62,17 @@ public class TypeLengthInstanceValueImpl implements TypeLengthInstanceValue {
     @Override
     public Buffer getValue() {
         return value;
+    }
+
+    /**
+     * If this method actually gets called then that means that we are the
+     * {@link RawTypeLengthInstanceValue} itself and that we need to frame it
+     * further. Subclasses MUST override this method and simply return <code>this</code>
+     *
+     * @return
+     */
+    @Override
+    public TypeLengthInstanceValue ensure() {
+        return null;
     }
 }

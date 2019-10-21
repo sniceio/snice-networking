@@ -1,6 +1,6 @@
 package io.snice.networking.codec.gtp;
 
-import io.snice.networking.codec.gtp.control.InfoElement;
+import io.snice.networking.codec.gtp.gtpc.InfoElement;
 import org.junit.Before;
 import org.junit.Test;
 

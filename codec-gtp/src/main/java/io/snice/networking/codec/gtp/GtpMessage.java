@@ -2,8 +2,9 @@ package io.snice.networking.codec.gtp;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.ReadableBuffer;
-import io.snice.networking.codec.gtp.control.Gtp2Message;
-import io.snice.networking.codec.gtp.control.InfoElement;
+import io.snice.networking.codec.gtp.gtpc.InfoElement;
+import io.snice.networking.codec.gtp.gtpc.v2.Gtp2Message;
+import io.snice.networking.codec.gtp.gtpc.v2.Gtp2MessageType;
 
 import java.util.List;
 
@@ -33,6 +34,14 @@ public interface GtpMessage {
         }
     }
 
+    default boolean isRequest() {
+        return false;
+    }
+
+    default boolean isResponse() {
+        return false;
+    }
+
     default boolean isGtpVersion1() {
         return getVersion() == 1;
     }
@@ -45,6 +54,9 @@ public interface GtpMessage {
         throw new ClassCastException("Unable to cast a " + getClass().getName() + " into a " + Gtp2Message.class.getName());
     }
 
+    default boolean isEchoRequest() {
+        return getMessageTypeDecimal() == Gtp2MessageType.Echo_Request.getType();
+    }
 
     GtpHeader getHeader();
 

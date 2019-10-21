@@ -45,10 +45,7 @@ public interface ConnectionContext<C extends Connection, T> extends Predicate<Co
 
     interface MessageProcessingBuilder<C extends Connection, T, R> {
 
-        MessageProcessingBuilder<C, T, R> withPipe(MessagePipe<C, T, R> pipe);
-
-        // MessageProcessingBuilder<C, T, R> withPipe(SingleMessagePipe<T, R> pipe);
-        <NEW_R> MessageProcessingBuilder<C, T, NEW_R> withPipe(SingleMessagePipe<? super T, ? extends NEW_R> pipe);
+        <NEW_R> MessageProcessingBuilder<C, T, NEW_R> withPipe(MessagePipe<C, ? super R, ? extends NEW_R> f);
 
         MessageProcessingBuilder<C, T, R> consume(Consumer<R> consumer);
 

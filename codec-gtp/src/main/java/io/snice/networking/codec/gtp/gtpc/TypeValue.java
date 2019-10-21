@@ -1,4 +1,5 @@
-package io.snice.networking.codec.gtp.control;
+package io.snice.networking.codec.gtp.gtpc;
 
 public interface TypeValue extends InfoElement {
+
 }

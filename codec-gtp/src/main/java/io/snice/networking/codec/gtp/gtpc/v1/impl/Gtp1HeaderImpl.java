@@ -1,10 +1,10 @@
-package io.snice.networking.codec.gtp.control.impl;
+package io.snice.networking.codec.gtp.gtpc.v1.impl;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.ReadableBuffer;
 import io.snice.networking.codec.gtp.GtpVersionException;
 import io.snice.networking.codec.gtp.Teid;
-import io.snice.networking.codec.gtp.control.Gtp1Header;
+import io.snice.networking.codec.gtp.gtpc.v1.Gtp1Header;
 
 import java.util.Optional;
 

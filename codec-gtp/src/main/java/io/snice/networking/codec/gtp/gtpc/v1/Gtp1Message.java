@@ -1,8 +1,7 @@
-package io.snice.networking.codec.gtp.control;
+package io.snice.networking.codec.gtp.gtpc.v1;
 
 import io.snice.buffer.ReadableBuffer;
 import io.snice.networking.codec.gtp.GtpMessage;
-import io.snice.networking.codec.gtp.control.impl.Gtp2MessageImpl;
 
 public interface Gtp1Message extends GtpMessage {
 

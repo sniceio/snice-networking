@@ -45,7 +45,7 @@ if __name__ == '__main__':
     res = render(interfaces, 'reference_points.liquid')
     print(res)
 
-    # java_file = '../pkts-3gppitu/src/main/java/io/pkts/tgpp/ReferencePoint.java'
-    java_file = 'ReferencePointTest.java'
+    java_file = '../codec-common/src/main/java/io/snice/networking/codec/tgpp/ReferencePoint.java'
+    # java_file = 'ReferencePointTest.java'
     with open(java_file, 'w') as java:
         java.write(res)

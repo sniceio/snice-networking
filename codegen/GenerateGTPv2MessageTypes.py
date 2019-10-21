@@ -72,7 +72,6 @@ if __name__ == '__main__':
     res = render(elements, 'gtpv2_message_types.liquid')
     print(res)
 
-    # java_file = '../pkts-3gppitu/src/main/java/io/pkts/tgpp/Gtp2InformationElements.java'
-    java_file = 'Gtp2MessageTypes.java'
+    java_file = '../codec-gtp/src/main/java/io/snice/networking/codec/gtp/Gtp2MessageType.java'
     with open(java_file, 'w') as java:
         java.write(res)

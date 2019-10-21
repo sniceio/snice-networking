@@ -4,25 +4,32 @@ import io.snice.networking.app.Environment;
 import io.snice.networking.app.MessagePipe;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
-import io.snice.networking.app.SingleMessagePipe;
 import io.snice.networking.codec.gtp.GtpMessage;
 import io.snice.networking.codec.gtp.GtpSerializationFactory;
-import io.snice.networking.codec.gtp.control.Gtp2Message;
+import io.snice.networking.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
+
+import static io.snice.networking.app.MessagePipe.match;
 
 
 public class Pgw extends NetworkApplication<GtpMessage, GtpConfig> {
 
-    private final static SingleMessagePipe<GtpMessage, Gtp2Message> echoPipe;
-    private static MessagePipe<Connection, GtpMessage, Gtp2Message> echoPipe2;
+    private static final MessagePipe<Connection, Gtp2Message, String> echo;
+    private static final MessagePipe<Connection, Gtp2Message, String> csr;
 
     static {
         // for all echo messages, simply reply back
-        echoPipe = SingleMessagePipe.transform(GtpMessage::toGtp2Message);
+        echo = match(Pgw::isEcho).map(GtpMessage::toString).consume((c, s) -> c.send(s));
+        csr = match(Pgw::isEcho).map(GtpMessage::toString).consume((c, s) -> c.send(s));
+    }
 
-        echoPipe2 = MessagePipe.transform(GtpMessage::toGtp2Message);
-        echoPipe2 = echoPipe2.consume((c, echo) -> c.send("pong"));
+    public static boolean isEcho(final Connection c, final Gtp2Message gtp) {
+        return gtp.isEchoRequest();
+    }
+
+    public static boolean isCSR(final Connection c, final Gtp2Message gtp) {
+        return gtp.isEchoRequest();
     }
 
 
@@ -44,9 +51,11 @@ public class Pgw extends NetworkApplication<GtpMessage, GtpConfig> {
         bootstrap.onConnection(id -> true).accept(builder -> {
             builder.withDefaultStatisticsModule();
 
-            builder.match(GtpMessage::isGtpVersion2).withPipe(echoPipe).consume((c, gtp) -> {
+            // no GTPv1 right now so just drop it...
+            builder.match(GtpMessage::isGtpVersion1).consume((c, gtp) -> c.close());
 
-            });
+            builder.match(GtpMessage::isGtpVersion2).map(GtpMessage::toGtp2Message).withPipe(echo);
+
 
             builder.match(gtp -> gtp.getVersion() == 2 && gtp.getMessageTypeDecimal() == 1).consume(echo -> System.out.println("Got echo request"));
             builder.match(gtp -> gtp.getVersion() == 2 && gtp.getMessageTypeDecimal() == 32).consume(crs -> System.out.println("Got Create Session Request"));

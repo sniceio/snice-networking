@@ -5,7 +5,6 @@ import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
@@ -33,19 +32,23 @@ public interface MessagePipe<C, T, R> extends BiFunction<C, T, R>, BiPredicate<C
 		return null;
 	}
 
+	static <T1, T2> BiOutTypeStep<T1, T2> consumes(final Class<T1> inType1, final Class<T2> inType2) {
+		ensureNotNull(inType1, "The input type cannot be null");
+		ensureNotNull(inType2, "The input type cannot be null");
+		return null;
+	}
+
 	interface OutTypeStep<T> {
 		<R> MappingStep<T, R> produces(final Class<R> outType);
+	}
+
+	interface BiOutTypeStep<T1, T2> {
+		<R> MappingStep<T1, R> produces(final Class<R> outType);
 	}
 
 	static <C, T> MessagePipe<C, T, T> match(final BiPredicate<C, T> condition) {
 		ensureNotNull(condition, "The condition cannot be null");
 		return new DefaultMessagePipe(condition);
-	}
-
-	static <T> MessagePipe<?, T, T> match(final Predicate<T> condition) {
-		ensureNotNull(condition, "The condition cannot be null");
-		final BiPredicate<? extends Object, T> biCondition = (o, t) -> condition.test(t);
-		return new DefaultMessagePipe(biCondition);
 	}
 
 	static <C, T, R> MessagePipe<C, T, R> of(final Class<T> inType, final Class<R> outType, final BiPredicate<C, T> condition) {

@@ -1,8 +1,9 @@
-package io.snice.networking.codec.gtp.control;
+package io.snice.networking.codec.gtp.gtpc;
 
 import io.snice.buffer.Buffer;
 import io.snice.networking.codec.gtp.GtpRawData;
 import io.snice.networking.codec.gtp.GtpTestBase;
+import io.snice.networking.codec.gtp.gtpc.v2.tliv.TypeLengthInstanceValue;
 import org.junit.Before;
 import org.junit.Test;
 
