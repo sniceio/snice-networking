@@ -18,8 +18,17 @@ public interface Gtp2Message extends GtpMessage {
      * @return
      */
     default boolean isCreateSessionRequest() {
-        return getType()== Gtp2MessageType.Create_Session_Request;
+        return getType() == Gtp2MessageType.CREATE_SESSION_REQUEST;
     }
 
+    default boolean isCreateSessionResponse() {
+        return getType() == Gtp2MessageType.CREATE_SESSION_RESPONSE;
+
+    }
+
+    @Override
+    default Gtp2Message toGtp2Message() {
+        return this;
+    }
 
 }

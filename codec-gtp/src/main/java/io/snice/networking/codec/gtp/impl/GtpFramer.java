@@ -21,10 +21,14 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
  */
 public final class GtpFramer {
 
-    public static final Map<Integer, Function<TypeLengthInstanceValue, ? extends TypeLengthInstanceValue>> framers = new HashMap<>();
+    public static final Map<Byte, Function<TypeLengthInstanceValue, ? extends TypeLengthInstanceValue>> framers = new HashMap<>();
 
     static {
-        framers.put(Gtp2InfoElementType.IMSI.getTypeAsDecimal(), tliv -> IMSI.frame(tliv.getValue()));
+        framers.put(Gtp2InfoElementType.IMSI.getType(), tliv -> IMSI.frame(tliv.getValue()));
+    }
+
+    public static Function<TypeLengthInstanceValue, ? extends TypeLengthInstanceValue> getFramer(final Byte b) {
+        return framers.get(b);
     }
 
     public static GtpMessage frameGtpMessage(final Buffer buffer) {

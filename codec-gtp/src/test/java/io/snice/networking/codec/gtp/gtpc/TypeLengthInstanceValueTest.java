@@ -24,6 +24,14 @@ public class TypeLengthInstanceValueTest extends GtpTestBase {
         ensureBasicTlivProperties(GtpRawData.fteid, 87, 9);
     }
 
+    @Test
+    public void testParseIMSI() throws Exception {
+        final TypeLengthInstanceValue tliv = TypeLengthInstanceValue.frame(GtpRawData.imsiTLIV);
+        assertThat(tliv.isIMSI(), is(true));
+        final var imsi = tliv.ensure().toIMSI();
+
+    }
+
     private static void ensureBasicTlivProperties(final Buffer buffer, final int expectedType, final int expectedLength) {
         final TypeLengthInstanceValue tliv = TypeLengthInstanceValue.frame(buffer);
         assertThat(tliv.getTypeAsDecimal(), is(expectedType));

@@ -1,6 +1,7 @@
 package io.snice.networking.codec.gtp;
 
 import io.snice.networking.codec.gtp.gtpc.InfoElement;
+import io.snice.networking.codec.gtp.gtpc.v2.tliv.TypeLengthInstanceValue;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,6 +39,22 @@ public class GtpMessageTest extends GtpTestBase {
         assertInfoElement(ie.get(13), 93, 44);
         assertInfoElement(ie.get(14), 3, 1);
         assertInfoElement(ie.get(15), 114, 2);
+
+    }
+
+    @Test
+    public void testGTPc2() {
+        final GtpMessage msg = GtpMessage.frame(GtpRawData.gtpc2);
+        assertThat(msg.getHeader().getLength(), is(240));
+        assertThat(msg.isGtpVersion2(), is(true));
+        assertThat(msg.toGtp2Message().isCreateSessionRequest(), is(true));
+
+        assertIMSI(msg.getImsi().get(), "99999123456789");
+    }
+
+    private static void assertIMSI(final TypeLengthInstanceValue ie, final String expected) {
+        assertThat(ie.isIMSI(), is(true));
+        assertThat(ie.ensure().toIMSI().toString(), is(expected));
     }
 
     private static void assertInfoElement(final InfoElement ie, final int expectedType, final int expectedLength) {

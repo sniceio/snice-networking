@@ -8,11 +8,17 @@ import io.snice.networking.codec.gtp.gtpc.v2.tliv.TypeLengthInstanceValue;
  */
 public abstract class BaseTLIV implements TypeLengthInstanceValue {
 
-    // protected BaseTLIV()
+    private final byte type;
+    protected final Buffer value;
+
+    protected BaseTLIV(final byte type, final Buffer value) {
+        this.type = type;
+        this.value = value;
+    }
 
     @Override
     public byte getType() {
-        return 0;
+        return type;
     }
 
     @Override

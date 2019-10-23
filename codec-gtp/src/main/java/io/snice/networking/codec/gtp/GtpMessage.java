@@ -5,8 +5,10 @@ import io.snice.buffer.ReadableBuffer;
 import io.snice.networking.codec.gtp.gtpc.InfoElement;
 import io.snice.networking.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.networking.codec.gtp.gtpc.v2.Gtp2MessageType;
+import io.snice.networking.codec.gtp.gtpc.v2.tliv.IMSI;
 
 import java.util.List;
+import java.util.Optional;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
@@ -50,12 +52,16 @@ public interface GtpMessage {
         return getVersion() == 2;
     }
 
+    default Optional<IMSI> getImsi() {
+        return Optional.empty();
+    }
+
     default Gtp2Message toGtp2Message() {
         throw new ClassCastException("Unable to cast a " + getClass().getName() + " into a " + Gtp2Message.class.getName());
     }
 
     default boolean isEchoRequest() {
-        return getMessageTypeDecimal() == Gtp2MessageType.Echo_Request.getType();
+        return getMessageTypeDecimal() == Gtp2MessageType.ECHO_REQUEST.getType();
     }
 
     GtpHeader getHeader();

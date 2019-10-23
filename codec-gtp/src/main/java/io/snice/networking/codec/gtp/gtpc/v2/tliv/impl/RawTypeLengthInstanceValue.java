@@ -2,7 +2,9 @@ package io.snice.networking.codec.gtp.gtpc.v2.tliv.impl;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.ReadableBuffer;
+import io.snice.networking.codec.gtp.GtpParseException;
 import io.snice.networking.codec.gtp.gtpc.v2.tliv.TypeLengthInstanceValue;
+import io.snice.networking.codec.gtp.impl.GtpFramer;
 
 import static io.snice.preconditions.PreConditions.assertArgument;
 import static io.snice.preconditions.PreConditions.assertNotNull;
@@ -73,6 +75,12 @@ public class RawTypeLengthInstanceValue implements TypeLengthInstanceValue {
      */
     @Override
     public TypeLengthInstanceValue ensure() {
-        return null;
+        final var framer = GtpFramer.getFramer(getType());
+        if (framer != null) {
+            return framer.apply(this);
+        }
+
+        // throw something?
+        throw new GtpParseException("Unknown GTP IE value");
     }
 }

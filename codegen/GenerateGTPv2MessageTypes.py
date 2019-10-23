@@ -26,7 +26,7 @@ def loadCsv(file_name = 'GTPv2_Message_Types.tsv'):
                 continue
 
             type = int(row[1])
-            message = row[2].replace(' ', '_')
+            message = row[2].replace(' ', '_').upper()
             specification = format(row[3])
 
             section = check_empty(row[4])
@@ -72,6 +72,6 @@ if __name__ == '__main__':
     res = render(elements, 'gtpv2_message_types.liquid')
     print(res)
 
-    java_file = '../codec-gtp/src/main/java/io/snice/networking/codec/gtp/Gtp2MessageType.java'
+    java_file = '../codec-gtp/src/main/java/io/snice/networking/codec/gtp/gtpc/v2/Gtp2MessageType.java'
     with open(java_file, 'w') as java:
         java.write(res)
