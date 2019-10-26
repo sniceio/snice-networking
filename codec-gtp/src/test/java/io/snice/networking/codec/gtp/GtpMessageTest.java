@@ -1,6 +1,9 @@
 package io.snice.networking.codec.gtp;
 
 import io.snice.networking.codec.gtp.gtpc.InfoElement;
+import io.snice.networking.codec.gtp.gtpc.v2.Gtp2InfoElementType;
+import io.snice.networking.codec.gtp.gtpc.v2.Gtp2Message;
+import io.snice.networking.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
 import io.snice.networking.codec.gtp.gtpc.v2.tliv.TypeLengthInstanceValue;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,7 +21,7 @@ public class GtpMessageTest extends GtpTestBase {
 
     @Test
     public void testParseGtpv2Message() {
-        final GtpMessage msg = GtpMessage.frame(GtpRawData.createSessionRequest);
+        final Gtp2Message msg = GtpMessage.frame(GtpRawData.createSessionRequest).toGtp2Message();
         assertThat(msg.getHeader().getLength(), is(251));
 
         final List<? extends InfoElement> ie = msg.getInfoElements();
@@ -40,6 +43,8 @@ public class GtpMessageTest extends GtpTestBase {
         assertInfoElement(ie.get(14), 3, 1);
         assertInfoElement(ie.get(15), 114, 2);
 
+        assertThat(msg.isCreateSessionRequest(), is(true));
+        assertIMSI(msg.getInformationElement(Gtp2InfoElementType.IMSI).get(), "23450001199900015");
     }
 
     @Test

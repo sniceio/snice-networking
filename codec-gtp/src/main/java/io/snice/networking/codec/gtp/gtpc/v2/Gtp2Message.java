@@ -3,6 +3,9 @@ package io.snice.networking.codec.gtp.gtpc.v2;
 import io.snice.buffer.ReadableBuffer;
 import io.snice.networking.codec.gtp.GtpMessage;
 import io.snice.networking.codec.gtp.gtpc.v2.Impl.Gtp2MessageImpl;
+import io.snice.networking.codec.gtp.gtpc.v2.tliv.TypeLengthInstanceValue;
+
+import java.util.Optional;
 
 public interface Gtp2Message extends GtpMessage {
 
@@ -11,6 +14,8 @@ public interface Gtp2Message extends GtpMessage {
     }
 
     Gtp2MessageType getType();
+
+    Optional<? extends TypeLengthInstanceValue> getInformationElement(final Gtp2InfoElementType type);
 
     /**
      * Convenience method for checking if this message is a Create Session Request or not.

@@ -6,50 +6,70 @@ import io.snice.networking.codec.gtp.GtpHeader;
 import io.snice.networking.codec.gtp.UnknownGtp2MessageTypeException;
 import io.snice.networking.codec.gtp.gtpc.InfoElement;
 import io.snice.networking.codec.gtp.gtpc.v2.Gtp2Header;
+import io.snice.networking.codec.gtp.gtpc.v2.Gtp2InfoElementType;
 import io.snice.networking.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.networking.codec.gtp.gtpc.v2.Gtp2MessageType;
-import io.snice.networking.codec.gtp.gtpc.v2.tliv.IMSI;
+import io.snice.networking.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
 import io.snice.networking.codec.gtp.gtpc.v2.tliv.TypeLengthInstanceValue;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
 public class Gtp2MessageImpl implements Gtp2Message {
 
+    /**
+     * Map that contains all the builders for the existing GTPv2 message types. The default value of the map
+     * is just so that it is way larger than potentially necessary because we want a good spread of the
+     * buckets and the little memory we waste is just fine since:
+     * 1. Memory is cheap
+     * 2. It's only a single map for the app (well, per class loader I guess)
+     */
+    private static final Map<Gtp2MessageType, Function<Gtp2Header, Gtp2MesssageBuilder<? extends Gtp2Message>>> builders
+            = new HashMap<>(200);
+
+    static {
+        builders.put(Gtp2MessageType.CREATE_SESSION_REQUEST, CreateSessionRequest::from);
+    }
+
     private final Gtp2Header header;
     private final Buffer body;
-    private final List<TypeLengthInstanceValue> values;
+    protected final List<TypeLengthInstanceValue> values;
     private final Gtp2MessageType type;
-    private final int imsiIndex;
+
+    private static Gtp2MesssageBuilder<? extends Gtp2Message> ensureBuilder(final Gtp2MessageType type, final Gtp2Header header) {
+        final Function<Gtp2Header, Gtp2MesssageBuilder<?>> f = builders.get(type);
+        if (f != null) {
+            return f.apply(header);
+        }
+
+        return null;
+    }
+
+    @Override
+    public Optional<? extends TypeLengthInstanceValue> getInformationElement(final Gtp2InfoElementType type) {
+        assertNotNull(type, "The GTPv2 Information Element type cannot be null");
+        return values.stream().filter(tliv -> type.getType() == tliv.getType()).findFirst();
+    }
 
     public static Gtp2Message frame(final Gtp2Header header, final ReadableBuffer buffer) {
         assertNotNull(header, "The GTPv2 header cannot be null");
         assertNotNull(buffer, "The buffer cannot be null");
         final Buffer body = buffer.readBytes(header.getBodyLength());
 
-        final ReadableBuffer values = body.toReadableBuffer();
-        final List<TypeLengthInstanceValue> tlivs = new ArrayList<>(); // TODO: what's a good default value?
-        int imsiIndex = -1;
-        int count = 0;
-        while (values.hasReadableBytes()) {
-            final TypeLengthInstanceValue tliv = TypeLengthInstanceValue.frame(values);
-            if (tliv.isIMSI()) {
-                imsiIndex = count;
-            }
-
-            tlivs.add(tliv);
-            ++count;
-        }
-
         final Gtp2MessageType type = Gtp2MessageType.lookup(header.getMessageTypeDecimal());
         if (type == null) {
             throw new UnknownGtp2MessageTypeException(header.getMessageTypeDecimal());
         }
-        return new Gtp2MessageImpl(type, header, body, Collections.unmodifiableList(tlivs), imsiIndex);
+
+        final Gtp2MesssageBuilder<?> builder = ensureBuilder(type, header);
+        builder.withBody(body);
+        // return new Gtp2MessageImpl(type, header, body, Collections.unmodifiableList(tlivs));
+        return builder.build();
     }
 
     @Override
@@ -57,18 +77,11 @@ public class Gtp2MessageImpl implements Gtp2Message {
         return type;
     }
 
-    private Gtp2MessageImpl(final Gtp2MessageType type, final Gtp2Header header, final Buffer body, final List<TypeLengthInstanceValue> values,
-                            final int imsiIndex) {
+    protected Gtp2MessageImpl(final Gtp2MessageType type, final Gtp2Header header, final Buffer body, final List<TypeLengthInstanceValue> values) {
         this.header = header;
         this.body = body;
         this.values = values;
         this.type = type;
-        this.imsiIndex = imsiIndex;
-    }
-
-    @Override
-    public Optional<IMSI> getImsi() {
-        return imsiIndex == -1 ? Optional.empty() : Optional.of(values.get(imsiIndex).ensure().toIMSI());
     }
 
     @Override

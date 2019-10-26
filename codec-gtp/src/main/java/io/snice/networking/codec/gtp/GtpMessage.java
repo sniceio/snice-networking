@@ -3,6 +3,7 @@ package io.snice.networking.codec.gtp;
 import io.snice.buffer.Buffer;
 import io.snice.buffer.ReadableBuffer;
 import io.snice.networking.codec.gtp.gtpc.InfoElement;
+import io.snice.networking.codec.gtp.gtpc.v2.Gtp2InfoElementType;
 import io.snice.networking.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.networking.codec.gtp.gtpc.v2.Gtp2MessageType;
 import io.snice.networking.codec.gtp.gtpc.v2.tliv.IMSI;
@@ -53,7 +54,7 @@ public interface GtpMessage {
     }
 
     default Optional<IMSI> getImsi() {
-        return Optional.empty();
+        return (Optional<IMSI>) toGtp2Message().getInformationElement(Gtp2InfoElementType.IMSI);
     }
 
     default Gtp2Message toGtp2Message() {
