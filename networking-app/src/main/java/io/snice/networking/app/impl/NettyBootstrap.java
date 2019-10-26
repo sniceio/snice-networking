@@ -1,10 +1,11 @@
 package io.snice.networking.app.impl;
 
-import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.app.ConnectionContext.MessageProcessingBuilder;
 import io.snice.networking.app.MessagePipe;
 import io.snice.networking.app.NetworkAppConfig;
+import io.snice.networking.app.NetworkBootstrap;
+import io.snice.networking.app.SingleMessagePipe;
 import io.snice.networking.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
@@ -48,7 +49,7 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBoo
     }
 
     @Override
-    public void registerSerializationFactory(SerializationFactory<T> serializationFactory) {
+    public void registerSerializationFactory(final SerializationFactory<T> serializationFactory) {
         assertNotNull(serializationFactory, "The serializationFactory cannot be null");
         this.serializationFactory = serializationFactory;
     }
@@ -129,6 +130,16 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBoo
                 rules.add(builder);
                 return builder;
             }
+
+            @Override
+            public void withPipe(final MessagePipe<C, T, ?> pipe) {
+
+            }
+
+            @Override
+            public void withPipe(final SingleMessagePipe<T, ?> pipe) {
+
+            }
         }
 
         private class MessageProcessingBuilderImpl<C extends Connection, T, R> implements MessageProcessingBuilder<C, T, R> {
@@ -138,6 +149,11 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBoo
 
             private MessageProcessingBuilderImpl(final MessagePipe<C, T, R> pipe) {
                 this.pipe = pipe;
+            }
+
+            @Override
+            public <NEW_R> MessageProcessingBuilder<C, T, NEW_R> withPipe(final MessagePipe<C, ? super R, ? extends NEW_R> f) {
+                return null;
             }
 
             @Override

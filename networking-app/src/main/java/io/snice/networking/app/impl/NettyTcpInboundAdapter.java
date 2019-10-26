@@ -113,7 +113,7 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
      */
     @Override
     public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
-        log(": channel inactive");
+        log("channel inactive");
         if (ctx.channel().localAddress() != null) {
             // final ConnectionIOEvent event = create(ctx, ConnectionInactiveIOEvent::create);
             // ctx.fireUserEventTriggered(event);

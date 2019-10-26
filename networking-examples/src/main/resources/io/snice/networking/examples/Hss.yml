@@ -1,0 +1,4 @@
+networkInterfaces:
+  - name: default
+    listen: diameter://127.0.0.1:3868
+    transport: tcp

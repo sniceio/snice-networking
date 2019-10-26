@@ -19,6 +19,12 @@ import java.util.function.Predicate;
  */
 public interface NetworkBootstrap<T, C extends NetworkAppConfig> {
 
+    /**
+     * Convenience predicate for accepting all connections.
+     * Use it as as the condition for {@link #onConnection(Predicate)}.
+     */
+    Predicate<ConnectionId> ACCEPT_ALL = id -> true;
+
     C getConfiguration();
 
     /**

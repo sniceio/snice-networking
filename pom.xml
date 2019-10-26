@@ -60,6 +60,7 @@
         <module>networking-app</module>
         <module>codec-common</module>
         <module>codec-gtp</module>
+        <module>codec-diameter</module>
         <module>networking-examples</module>
     </modules>
 
@@ -109,6 +110,14 @@
             <dependency>
                 <groupId>io.snice.networking</groupId>
                 <artifactId>codec-gtp</artifactId>
+                <version>${project.version}</version>
+                <type>jar</type>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.snice.networking</groupId>
+                <artifactId>codec-diameter</artifactId>
                 <version>${project.version}</version>
                 <type>jar</type>
                 <scope>compile</scope>
