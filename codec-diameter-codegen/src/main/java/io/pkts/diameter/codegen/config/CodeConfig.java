@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
-import io.pkts.diameter.avp.Avp;
-import io.pkts.diameter.avp.type.DiameterType;
 import io.pkts.diameter.codegen.Typedef;
 import io.pkts.diameter.codegen.primitives.AvpPrimitive;
 import io.pkts.diameter.codegen.primitives.EnumPrimitive;
+import io.snice.networking.diameter.avp.Avp;
+import io.snice.networking.diameter.avp.type.DiameterType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

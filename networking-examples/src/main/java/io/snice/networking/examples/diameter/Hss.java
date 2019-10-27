@@ -2,8 +2,8 @@ package io.snice.networking.examples.diameter;
 
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
-import io.snice.networking.codec.diameter.DiameterMessage;
-import io.snice.networking.codec.diameter.DiameterSerializationFactory;
+import io.snice.networking.diameter.DiameterMessage;
+import io.snice.networking.diameter.DiameterSerializationFactory;
 
 import static io.snice.networking.app.NetworkBootstrap.ACCEPT_ALL;
 
