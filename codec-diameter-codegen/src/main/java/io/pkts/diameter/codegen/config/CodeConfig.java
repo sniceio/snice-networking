@@ -204,16 +204,19 @@ public class CodeConfig {
         /**
          * All the expected directories to which we will generate the code into.
          */
-        private static final String AVP_MVN_DIR = "pkts-diameter";
-        private static final String CMD_MVN_DIR = "pkts-diameter-cmd";
-        private static final String APP_MVN_DIR = "pkts-diameter-app";
+        // private static final String AVP_MVN_DIR = "diameter-test";
+        // private static final String CMD_MVN_DIR = "diameter-test";
+        // private static final String APP_MVN_DIR = "diameter-test";
 
+        private static final String AVP_MVN_DIR = "codec-diameter";
+        private static final String CMD_MVN_DIR = "codec-diameter";
+        private static final String APP_MVN_DIR = "codec-diameter";
         /**
          * The directory we expect the diameter code gen code to be located in.
          * We'll use this when trying to automatically determine the pkts.io
          * root dir.
          */
-        private static final String CODE_GEN_MVN_DIR = "pkts-diameter-codegen";
+        private static final String CODE_GEN_MVN_DIR = "codec-diameter-codegen";
 
         /**
          * Default package names

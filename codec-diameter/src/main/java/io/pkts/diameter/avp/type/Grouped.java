@@ -27,7 +27,7 @@ public interface Grouped extends DiameterType {
         // if we guesstimate too low, the list will grow anyway so it's fine.
         final int maxNoOfAvps = groupedAvp.getHeader().getLength() / (8 + 4);
         final List<FramedAvp> avps = new ArrayList<>(maxNoOfAvps);
-        final ReadableBuffer data = (ReadableBuffer) groupedAvp.getData();
+        final ReadableBuffer data = groupedAvp.getData().toReadableBuffer();
         while (data.hasReadableBytes()) {
             avps.add(DiameterParser.frameRawAvp(data));
         }

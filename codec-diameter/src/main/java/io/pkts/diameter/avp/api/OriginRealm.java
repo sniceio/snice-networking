@@ -1,4 +1,8 @@
-package io.pkts.diameter.avp;
+package io.pkts.diameter.avp.api;
+
+import io.pkts.diameter.avp.Avp;
+import io.pkts.diameter.avp.AvpParseException;
+import io.pkts.diameter.avp.FramedAvp;
 
 import io.pkts.diameter.avp.impl.DiameterIdentityAvp;
 import io.pkts.diameter.avp.type.DiameterIdentity;

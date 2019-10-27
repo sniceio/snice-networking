@@ -4,10 +4,9 @@ import io.pkts.diameter.DiameterTestBase;
 import io.pkts.diameter.avp.Avp;
 import io.pkts.diameter.avp.AvpHeader;
 import io.pkts.diameter.avp.FramedAvp;
-import io.pkts.diameter.avp.OriginHost;
-import io.pkts.diameter.avp.OriginRealm;
-import io.pkts.diameter.avp.ResultCode.ResultCodeEnum;
-import io.pkts.diameter.avp.VendorSpecificApplicationId2;
+import io.pkts.diameter.avp.api.OriginHost;
+import io.pkts.diameter.avp.api.OriginRealm;
+import io.pkts.diameter.avp.api.ResultCode;
 import io.pkts.diameter.avp.type.DiameterIdentity;
 import io.pkts.diameter.avp.type.Enumerated;
 import io.pkts.diameter.avp.type.Grouped;
@@ -16,6 +15,8 @@ import org.junit.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
+
+// import io.pkts.diameter.avp.VendorSpecificApplicationId2;
 
 /**
  * Tests for verifying the {@link AvpHeader}.
@@ -67,13 +68,13 @@ public class AvpHeaderTest extends DiameterTestBase {
     @Test
     public void testResultCode() throws Exception {
         final FramedAvp raw = FramedAvp.frame(loadBuffer("AVP_Result_Code.raw"));
-        final Avp<Enumerated<ResultCodeEnum>> avp = raw.parse();
+        final Avp<Enumerated<ResultCode.ResultCodeEnum>> avp = raw.parse();
         // final Avp avp = raw.parse();
         assertThat(avp.isEnumerated(), is(true));
         assertThat(avp.getCode(), is(268L));
-        final Avp<Enumerated<ResultCodeEnum>> result = avp.toEnumerated();
-        final ResultCodeEnum rse = result.getValue().getAsEnum().get();
-        assertThat(rse, is(ResultCodeEnum.DIAMETER_SUCCESS_2001));
+        final Avp<Enumerated<ResultCode.ResultCodeEnum>> result = avp.toEnumerated();
+        final ResultCode.ResultCodeEnum rse = result.getValue().getAsEnum().get();
+        assertThat(rse, is(ResultCode.ResultCodeEnum.DIAMETER_SUCCESS_2001));
     }
 
     @Test
@@ -91,14 +92,14 @@ public class AvpHeaderTest extends DiameterTestBase {
         // buffer below will then effect subsequent reading from the AVP.
         final FramedAvp vendorId = grouped.getFramedAvp(266).get();
         final FramedAvp authAppId = grouped.getFramedAvp(258).get();
-        assertThat(vendorId.getData().readUnsignedInt(), is(10415L));
-        assertThat(authAppId.getData().readUnsignedInt(), is(16777251L));
+        assertThat(vendorId.getData().getUnsignedInt(0), is(10415L));
+        assertThat(authAppId.getData().getUnsignedInt(0), is(16777251L));
 
         // now test to use the convenience methods that will parse it all out
         // and also return the correct types
-        final VendorSpecificApplicationId2 vsaid = (VendorSpecificApplicationId2) avp;
-        assertThat(vsaid.getVendorId().getValue().getValue(), is(10415L));
-        assertThat(vsaid.getAuthApplicationId().get().getValue().getValue(), is(16777251L));
+        // final VendorSpecificApplicationId2 vsaid = (VendorSpecificApplicationId2) avp;
+        // assertThat(vsaid.getVendorId().getValue().getValue(), is(10415L));
+        // assertThat(vsaid.getAuthApplicationId().get().getValue().getValue(), is(16777251L));
 
         assertThat(grouped, notNullValue());
     }

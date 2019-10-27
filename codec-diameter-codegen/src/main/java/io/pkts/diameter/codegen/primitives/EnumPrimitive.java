@@ -32,7 +32,8 @@ public interface EnumPrimitive extends DiameterPrimitive {
     static Builder of(final AttributeContext ctx) throws CodeGenParseException {
         ctx.ensureElementName(NAME);
         // there are some bad values in the wireshark dictionary file.
-        final String name = ctx.getString("name").replace(" ", "_").trim();
+        // Some spaces and also ' like in "Don't Care" enum value
+        final String name = ctx.getString("name").replace(" ", "_").replace("'", "").trim();
         final long code = ctx.getLong("code");
         return new Builder(ctx, name, code);
     }

@@ -1,6 +1,9 @@
 package {{java.package}};
 
-import io.pkts.buffer.Buffer;
+import io.snice.buffer.Buffer;
+import io.pkts.diameter.avp.Avp;
+import io.pkts.diameter.avp.AvpParseException;
+import io.pkts.diameter.avp.FramedAvp;
 {% for import in java.imports %}
 import {{ import }};{% endfor %}
 
@@ -48,7 +51,7 @@ public interface {{java.class.name}} extends Avp<{{avp.type.interface}}<{{java.c
             throw new AvpParseException("AVP Code mismatch - unable to parse the AVP into a " + {{java.class.name}}.class.getName());
         }
         final Buffer data = raw.getData();
-        final int value = data.getInt(data.getReaderIndex());
+        final int value = data.getInt(0);
         final Optional<{{java.class.name}}Enum> e = {{java.class.name}}Enum.lookup(value);
         final EnumeratedHolder holder = new EnumeratedHolder(value, e);
         return new Default{{java.class.name}}(raw, holder);

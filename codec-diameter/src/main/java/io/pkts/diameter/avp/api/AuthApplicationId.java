@@ -1,8 +1,15 @@
-package io.pkts.diameter.avp;
+package io.pkts.diameter.avp.api;
+
+import io.pkts.diameter.avp.Avp;
+import io.pkts.diameter.avp.AvpParseException;
+import io.pkts.diameter.avp.FramedAvp;
 
 import io.pkts.diameter.avp.impl.DiameterUnsigned32Avp;
 import io.pkts.diameter.avp.type.Unsigned32;
 
+/**
+ * 
+ */
 public interface AuthApplicationId extends Avp<Unsigned32> {
 
     int CODE = 258;
@@ -16,7 +23,6 @@ public interface AuthApplicationId extends Avp<Unsigned32> {
         if (CODE != raw.getCode()) {
             throw new AvpParseException("AVP Code mismatch - unable to parse the AVP into a " + AuthApplicationId.class.getName());
         }
-
         return new DefaultAuthApplicationId(raw);
     }
 

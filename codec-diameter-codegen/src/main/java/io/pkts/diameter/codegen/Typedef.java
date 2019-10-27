@@ -5,6 +5,7 @@ import io.pkts.diameter.avp.impl.DiameterEnumeratedAvp;
 import io.pkts.diameter.avp.impl.DiameterGroupedAvp;
 import io.pkts.diameter.avp.impl.DiameterIdentityAvp;
 import io.pkts.diameter.avp.impl.DiameterInteger32Avp;
+import io.pkts.diameter.avp.impl.DiameterOctetStringAvp;
 import io.pkts.diameter.avp.impl.DiameterUnsigned32Avp;
 import io.pkts.diameter.avp.impl.DiameterUtf8StringAvp;
 import io.pkts.diameter.avp.type.DiameterIdentity;
@@ -13,6 +14,7 @@ import io.pkts.diameter.avp.type.Enumerated;
 import io.pkts.diameter.avp.type.Grouped;
 import io.pkts.diameter.avp.type.Integer32;
 import io.pkts.diameter.avp.type.Integer64;
+import io.pkts.diameter.avp.type.OctetString;
 import io.pkts.diameter.avp.type.UTF8String;
 import io.pkts.diameter.avp.type.Unsigned32;
 
@@ -20,7 +22,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public enum Typedef {
-    OCTET_STRING("OctetString", null, null, null),
+    OCTET_STRING("OctetString", null, OctetString.class, DiameterOctetStringAvp.class),
     INTEGER_32("Integer32", null, Integer32.class, DiameterInteger32Avp.class),
     INTEGER_64("Integer64", null, Integer64.class, null),
     UNSIGNED_32("Unsigned32", null, Unsigned32.class, DiameterUnsigned32Avp.class),

@@ -2,8 +2,8 @@ package io.pkts.diameter;
 
 import io.snice.buffer.ReadableBuffer;
 import io.pkts.diameter.avp.FramedAvp;
-import io.pkts.diameter.avp.OriginHost;
-import io.pkts.diameter.avp.OriginRealm;
+import io.pkts.diameter.avp.api.OriginHost;
+import io.pkts.diameter.avp.api.OriginRealm;
 import io.pkts.diameter.impl.DiameterParser;
 
 import java.io.IOException;
