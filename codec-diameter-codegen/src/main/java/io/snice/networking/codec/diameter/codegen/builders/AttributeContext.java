@@ -1,7 +1,7 @@
 package io.snice.networking.codec.diameter.codegen.builders;
 
 import io.snice.networking.codec.diameter.codegen.CodeGenParseException;
-import io.snice.networking.codec.diameter.codegen.PreConditions;
+import io.snice.preconditions.PreConditions;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 
@@ -53,7 +53,7 @@ public class AttributeContext {
 
     public String getString(final String name) throws CodeGenParseException {
         final int index = attributes.getIndex(name);
-        PreConditions.assertArgument(index > -1, String.format(ERROR_MSG, name), locator);
+        assertArgument(index > -1, String.format(ERROR_MSG, name), locator);
         return attributes.getValue(index);
     }
 
@@ -76,6 +76,12 @@ public class AttributeContext {
         if (!expectedName.equals(elementName)) {
             throw new CodeGenParseException(locator, String.format("Unable to handle element '%s', I " +
                     "only handle elements named '%s'", elementName, expectedName));
+        }
+    }
+
+    public static void assertArgument(final boolean expression, final String msg, final Locator locator) throws CodeGenParseException {
+        if (!expression) {
+            throw new CodeGenParseException(locator, msg);
         }
     }
 }

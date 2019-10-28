@@ -7,9 +7,11 @@ import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.codec.diameter.avp.api.OriginRealm;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
-public class ImmutableDiameterMessage implements DiameterMessage {
+public abstract class ImmutableDiameterMessage implements DiameterMessage {
 
     /**
      * The full raw diameter message.
@@ -19,10 +21,24 @@ public class ImmutableDiameterMessage implements DiameterMessage {
     private final DiameterHeader header;
     private final List<FramedAvp> avps;
 
-    public ImmutableDiameterMessage(final Buffer raw, final DiameterHeader header, final List<FramedAvp> avps) {
+    private final short indexOrigHost;
+    private final short indexOrigRealm;
+
+    public ImmutableDiameterMessage(final Buffer raw,
+                                    final DiameterHeader header,
+                                    final List<FramedAvp> avps,
+                                    final short indexOrigHost,
+                                    final short indexOrigRealm) {
         this.raw = raw;
         this.header = header;
-        this.avps = avps;
+        this.avps = Collections.unmodifiableList(avps);
+        this.indexOrigHost = indexOrigHost;
+        this.indexOrigRealm = indexOrigRealm;
+    }
+
+    @Override
+    public Optional<FramedAvp> getAvp(final long code) {
+        return avps.stream().filter(avp -> avp.getCode() == code).findFirst();
     }
 
     @Override
@@ -48,12 +64,12 @@ public class ImmutableDiameterMessage implements DiameterMessage {
 
     @Override
     public OriginHost getOriginHost() {
-        return null;
+        return avps.get(indexOrigHost).parse().toOriginHost();
     }
 
     @Override
     public OriginRealm getOriginRealm() {
-        return null;
+        return avps.get(indexOrigRealm).parse().toOriginRealm();
     }
 
     @Override

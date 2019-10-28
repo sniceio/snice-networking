@@ -18,6 +18,16 @@ public interface OriginHost extends Avp<DiameterIdentity> {
         return CODE;
     }
 
+    @Override
+    default boolean isOriginHost() {
+        return true;
+    }
+
+    @Override
+    default OriginHost toOriginHost() {
+        return this;
+    }
+
     static OriginHost parse(final FramedAvp raw) {
         if (CODE != raw.getCode()) {
             throw new AvpParseException("AVP Code mismatch - unable to parse the AVP into a " + OriginHost.class.getName());

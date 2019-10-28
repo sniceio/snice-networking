@@ -26,7 +26,7 @@ public interface DiameterHeader {
 
     boolean isRequest();
 
-    default boolean isResponse() {
+    default boolean isAnswer() {
         return !isRequest();
     }
 

@@ -10,32 +10,32 @@ import io.snice.networking.codec.diameter.avp.type.DiameterIdentity;
 /**
  * 
  */
-public interface OriginRealm extends Avp<DiameterIdentity> {
+public interface DestinationHost extends Avp<DiameterIdentity> {
 
-    int CODE = 296;
+    int CODE = 293;
 
     @Override
     default long getCode() {
         return CODE;
     }
 
-    default boolean isOriginRealm() {
+    default boolean isDestinationHost() {
         return true;
     }
 
-    default OriginRealm toOriginRealm() {
+    default DestinationHost toDestinationHost() {
         return this;
     }
 
-    static OriginRealm parse(final FramedAvp raw) {
+    static DestinationHost parse(final FramedAvp raw) {
         if (CODE != raw.getCode()) {
-            throw new AvpParseException("AVP Code mismatch - unable to parse the AVP into a " + OriginRealm.class.getName());
+            throw new AvpParseException("AVP Code mismatch - unable to parse the AVP into a " + DestinationHost.class.getName());
         }
-        return new DefaultOriginRealm(raw);
+        return new DefaultDestinationHost(raw);
     }
 
-    class DefaultOriginRealm extends DiameterIdentityAvp implements OriginRealm {
-        private DefaultOriginRealm(final FramedAvp raw) {
+    class DefaultDestinationHost extends DiameterIdentityAvp implements DestinationHost {
+        private DefaultDestinationHost(final FramedAvp raw) {
             super(raw);
         }
     }

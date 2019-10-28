@@ -61,7 +61,7 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
     public void start() {
         network = NettyNetworkLayer.with(config.getNetworkInterfaces())
                 .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, serializationFactory, Optional.empty(), ctxs), Transport.udp)
-                .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, Optional.empty(), ctxs), Transport.tcp)
+                .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, serializationFactory, Optional.empty(), ctxs), Transport.tcp)
                 .build();
         network.start();
     }

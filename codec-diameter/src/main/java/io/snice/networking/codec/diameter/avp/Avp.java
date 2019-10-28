@@ -1,5 +1,7 @@
 package io.snice.networking.codec.diameter.avp;
 
+import io.snice.networking.codec.diameter.avp.api.OriginHost;
+import io.snice.networking.codec.diameter.avp.api.OriginRealm;
 import io.snice.networking.codec.diameter.avp.type.DiameterType;
 import io.snice.networking.codec.diameter.avp.type.Enumerated;
 
@@ -14,6 +16,8 @@ import io.snice.networking.codec.diameter.avp.type.Enumerated;
  */
 public interface Avp<T extends DiameterType> extends FramedAvp {
 
+    String CANNOT_CAST_AVP_OF_TYPE = "Cannot cast AVP of type ";
+
     T getValue();
 
     /**
@@ -27,5 +31,23 @@ public interface Avp<T extends DiameterType> extends FramedAvp {
 
     default <E extends Enum<E>> Avp<Enumerated<E>> toEnumerated() throws ClassCastException {
         throw new ClassCastException("Unable to cast a " + this.getClass().getName() + " into a " + Enumerated.class.getName());
+    }
+
+    default boolean isOriginHost() {
+        return false;
+    }
+
+    default OriginHost toOriginHost() {
+        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
+                + " to type " + OriginHost.class.getName());
+    }
+
+    default boolean isOriginRealm() {
+        return false;
+    }
+
+    default OriginRealm toOriginRealm() {
+        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
+                + " to type " + OriginRealm.class.getName());
     }
 }

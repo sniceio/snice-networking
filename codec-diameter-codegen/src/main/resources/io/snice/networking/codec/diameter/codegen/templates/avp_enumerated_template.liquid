@@ -1,9 +1,9 @@
 package {{java.package}};
 
 import io.snice.buffer.Buffer;
-import io.snice.networking.codec.diameter.diameter.avp.Avp;
-import io.snice.networking.codec.diameter.diameter.avp.AvpParseException;
-import io.snice.networking.codec.diameter.diameter.avp.FramedAvp;
+import io.snice.networking.codec.diameter.avp.Avp;
+import io.snice.networking.codec.diameter.avp.AvpParseException;
+import io.snice.networking.codec.diameter.avp.FramedAvp;
 {% for import in java.imports %}
 import {{ import }};{% endfor %}
 

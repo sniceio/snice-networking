@@ -20,8 +20,8 @@
         </encoder>
     </appender>
 
-    <logger name="io.pkts.diameter" level="debug">
-        <appender-ref ref="CONSOLE"/>
+    <logger name="io.snice" level="DEBUG">
+        <appender-ref ref="STDOUT"/>
     </logger>
 
     <root level="debug">

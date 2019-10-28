@@ -30,24 +30,36 @@ public class DiameterParser {
     public static DiameterMessage frame(final ReadableBuffer buffer) throws DiameterParseException {
         final int start = buffer.getReaderIndex();
         final DiameterHeader header = frameHeader(buffer);
+
         // the +20 because we have already consumed 20 bytes for the header but the length as stated
         // in the diameter header actually includes these 20 bytes so...
         if (header.getLength() > buffer.getReadableBytes() + 20) {
             throw new DiameterParseException(20, "Not enough bytes in message to parse out the full message");
         }
 
-        // TODO: we may want to slice out the entire buffer and store that as well
-        // for those applications that just write back out to another network connection
-        // and doesn't really need to mess with the data. Kind of what I do for SIP.
-        // Also, the way this will be read off of the network, we will probably always have
-        // the exact buffer we need and perhaps we should just assume that's the case.
 
         final ReadableBuffer avps = buffer.readBytes(header.getLength() - 20).toReadableBuffer();
         final List<FramedAvp> list = new ArrayList<>(); // TODO: what's a sensible default?
+
+        // certain AVPs that are used in almost all messages we want to keep
+        // track of since most applications will absolutely need them.
+        short indexOfOrigHost = -1;
+        short indexOfOrigRealm = -1;
+
         while (avps.getReadableBytes() > 0) {
             final int readerIndex = avps.getReaderIndex();
-            final FramedAvp avp = FramedAvp.frame(avps);
+            FramedAvp avp = FramedAvp.frame(avps);
+
+            if (OriginHost.CODE == avp.getCode()) {
+                indexOfOrigHost = (short) list.size();
+                avp = avp.parse();
+            } else if (OriginRealm.CODE == avp.getCode()) {
+                indexOfOrigRealm = (short) list.size();
+                avp = avp.parse();
+            }
+
             list.add(avp);
+
             final int padding = avp.getPadding();
             if (padding != 0) {
                 avps.readBytes(padding);
@@ -63,8 +75,34 @@ public class DiameterParser {
         }
 
         final Buffer entireMsg = buffer.slice(start, buffer.getReaderIndex());
+        if (header.isRequest()) {
+            return new ImmutableDiameterRequest(entireMsg, header, list, indexOfOrigHost, indexOfOrigRealm);
+        }
+        return new ImmutableDiameterAnswer(entireMsg, header, list, indexOfOrigHost, indexOfOrigRealm);
+    }
 
-        return new ImmutableDiameterMessage(entireMsg, header, list);
+    /**
+     * For stream based protocols, we may not get all the data at the same time and as such, we need
+     * to wait for more to arrive. This method simply checks if we have enough data in the buffer to
+     * fully frame the {@link DiameterMessage}.
+     *
+     * @param buffer
+     * @return
+     */
+    public static boolean canFrameMessage(final Buffer buffer) {
+        final ReadableBuffer readable = buffer.toReadableBuffer();
+        // need 20 bytes for the header...
+        if (readable.getReadableBytes() < 20) {
+            return false;
+        }
+        final Buffer headerBuffer = readable.readBytes(20);
+        final DiameterHeader header = new ImmutableDiameterHeader(headerBuffer);
+
+        if (header.getLength() > readable.getReadableBytes() + 20) {
+            return false;
+        }
+
+        return true;
     }
 
 

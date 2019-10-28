@@ -3,9 +3,10 @@ package io.snice.networking.app.impl;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
-import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
 import io.snice.networking.app.ConnectionContext;
+import io.snice.networking.codec.Framer;
+import io.snice.networking.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
@@ -31,6 +32,7 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
     private final Optional<URI> vipAddress;
     private final UUID uuid = UUID.randomUUID();
     private final List<ConnectionContext> ctxs;
+    private final SerializationFactory<T> factory;
 
     /**
      * If the incoming connection doesn't match anything, then we'll use this
@@ -45,8 +47,9 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
      */
     private ConnectionAdapter<TcpConnection, T> connection;
 
-    public NettyTcpInboundAdapter(final Clock clock , final Optional<URI> vipAddress, final List<ConnectionContext> ctxs) {
+    public NettyTcpInboundAdapter(final Clock clock, final SerializationFactory<T> factory, final Optional<URI> vipAddress, final List<ConnectionContext> ctxs) {
         this.clock = clock;
+        this.factory = factory;
         this.vipAddress = vipAddress;
         this.ctxs = ctxs;
 
@@ -101,7 +104,8 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
             return;
         }
 
-        connection = new ConnectionAdapter(new TcpConnection(channel, id, vipAddress), null, connCtx);
+        final Framer<T> framer = factory.getFramer();
+        connection = new ConnectionAdapter(new TcpConnection(channel, id, vipAddress), framer, connCtx);
     }
 
     private ConnectionContext<Connection, T> findContext(final ConnectionId id) {

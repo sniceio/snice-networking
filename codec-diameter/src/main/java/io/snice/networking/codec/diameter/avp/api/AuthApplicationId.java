@@ -3,6 +3,7 @@ package io.snice.networking.codec.diameter.avp.api;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
+
 import io.snice.networking.codec.diameter.avp.impl.DiameterUnsigned32Avp;
 import io.snice.networking.codec.diameter.avp.type.Unsigned32;
 
@@ -16,6 +17,14 @@ public interface AuthApplicationId extends Avp<Unsigned32> {
     @Override
     default long getCode() {
         return CODE;
+    }
+
+    default boolean isAuthApplicationId() {
+        return true;
+    }
+
+    default AuthApplicationId toAuthApplicationId() {
+        return this;
     }
 
     static AuthApplicationId parse(final FramedAvp raw) {

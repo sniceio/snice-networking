@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static io.snice.networking.codec.diameter.codegen.PreConditions.ensureArgument;
+import static io.snice.preconditions.PreConditions.assertArgument;
 
 public class CodeGen {
 
@@ -113,8 +113,8 @@ public class CodeGen {
      */
     private static Path ensureDictionaryDirectory(final String dir) throws IllegalArgumentException {
         final Path root = Paths.get(dir);
-        ensureArgument(Files.exists(root), "The given directory doesn't exist (" + root + ")");
-        ensureArgument(Files.isDirectory(root), "The given directory is not a directory (" + root + ")");
+        assertArgument(Files.exists(root), "The given directory doesn't exist (" + root + ")");
+        assertArgument(Files.isDirectory(root), "The given directory is not a directory (" + root + ")");
 
         final Path altRoot = root.resolve("diameter");
 
@@ -135,8 +135,8 @@ public class CodeGen {
     private static CodeConfig loadConfig(final String config) throws IOException {
         final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         final Path path = Paths.get(config).toAbsolutePath();
-        ensureArgument(Files.exists(path), "The given config file does not exist (" + path + ")");
-        ensureArgument(Files.isRegularFile(path), "The given config file is not a regular file (" + path + ")");
+        assertArgument(Files.exists(path), "The given config file does not exist (" + path + ")");
+        assertArgument(Files.isRegularFile(path), "The given config file is not a regular file (" + path + ")");
 
         return mapper.readValue(path.toFile(), CodeConfig.class);
     }

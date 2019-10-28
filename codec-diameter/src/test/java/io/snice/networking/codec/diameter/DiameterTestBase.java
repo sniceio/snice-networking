@@ -45,6 +45,8 @@ public class DiameterTestBase {
      * These are the "raw" diameter messages that came from the diameter.pcap, as checked in
      * along side these raw version. They are simply just extractions from that pcap as raw bytes
      * and then the associated values have been verified using wireshark.
+     *
+     * Also, other "raw" diameter messages from other pcaps are now also included in the below.
      */
     public static final RawDiameterMessageHolder[] RAW_DIAMETER_MESSAGES = new RawDiameterMessageHolder[]{
             new RawDiameterMessageHolder("001_diameter_auth_info_request.raw", 344, true, true, false, false, 318, 16777251L, 0x6cac28cc, 0xfb1329de, 9),
@@ -60,7 +62,8 @@ public class DiameterTestBase {
             new RawDiameterMessageHolder("011_diameter_purge_ue_answer.raw", 244, false, true, false, false, 321, 16777251L, 0x6cac28cf, 0xfb1329e1, 7),
             new RawDiameterMessageHolder("012_diameter_credit_control_answer.raw", 220, false, true, false, false, 272, 16777238L, 0x12681e59, 0x0636af14, 7),
             new RawDiameterMessageHolder("013_diameter_device_watchdog_request.raw", 112, true, false, false, false, 280, 0L, 0x12681e5b, 0x0636af14, 2),
-            new RawDiameterMessageHolder("014_diameter_device_watchdog_answer.raw", 124, false, false, false, false, 280, 0L, 0x12681e5b, 0x0636af14, 3)
+            new RawDiameterMessageHolder("014_diameter_device_watchdog_answer.raw", 124, false, false, false, false, 280, 0L, 0x12681e5b, 0x0636af14, 3),
+            new RawDiameterMessageHolder("capabilities_exchange_request.raw", 232, true, false, false, false, 257, 0L, 0x0098f24d, 0x013188cd, 7)
     };
 
     /**
@@ -88,7 +91,6 @@ public class DiameterTestBase {
 
     public static DiameterMessage loadDiameterMessage(final String resource) throws Exception {
         final ReadableBuffer buffer = loadBuffer(resource);
-        System.out.println(buffer.toString());
         return DiameterMessage.frame(buffer);
 
     }
@@ -245,9 +247,9 @@ public class DiameterTestBase {
             assertThat("Incorrect lenght for resource " + resource, header.getLength(), is(length));
 
             // also making sure that we don't accidently do something stupid when it comes to the
-            // header.isResponse() - i.e., accidentally remove the not flag or something silly.
+            // header.isAnswer() - i.e., accidentally remove the not flag or something silly.
             assertThat("Incorrect request/response marker bit for resource " + resource, header.isRequest(), is(isRequest));
-            assertThat("Incorrect request/response marker bit for resource " + resource, header.isResponse(), is(!isRequest));
+            assertThat("Incorrect request/response marker bit for resource " + resource, header.isAnswer(), is(!isRequest));
 
             assertThat("Incorrect proxiable marker bit for resource " + resource, header.isProxiable(), is(isProxiable));
             assertThat("Incorrect error marker bit for resource " + resource, header.isError(), is(isError));

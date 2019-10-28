@@ -9,6 +9,7 @@ import io.snice.networking.codec.diameter.avp.type.DiameterType;
 import io.snice.networking.codec.diameter.codegen.Typedef;
 import io.snice.networking.codec.diameter.codegen.primitives.AvpPrimitive;
 import io.snice.networking.codec.diameter.codegen.primitives.EnumPrimitive;
+import io.snice.preconditions.PreConditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.snice.networking.codec.diameter.codegen.PreConditions.ensureArgument;
+import static io.snice.preconditions.PreConditions.assertArgument;
 
 /**
  * Contains configuration for where to render the code, the default package, how to
@@ -303,7 +304,7 @@ public class CodeConfig {
         }
 
         private void ensureDirectory(final Path dir) {
-            ensureArgument(Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS),
+            assertArgument(Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS),
                     "The specified directory doesn't exist or is not a directory (" + dir + ")");
         }
 
@@ -316,7 +317,7 @@ public class CodeConfig {
          */
         private Path ensureMavenDirectory(final Path dir) {
             ensureDirectory(dir);
-            ensureArgument(Files.isRegularFile(dir.resolve("pom.xml")), "Unable to find the pom.xml for directory " + dir);
+            assertArgument(Files.isRegularFile(dir.resolve("pom.xml")), "Unable to find the pom.xml for directory " + dir);
             return dir;
         }
 

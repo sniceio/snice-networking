@@ -3,6 +3,7 @@ package io.snice.networking.codec.diameter.avp.api;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
+
 import io.snice.networking.codec.diameter.avp.impl.DiameterGroupedAvp;
 import io.snice.networking.codec.diameter.avp.type.Grouped;
 
@@ -16,6 +17,14 @@ public interface VendorSpecificApplicationId extends Avp<Grouped> {
     @Override
     default long getCode() {
         return CODE;
+    }
+
+    default boolean isVendorSpecificApplicationId() {
+        return true;
+    }
+
+    default VendorSpecificApplicationId toVendorSpecificApplicationId() {
+        return this;
     }
 
     static VendorSpecificApplicationId parse(final FramedAvp raw) {
