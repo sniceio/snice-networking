@@ -45,7 +45,6 @@ public final class TcpConnection extends AbstractConnection {
      */
     @Override
     public void send(final Object msg) {
-        System.out.println("writnig it");
         final var byteBuf = toByteBuf((Buffer)msg);
         write(byteBuf);
     }

@@ -4,6 +4,7 @@ import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.codec.diameter.DiameterMessage;
 import io.snice.networking.codec.diameter.DiameterSerializationFactory;
+import io.snice.networking.codec.diameter.avp.api.ExperimentalResultCode;
 import io.snice.networking.codec.diameter.avp.api.ResultCode;
 import io.snice.networking.common.Connection;
 
@@ -33,7 +34,9 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
     }
 
     private static final void processULR(final Connection con, final DiameterMessage ulr) {
-        final var ula = ulr.createAnswer(ResultCode.DiameterSuccess).build();
+        final var ula = ulr.createAnswer(ResultCode.DiameterSuccess)
+                .withAvp(ExperimentalResultCode.DiameterErrorUserUnknown)
+                .build();
         con.send(ula.getBuffer());
     }
 

@@ -16,6 +16,6 @@ public class CodeGenTest {
 
         final CodeConfig config = CodeConfig.of().build();
         final Renderer renderer = new Renderer(config, collector);
-        renderer.renderAvp("Origin-Host");
+        renderer.renderAvp("Session-Id");
     }
 }

@@ -33,7 +33,7 @@ public interface EnumPrimitive extends DiameterPrimitive {
         ctx.ensureElementName(NAME);
         // there are some bad values in the wireshark dictionary file.
         // Some spaces and also ' like in "Don't Care" enum value
-        final String name = ctx.getString("name").replace(" ", "_").replace("'", "").trim();
+        final String name = ctx.getString("name").replace("-", "_").replace("(", "_").replace(")", "_").replace(" ", "_").replace("'", "").trim();
         final long code = ctx.getLong("code");
         return new Builder(ctx, name, code);
     }

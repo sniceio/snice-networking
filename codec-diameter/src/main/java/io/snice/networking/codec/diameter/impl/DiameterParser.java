@@ -12,6 +12,7 @@ import io.snice.networking.codec.diameter.avp.api.AuthApplicationId;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.codec.diameter.avp.api.OriginRealm;
 import io.snice.networking.codec.diameter.avp.api.ResultCode;
+import io.snice.networking.codec.diameter.avp.api.SessionId;
 import io.snice.networking.codec.diameter.avp.api.VendorId;
 import io.snice.networking.codec.diameter.avp.api.VendorSpecificApplicationId;
 import io.snice.networking.codec.diameter.avp.impl.ImmutableAvpHeader;
@@ -149,8 +150,6 @@ public class DiameterParser {
                 return OriginHost.parse(raw);
             case OriginRealm.CODE:
                 return OriginRealm.parse(raw);
-            // case VendorSpecificApplicationId2.CODE:
-            // return VendorSpecificApplicationId2.ensure(raw);
             case VendorId.CODE:
                 return VendorId.parse(raw);
             case AuthApplicationId.CODE:
@@ -159,6 +158,8 @@ public class DiameterParser {
                 return ResultCode.parse(raw);
             case VendorSpecificApplicationId.CODE:
                 return VendorSpecificApplicationId.parse(raw);
+            case SessionId.CODE:
+                return SessionId.parse(raw);
             default:
                 throw new RuntimeException("AVP " + raw.getCode() + " has not yet been implemented");
         }
