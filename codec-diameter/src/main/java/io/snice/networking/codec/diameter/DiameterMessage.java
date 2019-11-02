@@ -54,6 +54,17 @@ public interface DiameterMessage extends Cloneable {
         return header.isRequest() && header.getCommandCode() == 257;
     }
 
+    default boolean isCEA() {
+        final var header = getHeader();
+        return header.isAnswer() && header.getCommandCode() == 257;
+    }
+
+    /**
+     * Get the entire {@link DiameterMessage} as a {@link Buffer}, which you then can use
+     * to e.g. write to network socket.
+     */
+    Buffer getBuffer();
+
     /**
      * The {@link OriginHost} MUST be present in all diameter messages.
      */
@@ -144,6 +155,15 @@ public interface DiameterMessage extends Cloneable {
         Builder<T> withDestinationHost(DestinationHost destHost);
 
         Builder<T> withDestinationRealm(DestinationRealm destRealm);
+
+        /**
+         * The length of the entire message must be encoded into the {@link DiameterHeader}
+         * and as such, we need access to it within the {@link Builder} and we'll calculate
+         * the correct length upon {@link #build()}.
+         *
+         * @param header
+         */
+        Builder<T> withDiameterHeader(final DiameterHeader.Builder header);
 
         T build();
 

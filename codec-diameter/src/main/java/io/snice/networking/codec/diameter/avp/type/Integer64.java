@@ -1,6 +1,9 @@
 package io.snice.networking.codec.diameter.avp.type;
 
 import io.snice.buffer.Buffer;
+import io.snice.buffer.WritableBuffer;
+
+import java.util.Objects;
 
 public interface Integer64 extends DiameterType {
 
@@ -9,6 +12,16 @@ public interface Integer64 extends DiameterType {
     }
 
     long getValue();
+
+    @Override
+    default int size() {
+        return 8;
+    }
+
+    @Override
+    default void writeValue(final WritableBuffer buffer) {
+        buffer.write(getValue());
+    }
 
     class DefaultInteger64 implements Integer64 {
         private final long value;
@@ -20,6 +33,19 @@ public interface Integer64 extends DiameterType {
         @Override
         public long getValue() {
             return value;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final DefaultInteger64 that = (DefaultInteger64) o;
+            return value == that.value;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(value);
         }
     }
 }

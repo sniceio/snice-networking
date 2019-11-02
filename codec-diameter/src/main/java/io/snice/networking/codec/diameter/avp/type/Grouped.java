@@ -15,7 +15,7 @@ public interface Grouped extends DiameterType {
         // for grouped, we expect there to be x number of AVPs present
         // in the data and while we have data left to read, we'll continue
         // to find new ones. Note, we will not go deep, only one "layer"
-        // at a time and then you will have to call the parse method again
+        // at a time and then you will have to call the ensure method again
         // if you wish to keep diving deeper and deeper into the grouped ones.
         // The reason is that we don't want to spend time on parsing if the
         // user isn't going to use it.
@@ -28,17 +28,20 @@ public interface Grouped extends DiameterType {
         final int maxNoOfAvps = groupedAvp.getHeader().getLength() / (8 + 4);
         final List<FramedAvp> avps = new ArrayList<>(maxNoOfAvps);
         final ReadableBuffer data = groupedAvp.getData().toReadableBuffer();
+        int length = 0;
         while (data.hasReadableBytes()) {
-            avps.add(DiameterParser.frameRawAvp(data));
+            final FramedAvp avp = DiameterParser.frameRawAvp(data);
+            length += avp.getLength();
+            avps.add(avp);
         }
 
-        return new DefaultGrouped(avps);
+        return new DefaultGrouped(length, avps);
     }
 
     /**
      * <p>
      * Get the {@link FramedAvp} based on its AVP code. Note that this is the "raw" un-parsed
-     * AVP and you either have to call {@link FramedAvp#parse()} if you want to fully parse it.
+     * AVP and you either have to call {@link FramedAvp#ensure()} if you want to fully ensure it.
      * </p>
      *
      * <p>
@@ -59,13 +62,24 @@ public interface Grouped extends DiameterType {
     class DefaultGrouped implements Grouped {
         final List<FramedAvp> avps;
 
-        private DefaultGrouped(final List<FramedAvp> avps) {
+        /**
+         * The total length of all the AVPs. Needed when calculating the length of this AVP
+         */
+        private final int length;
+
+        private DefaultGrouped(final int length, final List<FramedAvp> avps) {
+            this.length = length;
             this.avps = avps;
         }
 
         @Override
         public Optional<FramedAvp> getFramedAvp(final long code) {
             return avps.stream().filter(avp -> avp.getCode() == code).findFirst();
+        }
+
+        @Override
+        public int size() {
+            return length;
         }
     }
 }

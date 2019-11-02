@@ -244,7 +244,7 @@ public class DiameterTestBase {
          * @param header
          */
         public void assertHeader(final DiameterHeader header) throws Exception {
-            assertThat("Incorrect lenght for resource " + resource, header.getLength(), is(length));
+            assertThat("Incorrect length for resource " + resource, header.getLength(), is(length));
 
             // also making sure that we don't accidently do something stupid when it comes to the
             // header.isAnswer() - i.e., accidentally remove the not flag or something silly.

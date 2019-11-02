@@ -1,6 +1,7 @@
 package io.snice.networking.codec.diameter.avp.impl;
 
 import io.snice.buffer.Buffer;
+import io.snice.buffer.WritableBuffer;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpHeader;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
@@ -32,12 +33,17 @@ public class ImmutableAvp<T extends DiameterType> implements Avp<T> {
     }
 
     @Override
+    public void writeTo(WritableBuffer out) {
+        raw.writeTo(out);
+    }
+
+    @Override
     public Buffer getData() {
         return raw.getData();
     }
 
     @Override
-    public Avp<T> parse() {
+    public Avp<T> ensure() {
         return this;
     }
 }

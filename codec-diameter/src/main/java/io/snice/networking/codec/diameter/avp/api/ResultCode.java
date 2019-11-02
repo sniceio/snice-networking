@@ -1,20 +1,25 @@
 package io.snice.networking.codec.diameter.avp.api;
 
 import io.snice.buffer.Buffer;
+import io.snice.buffer.WritableBuffer;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
-
 import io.snice.networking.codec.diameter.avp.impl.DiameterEnumeratedAvp;
 import io.snice.networking.codec.diameter.avp.type.Enumerated;
 
+import java.util.Objects;
 import java.util.Optional;
+
+import static io.snice.preconditions.PreConditions.assertNotNull;
 
 /**
  * 
  nisse
  */
-public interface ResultCode extends Avp<Enumerated<ResultCode.ResultCodeEnum>> {
+public interface ResultCode extends Avp<Enumerated<ResultCode.Code>> {
+
+    ResultCode DiameterSuccess = of(Code.DIAMETER_SUCCESS_2001);
 
     int CODE = 268;
 
@@ -23,7 +28,19 @@ public interface ResultCode extends Avp<Enumerated<ResultCode.ResultCodeEnum>> {
         return CODE;
     }
 
-    enum ResultCodeEnum { 
+    @Override
+    default void writeValue(final WritableBuffer buffer) {
+        buffer.write(getValue().getValue());
+    }
+
+    static ResultCode of(final Code code) {
+        assertNotNull(code);
+        final EnumeratedHolder enumerated = new EnumeratedHolder(code.getCode(), Optional.of(code));
+        final Avp<Enumerated> avp = Avp.ofType(Enumerated.class).withValue(enumerated).withAvpCode(CODE).build();
+        return new DefaultResultCode(avp, enumerated);
+    }
+
+    enum Code {
         DIAMETER_MULTI_ROUND_AUTH_1001("DIAMETER_MULTI_ROUND_AUTH", 1001),
         DIAMETER_SUCCESS_2001("DIAMETER_SUCCESS", 2001),
         DIAMETER_LIMITED_SUCCESS_2002("DIAMETER_LIMITED_SUCCESS", 2002),
@@ -102,12 +119,16 @@ public interface ResultCode extends Avp<Enumerated<ResultCode.ResultCodeEnum>> {
         private final String name;
         private final int code;
 
-        ResultCodeEnum(final String name, final int code) {
+        Code(final String name, final int code) {
             this.name = name;
             this.code = code;
         }
 
-        static Optional<ResultCodeEnum> lookup(final int code) {
+        public int getCode() {
+            return code;
+        }
+
+        static Optional<Code> lookup(final int code) {
             switch (code) { 
                 case 1001: return Optional.of(DIAMETER_MULTI_ROUND_AUTH_1001);
                 case 2001: return Optional.of(DIAMETER_SUCCESS_2001);
@@ -189,22 +210,22 @@ public interface ResultCode extends Avp<Enumerated<ResultCode.ResultCodeEnum>> {
         }
     }
 
-    default Optional<ResultCodeEnum> getAsEnum() {
+    default Optional<Code> getAsEnum() {
         return getValue().getAsEnum();
     }
 
     static ResultCode parse(final FramedAvp raw) {
         if (CODE != raw.getCode()) {
-            throw new AvpParseException("AVP Code mismatch - unable to parse the AVP into a " + ResultCode.class.getName());
+            throw new AvpParseException("AVP Code mismatch - unable to ensure the AVP into a " + ResultCode.class.getName());
         }
         final Buffer data = raw.getData();
         final int value = data.getInt(0);
-        final Optional<ResultCodeEnum> e = ResultCodeEnum.lookup(value);
+        final Optional<Code> e = Code.lookup(value);
         final EnumeratedHolder holder = new EnumeratedHolder(value, e);
         return new DefaultResultCode(raw, holder);
     }
 
-    class DefaultResultCode extends DiameterEnumeratedAvp<ResultCodeEnum> implements ResultCode {
+    class DefaultResultCode extends DiameterEnumeratedAvp<Code> implements ResultCode {
         private DefaultResultCode(final FramedAvp raw, final EnumeratedHolder value) {
             super(raw, value);
         }
@@ -213,24 +234,41 @@ public interface ResultCode extends Avp<Enumerated<ResultCode.ResultCodeEnum>> {
     /**
      * Ah! Must be a better way. I ran out of steam - getting late so it is what it is.
      */
-    class EnumeratedHolder implements Enumerated<ResultCodeEnum> {
+    class EnumeratedHolder implements Enumerated<Code> {
 
         private final int code;
-        private final Optional<ResultCodeEnum> e;
+        private final Optional<Code> e;
 
-        private EnumeratedHolder(final int code, final Optional<ResultCodeEnum> e) {
+        private EnumeratedHolder(final ResultCode.Code code) {
+            this(code.getCode(), Optional.of(code));
+        }
+
+        private EnumeratedHolder(final int code, final Optional<Code> e) {
             this.code = code;
             this.e = e;
         }
 
         @Override
-        public Optional<ResultCodeEnum> getAsEnum() {
+        public Optional<Code> getAsEnum() {
             return e;
         }
 
         @Override
         public int getValue() {
             return code;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final EnumeratedHolder that = (EnumeratedHolder) o;
+            return code == that.code;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(code);
         }
     }
 

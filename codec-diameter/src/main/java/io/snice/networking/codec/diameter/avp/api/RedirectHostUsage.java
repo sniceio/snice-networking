@@ -4,7 +4,6 @@ import io.snice.buffer.Buffer;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
-
 import io.snice.networking.codec.diameter.avp.impl.DiameterEnumeratedAvp;
 import io.snice.networking.codec.diameter.avp.type.Enumerated;
 
@@ -61,7 +60,7 @@ public interface RedirectHostUsage extends Avp<Enumerated<RedirectHostUsage.Redi
 
     static RedirectHostUsage parse(final FramedAvp raw) {
         if (CODE != raw.getCode()) {
-            throw new AvpParseException("AVP Code mismatch - unable to parse the AVP into a " + RedirectHostUsage.class.getName());
+            throw new AvpParseException("AVP Code mismatch - unable to ensure the AVP into a " + RedirectHostUsage.class.getName());
         }
         final Buffer data = raw.getData();
         final int value = data.getInt(0);

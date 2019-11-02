@@ -1,10 +1,12 @@
 package io.snice.networking.codec.diameter.avp.impl;
 
 import io.snice.buffer.Buffer;
+import io.snice.buffer.WritableBuffer;
 import io.snice.networking.codec.diameter.avp.AvpHeader;
-import io.snice.networking.codec.diameter.impl.DiameterParser;
 
 import java.util.Optional;
+
+import static io.snice.preconditions.PreConditions.assertArgument;
 
 /**
  * @author jonas@jonasborjesson.com
@@ -19,11 +21,26 @@ public class ImmutableAvpHeader implements AvpHeader {
         this.vendorId = vendorId;
     }
 
+    public static Builder withCode(final long code) {
+        assertArgument(code >= 0, "The code must be larger than zero");
+        return new Builder(code);
+    }
+
     @Override
     public int getHeaderLength() {
         // the AVP header length is always at least 8 bytes plus an additional 4 if
         // the optional vendor id is set.
         return vendorId.isPresent() ? 12 : 8;
+    }
+
+    @Override
+    public Buffer getBuffer() {
+        return buffer;
+    }
+
+    @Override
+    public void writeTo(WritableBuffer out) {
+        buffer.writeTo(out);
     }
 
     @Override
@@ -34,7 +51,8 @@ public class ImmutableAvpHeader implements AvpHeader {
     @Override
     public int getLength() {
         try {
-            return DiameterParser.getIntFromThreeOctets(buffer.getByte(5), buffer.getByte(6), buffer.getByte(7));
+            // return DiameterParser.getIntFromThreeOctets(buffer.getByte(5), buffer.getByte(6), buffer.getByte(7));
+            return buffer.getIntFromThreeOctets(5);
         } catch (final Exception e) {
             return -1;
         }
@@ -98,6 +116,63 @@ public class ImmutableAvpHeader implements AvpHeader {
             return (buffer.getByte(index) & 0b00100000) == 0b00100000;
         } catch (final IndexOutOfBoundsException e) {
             throw new RuntimeException("Unable to read byte from underlying buffer", e);
+        }
+    }
+
+    public static class Builder implements AvpHeader.Builder {
+
+        /**
+         * The vast majority of all {@link AvpHeader}s are 8 bytes long so let's assume
+         * that. Only if the vendor id is set, the header grows another 4 bytes and
+         * if that happens, we'll rebuild it when we build the header...
+         */
+        private final long code;
+        private boolean isMandatory;
+        private boolean isProtected;
+        private long vendorId = -1;
+
+        private Builder(final long code) {
+            this.code = code;
+        }
+
+        @Override
+        public AvpHeader.Builder isMandatory() {
+            this.isMandatory = true;
+            return this;
+        }
+
+        @Override
+        public AvpHeader.Builder isProtected() {
+            this.isProtected = true;
+            return this;
+        }
+
+        @Override
+        public AvpHeader.Builder withVendorId(final long vendorId) {
+            this.vendorId = vendorId;
+            return this;
+        }
+
+        @Override
+        public AvpHeader build() {
+            final WritableBuffer buffer;
+            final Optional<Long> vendorIdOptional;
+            if (vendorId >= 0) {
+                buffer = WritableBuffer.of(new byte[12]);
+                buffer.setWriterIndex(12); // because we are only using setXXX as opposed to writeXXXX
+                buffer.setBit7(4, true);
+                buffer.setUnsignedInt(8, vendorId);
+                vendorIdOptional = Optional.of(vendorId);
+            } else {
+                buffer = WritableBuffer.of(new byte[8]);
+                buffer.setWriterIndex(8);
+                vendorIdOptional = Optional.empty();
+            }
+            buffer.setUnsignedInt(0, code);
+            buffer.setBit6(4, isMandatory);
+            buffer.setBit5(4, isProtected);
+
+            return new ImmutableAvpHeader(buffer.build(), vendorIdOptional);
         }
     }
 

@@ -26,5 +26,10 @@ public interface DiameterIdentity extends DiameterType {
         public String asString() {
             return value.toString();
         }
+
+        @Override
+        public int size() {
+            return value.capacity();
+        }
     }
 }

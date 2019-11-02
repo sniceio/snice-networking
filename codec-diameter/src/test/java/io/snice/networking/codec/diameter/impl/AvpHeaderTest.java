@@ -42,9 +42,30 @@ public class AvpHeaderTest extends DiameterTestBase {
     }
 
     @Test
+    public void testBuildAvpHeader() {
+        final var header = AvpHeader.withCode(100).isMandatory().build();
+        assertThat(header.getCode(), is(100L));
+        assertThat(header.isMandatory(), is(true));
+        assertThat(header.isProtected(), is(false));
+        assertThat(header.isVendorSpecific(), is(false));
+        assertThat(header.getVendorId().isEmpty(), is(true));
+
+        // get the raw buffer out and then reparse it and see
+        // that all is well
+        final var buffer = header.getBuffer();
+        final var h2 = AvpHeader.frame(buffer.toReadableBuffer());
+
+        assertThat(h2.getCode(), is(100L));
+        assertThat(h2.isMandatory(), is(true));
+        assertThat(h2.isProtected(), is(false));
+        assertThat(h2.isVendorSpecific(), is(false));
+        assertThat(h2.getVendorId().isEmpty(), is(true));
+    }
+
+    @Test
     public void testOriginHost() throws Exception {
         final FramedAvp raw = FramedAvp.frame(loadBuffer("AVP_Origin_Host.raw"));
-        final Avp avp = raw.parse();
+        final Avp avp = raw.ensure();
         assertThat(avp instanceof OriginHost, is(true));
         assertThat(avp.getCode(), is(264L));
         assertThat((OriginHost) avp instanceof OriginHost, is(true));
@@ -56,7 +77,7 @@ public class AvpHeaderTest extends DiameterTestBase {
     @Test
     public void testOriginRealm() throws Exception {
         final FramedAvp raw = FramedAvp.frame(loadBuffer("AVP_Origin_Realm.raw"));
-        final Avp avp = raw.parse();
+        final Avp avp = raw.ensure();
         assertThat(avp instanceof OriginRealm, is(true));
         assertThat((OriginRealm) avp instanceof OriginRealm, is(true));
 
@@ -68,25 +89,25 @@ public class AvpHeaderTest extends DiameterTestBase {
     @Test
     public void testResultCode() throws Exception {
         final FramedAvp raw = FramedAvp.frame(loadBuffer("AVP_Result_Code.raw"));
-        final Avp<Enumerated<ResultCode.ResultCodeEnum>> avp = raw.parse();
-        // final Avp avp = raw.parse();
+        final Avp<Enumerated<ResultCode.Code>> avp = raw.ensure();
+        // final Avp avp = raw.ensure();
         assertThat(avp.isEnumerated(), is(true));
         assertThat(avp.getCode(), is(268L));
-        final Avp<Enumerated<ResultCode.ResultCodeEnum>> result = avp.toEnumerated();
-        final ResultCode.ResultCodeEnum rse = result.getValue().getAsEnum().get();
-        assertThat(rse, is(ResultCode.ResultCodeEnum.DIAMETER_SUCCESS_2001));
+        final Avp<Enumerated<ResultCode.Code>> result = avp.toEnumerated();
+        final ResultCode.Code rse = result.getValue().getAsEnum().get();
+        assertThat(rse, is(ResultCode.Code.DIAMETER_SUCCESS_2001));
     }
 
     @Test
     public void testGroupedAvp() throws Exception {
         final FramedAvp raw = FramedAvp.frame(loadBuffer("AVP_Vendor_Specific_Application.raw"));
-        final Avp<Grouped> avp = raw.parse();
+        final Avp<Grouped> avp = raw.ensure();
         assertThat(avp.getCode(), is(260L));
         final Grouped grouped = avp.getValue();
 
         // Test to get the "raw" un-parsed AVPs...
         // It is important that doing it the "raw" way doesn't then
-        // affect to parse it later on, which is what would happen if
+        // affect to ensure it later on, which is what would happen if
         // you don't watch out for how the internal buffers are handled.
         // I.e., if you share the same reader-index then reading from the
         // buffer below will then effect subsequent reading from the AVP.
@@ -95,7 +116,7 @@ public class AvpHeaderTest extends DiameterTestBase {
         assertThat(vendorId.getData().getUnsignedInt(0), is(10415L));
         assertThat(authAppId.getData().getUnsignedInt(0), is(16777251L));
 
-        // now test to use the convenience methods that will parse it all out
+        // now test to use the convenience methods that will ensure it all out
         // and also return the correct types
         // final VendorSpecificApplicationId2 vsaid = (VendorSpecificApplicationId2) avp;
         // assertThat(vsaid.getVendorId().getValue().getValue(), is(10415L));

@@ -3,7 +3,6 @@ package io.snice.networking.codec.diameter.avp.api;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
-
 import io.snice.networking.codec.diameter.avp.impl.DiameterUnsigned32Avp;
 import io.snice.networking.codec.diameter.avp.type.Unsigned32;
 
@@ -29,7 +28,7 @@ public interface VendorId extends Avp<Unsigned32> {
 
     static VendorId parse(final FramedAvp raw) {
         if (CODE != raw.getCode()) {
-            throw new AvpParseException("AVP Code mismatch - unable to parse the AVP into a " + VendorId.class.getName());
+            throw new AvpParseException("AVP Code mismatch - unable to ensure the AVP into a " + VendorId.class.getName());
         }
         return new DefaultVendorId(raw);
     }

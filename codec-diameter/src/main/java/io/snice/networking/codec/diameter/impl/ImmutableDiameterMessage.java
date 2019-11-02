@@ -18,7 +18,7 @@ public abstract class ImmutableDiameterMessage implements DiameterMessage {
      */
     private final Buffer raw;
 
-    private final DiameterHeader header;
+    protected final DiameterHeader header;
     private final List<FramedAvp> avps;
 
     private final short indexOrigHost;
@@ -51,9 +51,13 @@ public abstract class ImmutableDiameterMessage implements DiameterMessage {
         return avps;
     }
 
+    @Override
+    public Buffer getBuffer() {
+        return raw;
+    }
     /**
      * This class is immutable and as such, when cloning, you'll just get back the same
-     * regference again.
+     * reference again.
      *
      * @return
      */
@@ -64,12 +68,12 @@ public abstract class ImmutableDiameterMessage implements DiameterMessage {
 
     @Override
     public OriginHost getOriginHost() {
-        return avps.get(indexOrigHost).parse().toOriginHost();
+        return avps.get(indexOrigHost).ensure().toOriginHost();
     }
 
     @Override
     public OriginRealm getOriginRealm() {
-        return avps.get(indexOrigRealm).parse().toOriginRealm();
+        return avps.get(indexOrigRealm).ensure().toOriginRealm();
     }
 
     @Override

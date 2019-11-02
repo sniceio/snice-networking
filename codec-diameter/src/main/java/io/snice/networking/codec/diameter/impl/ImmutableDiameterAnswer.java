@@ -32,17 +32,18 @@ public class ImmutableDiameterAnswer extends ImmutableDiameterMessage implements
 
     @Override
     public DiameterAnswer.Builder copy() {
-        return null;
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
     public ResultCode getResultCode() {
-        return null;
+        // TODO: keep track of this as an index as well
+        return (ResultCode) getAvp(ResultCode.CODE).orElseThrow(RuntimeException::new).ensure();
     }
 
     public static DiameterAnswer.Builder withResultCode(final ResultCode resultCode) {
         assertNotNull(resultCode, "You must specify the result code");
-        return null;
+        return new DiameterAnswerBuilder(resultCode);
     }
 
 }

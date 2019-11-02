@@ -34,7 +34,7 @@ public class DiameterParser {
         // the +20 because we have already consumed 20 bytes for the header but the length as stated
         // in the diameter header actually includes these 20 bytes so...
         if (header.getLength() > buffer.getReadableBytes() + 20) {
-            throw new DiameterParseException(20, "Not enough bytes in message to parse out the full message");
+            throw new DiameterParseException(20, "Not enough bytes in message to ensure out the full message");
         }
 
 
@@ -52,10 +52,10 @@ public class DiameterParser {
 
             if (OriginHost.CODE == avp.getCode()) {
                 indexOfOrigHost = (short) list.size();
-                avp = avp.parse();
+                avp = avp.ensure();
             } else if (OriginRealm.CODE == avp.getCode()) {
                 indexOfOrigRealm = (short) list.size();
-                avp = avp.parse();
+                avp = avp.ensure();
             }
 
             list.add(avp);
@@ -120,8 +120,8 @@ public class DiameterParser {
      * you just want to check and not handle the {@link DiameterParseException} that would be thrown as a
      * result of this not being a diameter message.
      * <p>
-     * TODO: may actually need a more specific parse exception because right now, you don't konw if
-     * it "blew" up because it is not a diameter message or because there is a "real" parse exception.
+     * TODO: may actually need a more specific ensure exception because right now, you don't konw if
+     * it "blew" up because it is not a diameter message or because there is a "real" ensure exception.
      *
      * @param buffer
      * @return
@@ -150,7 +150,7 @@ public class DiameterParser {
             case OriginRealm.CODE:
                 return OriginRealm.parse(raw);
             // case VendorSpecificApplicationId2.CODE:
-            // return VendorSpecificApplicationId2.parse(raw);
+            // return VendorSpecificApplicationId2.ensure(raw);
             case VendorId.CODE:
                 return VendorId.parse(raw);
             case AuthApplicationId.CODE:
@@ -172,9 +172,10 @@ public class DiameterParser {
         return new ImmutableFramedAvp(header, data);
     }
 
+
     public static AvpHeader frameAvpHeader(final ReadableBuffer buffer) throws DiameterParseException {
         if (buffer.getReadableBytes() < 8) {
-            throw new DiameterParseException("Unable to read 8 bytes from the buffer, not enough data to parse AVP.");
+            throw new DiameterParseException("Unable to read 8 bytes from the buffer, not enough data to ensure AVP.");
         }
 
         // these are the flags and we need to check if the Vendor-ID bit is set and if so we need
@@ -187,16 +188,4 @@ public class DiameterParser {
 
     }
 
-    /**
-     * It is quite common in the various diameter headers that the length is stored in 3 octects. This will return
-     * an int based on those.
-     *
-     * @param a
-     * @param b
-     * @param c
-     * @return
-     */
-    public static int getIntFromThreeOctets(final byte a, final byte b, final byte c) {
-        return (a & 0xff) << 16 | (b & 0xff) << 8 | (c & 0xff) << 0;
-    }
 }

@@ -1,6 +1,7 @@
 package io.snice.networking.codec.diameter.impl;
 
 import io.snice.buffer.Buffer;
+import io.snice.buffer.WritableBuffer;
 import io.snice.networking.codec.diameter.DiameterHeader;
 
 /**
@@ -10,54 +11,75 @@ import io.snice.networking.codec.diameter.DiameterHeader;
 public class ImmutableDiameterHeader implements DiameterHeader {
     private final Buffer buffer;
 
+    public static DiameterHeader.Builder of() {
+        final WritableBuffer buffer = WritableBuffer.of(20);
+        buffer.fastForwardWriterIndex();
+        return new ImmutableDiameterHeader.Builder(buffer);
+    }
+
     protected ImmutableDiameterHeader(final Buffer buffer) {
         this.buffer = buffer;
     }
 
     @Override
     public int getLength() {
-        return DiameterParser.getIntFromThreeOctets(getByte(1), getByte(2), getByte(3));
+        return buffer.getIntFromThreeOctets(1);
     }
 
     @Override
     public boolean isRequest() {
-        // 5th byte is the command flags
-        return (getByte(4) & 0b10000000) == 0b10000000;
+        // 5th byte is the command flags and the 7th bit is whether this
+        // is a request or answer.
+        return buffer.getBit7(4);
     }
 
     @Override
     public boolean isProxiable() {
-        return (getByte(4) & 0b01000000) == 0b01000000;
+        return buffer.getBit6(4);
     }
 
     @Override
     public boolean isError() {
-        return (getByte(4) & 0b00100000) == 0b00100000;
+        return buffer.getBit5(4);
     }
 
     @Override
     public boolean isPossiblyRetransmission() {
-        return (getByte(4) & 0b00010000) == 0b00010000;
+        return buffer.getBit4(4);
     }
 
     @Override
     public int getCommandCode() {
-        return DiameterParser.getIntFromThreeOctets(getByte(5), getByte(6), getByte(7));
+        return buffer.getIntFromThreeOctets(5);
     }
 
     @Override
     public long getApplicationId() {
-        return getLong(8);
+        return buffer.getUnsignedInt(8);
     }
 
     @Override
     public long getHopByHopId() {
-        return getLong(12);
+        return buffer.getUnsignedInt(12);
     }
 
     @Override
     public long getEndToEndId() {
-        return getLong(16);
+        return buffer.getUnsignedInt(16);
+    }
+
+    @Override
+    public Buffer getBuffer() {
+        return buffer;
+    }
+
+    @Override
+    public DiameterHeader.Builder copy() {
+        // remember that a buffer.toWritableBuffer is forced to copy the entire underlying
+        // byte-array since the default buffer is immutable and as such, in order to guarantee
+        // this property, it has to copy it in order to turn it into a WritableBuffer
+        final WritableBuffer copy = buffer.toWritableBuffer();
+        return new Builder(copy);
     }
 
     private final byte getByte(final int index) {
@@ -67,7 +89,7 @@ public class ImmutableDiameterHeader implements DiameterHeader {
     @Override
     public boolean validate() {
         // the version must be 1 so if it isn't, bail out.
-        if (!((getByte(0) & 0b00000001) == 0b00000001)) {
+        if (!buffer.getBit0(0)) {
             return false;
         }
 
@@ -101,9 +123,61 @@ public class ImmutableDiameterHeader implements DiameterHeader {
         return sb.toString();
     }
 
-    private long getLong(final int i) {
-        return (getByte(i) & 0xff) << 24 | (getByte(i + 1) & 0xff) << 16
-                | (getByte(i + 2) & 0xff) << 8 | (getByte(i + 3) & 0xff) << 0;
+    private static class Builder implements DiameterHeader.Builder {
+
+        private final WritableBuffer buffer;
+
+        private Builder(final WritableBuffer buffer) {
+            this.buffer = buffer;
+            buffer.fastForwardWriterIndex();
+        }
+
+        @Override
+        public DiameterHeader.Builder isRequest() {
+            buffer.setBit7(4, true);
+            return this;
+        }
+
+        @Override
+        public DiameterHeader.Builder isAnswer() {
+            buffer.setBit7(4, false);
+            return this;
+        }
+
+        @Override
+        public DiameterHeader.Builder withApplicationId(final long applicationId) {
+            buffer.setUnsignedInt(8, applicationId);
+            return this;
+        }
+
+        @Override
+        public DiameterHeader.Builder withHopToHopId(final long id) {
+            buffer.setUnsignedInt(12, id);
+            return this;
+        }
+
+        @Override
+        public DiameterHeader.Builder withEndToEndId(final long id) {
+            buffer.setUnsignedInt(16, id);
+            return this;
+        }
+
+        @Override
+        public DiameterHeader.Builder withCommandCode(final int code) {
+            buffer.setThreeOctetInt(5, code);
+            return this;
+        }
+
+        @Override
+        public DiameterHeader.Builder withLength(final int length) {
+            buffer.setThreeOctetInt(1, length);
+            return this;
+        }
+
+        @Override
+        public DiameterHeader build() {
+            return new ImmutableDiameterHeader(buffer.build());
+        }
     }
 
 }

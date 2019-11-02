@@ -36,7 +36,7 @@ public class AttributeContext {
         try {
             return Long.parseLong(value);
         } catch (final NumberFormatException e) {
-            final String msg = String.format("Unable to parse attribute value '%s' as long for attribute '%s'", value, name);
+            final String msg = String.format("Unable to ensure attribute value '%s' as long for attribute '%s'", value, name);
             throw new CodeGenParseException(locator, msg);
         }
     }
@@ -46,7 +46,7 @@ public class AttributeContext {
         try {
             return Integer.parseInt(value);
         } catch (final NumberFormatException e) {
-            final String msg = String.format("Unable to parse attribute value '%s' as int for attribute '%s'", value, name);
+            final String msg = String.format("Unable to ensure attribute value '%s' as int for attribute '%s'", value, name);
             throw new CodeGenParseException(locator, msg);
         }
     }

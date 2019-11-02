@@ -1,6 +1,7 @@
 package io.snice.networking.codec.diameter.avp.impl;
 
 import io.snice.buffer.Buffer;
+import io.snice.buffer.WritableBuffer;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpHeader;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
@@ -10,6 +11,7 @@ public class ImmutableFramedAvp implements FramedAvp {
 
     private final AvpHeader header;
     private final Buffer data;
+
 
     public ImmutableFramedAvp(final AvpHeader header, final Buffer data) {
         this.header = header;
@@ -47,13 +49,29 @@ public class ImmutableFramedAvp implements FramedAvp {
     }
 
     @Override
+    public void writeTo(final WritableBuffer out) {
+        header.writeTo(out);
+        data.writeTo(out);
+
+        switch (getPadding()) {
+            case 3:
+                out.write((byte) 0);
+            case 2:
+                out.write((byte) 0);
+            case 1:
+                out.write((byte) 0);
+            default:
+        }
+    }
+
+    @Override
     public Buffer getData() {
         // must slice so that the returned data has it's own reader index etc.
         return data.slice();
     }
 
     @Override
-    public Avp parse() {
+    public Avp ensure() {
         return DiameterParser.parseAvp(this);
     }
 }
