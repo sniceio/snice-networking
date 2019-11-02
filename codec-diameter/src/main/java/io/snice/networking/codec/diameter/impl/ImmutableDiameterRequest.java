@@ -34,6 +34,7 @@ public class ImmutableDiameterRequest extends ImmutableDiameterMessage implement
     public DiameterAnswer.Builder createAnswer(final ResultCode resultCode) throws DiameterParseException, ClassCastException {
         final var builder = ImmutableDiameterAnswer.withResultCode(resultCode);
         final var header = super.header.copy().isAnswer();
+        // final var sessionid = getAvp()
         builder.withDiameterHeader(header);
         builder.withAvp(resultCode);
         builder.withOriginHost(getOriginHost());

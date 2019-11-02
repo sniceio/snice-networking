@@ -49,6 +49,11 @@ public interface DiameterMessage extends Cloneable {
                 + " into a " + DiameterAnswer.class.getName());
     }
 
+    default boolean isULR() {
+        final var header = getHeader();
+        return header.isRequest() && header.getCommandCode() == 316;
+    }
+
     default boolean isCER() {
         final var header = getHeader();
         return header.isRequest() && header.getCommandCode() == 257;
