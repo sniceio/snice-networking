@@ -2,8 +2,8 @@ package io.snice.networking.codec.gtp;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.ReadableBuffer;
-import io.snice.networking.codec.gtp.control.Gtp1Header;
-import io.snice.networking.codec.gtp.control.Gtp2Header;
+import io.snice.networking.codec.gtp.gtpc.v1.Gtp1Header;
+import io.snice.networking.codec.gtp.gtpc.v2.Gtp2Header;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
 

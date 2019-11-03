@@ -2,10 +2,14 @@ package io.snice.networking.codec.gtp;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.ReadableBuffer;
-import io.snice.networking.codec.gtp.control.Gtp2Message;
-import io.snice.networking.codec.gtp.control.InfoElement;
+import io.snice.networking.codec.gtp.gtpc.InfoElement;
+import io.snice.networking.codec.gtp.gtpc.v2.Gtp2InfoElementType;
+import io.snice.networking.codec.gtp.gtpc.v2.Gtp2Message;
+import io.snice.networking.codec.gtp.gtpc.v2.Gtp2MessageType;
+import io.snice.networking.codec.gtp.gtpc.v2.tliv.IMSI;
 
 import java.util.List;
+import java.util.Optional;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
@@ -33,10 +37,41 @@ public interface GtpMessage {
         }
     }
 
+    default boolean isRequest() {
+        return false;
+    }
+
+    default boolean isResponse() {
+        return false;
+    }
+
+    default boolean isGtpVersion1() {
+        return getVersion() == 1;
+    }
+
+    default boolean isGtpVersion2() {
+        return getVersion() == 2;
+    }
+
+    default Optional<IMSI> getImsi() {
+        return (Optional<IMSI>) toGtp2Message().getInformationElement(Gtp2InfoElementType.IMSI);
+    }
+
+    default Gtp2Message toGtp2Message() {
+        throw new ClassCastException("Unable to cast a " + getClass().getName() + " into a " + Gtp2Message.class.getName());
+    }
+
+    default boolean isEchoRequest() {
+        return getMessageTypeDecimal() == Gtp2MessageType.ECHO_REQUEST.getType();
+    }
 
     GtpHeader getHeader();
 
     List<? extends InfoElement> getInfoElements();
+
+    default int getMessageTypeDecimal() {
+        return getHeader().getMessageTypeDecimal();
+    }
 
     default int getVersion() {
         return getHeader().getVersion();

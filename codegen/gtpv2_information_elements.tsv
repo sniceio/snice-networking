@@ -1,0 +1,149 @@
+Dont Process	Type Value	Enum Override	Information Element	Comment/Ref	Number of fixed octets
+	0		Reserved		
+	1		International Mobile Subscriber Identity (IMSI)	Variable Length / 8.3	Not Applicable
+	2		Cause	Variable Length / 8.4	Not Applicable
+	3	Recovery	Recovery (Restart Counter)	Variable Length / 8.5	Not Applicable
+x	4 to 34		Reserved for S101 interface	See 3GPP TS 29.276 [14]	See 3GPP TS 29.276 [14]
+x	35 to 50		Reserved for S121 interface	See 3GPP TS 29.276 [14]	See 3GPP TS 29.276 [14]
+	51		STN-SR	See 3GPP TS 29.280 [15]	See 3GPP TS 29.280 [15]
+x	52 to 70		Reserved for Sv interface	See 3GPP TS 29.280 [15]	See 3GPP TS 29.280 [15]
+	71		Access Point Name (APN)	Variable Length / 8.6	Not Applicable
+	72		Aggregate Maximum Bit Rate (AMBR)	Fixed Length / 8.7	8
+	73		EPS Bearer ID (EBI)	Extendable / 8.8	1
+	74		IP Address	Variable Length / 8.9	Not Applicable
+	75		Mobile Equipment Identity (MEI)	Variable Length / 8.10	Not Applicable
+	76		MSISDN	Variable Length / 8.11	Not Applicable
+	77		Indication	Extendable / 8.12	2
+	78		Protocol Configuration Options (PCO)	Variable Length / 8.13	Not Applicable
+	79		PDN Address Allocation (PAA)	Variable Length / 8.14	Not Applicable
+	80		Bearer LevelQuality of Service (Bearer QoS)	Extendable / 8.15	22
+	81		FlowQuality of Service (Flow QoS)	Extendable / 8.16	21
+	82		RAT Type	Extendable / 8.17	1
+	83		Serving Network	Extendable / 8.18	3
+	84		EPS Bearer LevelTraffic Flow Template (Bearer TFT)	Variable Length / 8.19	Not Applicable
+	85		Traffic Aggregation Description (TAD)	Variable Length / 8.20	Not Applicable
+	86		User Location Information (ULI)	Extendable / 8.21	"f+4-4" (See Figure 8.21-1)
+	87		Fully Qualified Tunnel Endpoint Identifier (F-TEID)	Extendable / 8.22	9/21/25
+	88		TMSI	Variable Length / 8.23	Not Applicable
+	89		Global CN-Id	Variable Length / 8.24	Not Applicable
+	90		S103 PDN Data Forwarding Info (S103PDF)	Variable Length / 8.25	Not Applicable
+	91		S1-U Data Forwarding Info (S1UDF)	Variable Length/ 8.26	Not Applicable
+	92		Delay Value	Extendable / 8.27	1
+	93		Bearer Context	Extendable / 8.28	Not Applicable
+	94		Charging ID	Extendable / 8.29	4
+	95		Charging Characteristics	Extendable / 8.30	2
+	96		Trace Information	Variable Length / 8.31	Not Applicable
+	97		Bearer Flags	Extendable / 8.32	1
+x	98		Reserved		
+	99		PDN Type	Extendable /8.34	1
+	100		Procedure Transaction ID	Extendable /8.35	1
+x	101		Reserved		
+x	102		Reserved		
+	103	MM_Context_gsm_key_triplets	MM Context (GSM Key and Triplets)	Extendable /8.38	"r+1-4" (See Figure 8.38-1)
+	104	mm_context_umts_key_used_cipher_quintuplets	MM Context (UMTS Key, Used Cipher and Quintuplets)	Extendable/ 8.38	"r+1-4" (See Figure 8.38-2)
+	105	mm_context_gsm_key_used_cipher_quintuplets	MM Context (GSM Key,Used Cipher and Quintuplets)	Extendable /8.38	"r+1-4" (See Figure 8.38-3)
+	106	mm_context_umts_key_quintuplets	MM Context (UMTS Key and Quintuplets)	Extendable /8.38	"r+1-4" (See Figure 8.38-4)
+	107	mm_context_EPS_Security_Context_quadruplets_quintuplets	MM Context (EPS Security Context,Quadruplets and Quintuplets)	Extendable /8.38	"s+64-4" (See Figure 8.38-5)
+	108	mm_context_UMTS_Key_quadruplets_quintuplets	MM Context (UMTS Key, Quadruplets and Quintuplets)	Extendable /8.38	"r+1-4" (See Figure 8.38-6)
+	109		PDN Connection	Extendable /8.39	Not Applicable
+	110		PDU Numbers	Extendable /8.40	9
+	111		P-TMSI	Variable Length/ 8.41	Not Applicable
+	112		P-TMSI Signature	Variable Length/ 8.42	Not Applicable
+	113		Hop Counter	Extendable / 8.43	1
+	114		UE Time Zone	Extendable/ 8.44	2
+	115		Trace Reference	Fixed Length/ 8.45	6
+	116		Complete Request Message	Variable Length/ 8.46	Not Applicable
+	117		GUTI	Variable Length/ 8.47	Not Applicable
+	118		F-Container	Variable Length/ 8.48	Not Applicable
+	119		F-Cause	Variable Length/ 8.49	Not Applicable
+	120		PLMN ID	Variable Length/ 8.50	Not Applicable
+	121		Target Identification	Variable Length/ 8.51	Not Applicable
+x	122		Reserved		
+	123		Packet Flow ID	Variable Length/ 8.53	Not Applicable
+	124		RAB Context	Fixed Length/ 8.54	9
+	125		Source RNC PDCP Context Info	Variable Length/ 8.55	Not Applicable
+	126		Port Number	Extendable / 8.56	2
+	127		APN Restriction	Extendable / 8.57	1
+	128		Selection Mode	Extendable / 8.58	1
+	129		Source Identification	Variable Length/ 8.59	Not Applicable
+x	130		Reserved		
+	131		Change Reporting Action	Variable Length/ 8.61	Not Applicable
+	132		Fully Qualified PDN Connection Set Identifier (FQ-CSID)	Extendable / 8.62	"q+1-4" (See Figure 8.62-1)
+	133		Channel needed	Variable Length / 8.63	Not Applicable
+	134		eMLPP Priority	Variable Length / 8.64	Not Applicable
+	135		Node Type	Extendable / 8.65	1
+	136		Fully Qualified Domain Name (FQDN)	Variable Length / 8.66	Not Applicable
+	137		Transaction Identifier (TI)	Variable Length / 8.68	Not Applicable
+	138		MBMS Session Duration	Extendable / 8.69	3
+	139		MBMS Service Area	Variable Length / 8.70	Not Applicable
+	140		MBMS Session Identifier	Extendable / 8.71	1
+	141		MBMS Flow Identifier	Extendable / 8.72	2
+	142		MBMS IP Multicast Distribution	Extendable / 8.73	"m+1-4" (See Figure 8.73-1)
+	143		MBMS Distribution Acknowledge	Extendable / 8.74	1
+	144		RFSP Index	Fixed Length / 8.77	2
+	145		User CSG Information (UCI)	Extendable / 8.75	8
+	146		CSG Information Reporting Action	Extendable / 8.76	1
+	147		CSG ID	Extendable / 8.78	4
+	148		CSG Membership Indication (CMI)	Extendable / 8.79	1
+	149		Service indicator	Fixed Length / 8.80	1
+	150		Detach Type	Fixed Length / 8.81	1
+	151		Local Distiguished Name (LDN)	Variable Length / 8.82	Not Applicable
+	152		Node Features	Extendable / 8.83	1
+	153		MBMS Time to Data Transfer	Extendable / 8.84	1
+	154		Throttling	Extendable / 8.85	2
+	155		Allocation/Retention Priority (ARP)	Extendable / 8.86	1
+	156		EPC Timer	Extendable / 8.87	1
+	157		Signalling Priority Indication	Extendable / 8.88	1
+	158		Temporary Mobile Group Identity (TMGI)	Extendable / 8.89	6
+	159		Additional MM context for SRVCC	Extendable / 8.90	"e-4" (See Figure 8.90-1)
+	160		Additional flags for SRVCC	Extendable / 8.91	1
+x	161		Reserved		
+	162		MDT Configuration	Extendable / 8.93	"q-4" (See Figure 8.93-1)
+	163		Additional Protocol Configuration Options (APCO)	Extendable / 8.94	"m-4" (See Figure 8.94-1)
+	164		Absolute Time of MBMS Data Transfer	Extendable / 8.95	8
+	165		H(e)NB Information Reporting	Extendable / 8.96	1
+	166		IPv4 Configuration Parameters (IP4CP)	Extendable / 8.97	5
+	167		Change to Report Flags	Extendable / 8.98	1
+	168		Action Indication	Extendable / 8.99	1
+	169		TWAN Identifier	Extendable / 8.100	"k+6-4" (See Figure 8.100-1)
+	170		ULI Timestamp	Extendable / 8.101	4
+	171		MBMS Flags	Extendable / 8.102	1
+	172	RAN_NAS_CAUSE	RAN/NAS Cause	Extendable / 8.103	"m-4" (See Figure 8.103-1)
+	173		CN Operator Selection Entity	Extendable / 8.104	1
+	174		Trusted WLAN Mode Indication	Extendable / 8.105	1
+	175		Node Number	Extendable / 8.106	"p-4" (See Figure 8.106-1)
+	176		Node Identifier	Extendable / 8.107	"q-4" (See Figure 8.107-1)
+	177		Presence Reporting Area Action	Extendable / 8.108	"t-4" (See Figure 8.108-1)
+	178		Presence Reporting Area Information	Extendable / 8.109	4
+	179		TWAN Identifier Timestamp	Extendable / 8.110	4
+	180		Overload Control Information	Extendable / 8.111	Not Applicable
+	181		Load Control Information	Extendable / 8.112	Not Applicable
+	182		Metric	Fixed Length / 8.113	1
+	183		Sequence Number	Fixed Length / 8.114	4
+	184		APN and Relative Capacity	Extendable / 8.115	"m-4" (See Figure 8.115
+	185		WLAN Offloadability Indication	Extendable / 8.116	1
+	186		Paging and Service Information	Extendable / 8.117	m-4 (See Figure 8.117-1)
+	187		Integer Number	Variable / 8.118	Not Applicable
+	188		Millisecond Time Stamp	Extendable / 8.119	6
+	189		Monitoring Event Information	Extendable / 8.120	"k+2-4" (See Figure 8.120-1)
+	190		ECGI List	Extendable / 8.121	"m*7+2" (See Figure 8.121-1)
+	191		Remote UE Context	Extendable / 8.122	Not Applicable
+	192		Remote User ID	Extendable / 8.123	"c-4" (see Figure 8.123-1)
+	193		Remote UE IP information	Variable Length / 8.124	Not Applicable
+	194		CIoT Optimizations Support Indication	Extendable / 8.125	1
+	195		SCEF PDN Connection	Extendable / 8.126	Not Applicable
+	196		Header Compression Configuration	Extendable / 8.127	4
+	197		Extended Protocol Configuration Options (ePCO)	Variable Length / 8.128	Not Applicable
+	198		Serving PLMN Rate Control	Extendable / 8.129	4
+	199		Counter	Extendable / 8.130	5
+	200		Mapped UE Usage Type	Extendable / 8.131	2
+	201		Secondary RAT Usage Data Report	Extendable / 8.132	27
+	202		UP Function Selection Indication Flags	Extendable / 8.133	1
+	203		Maximum Packet Loss Rate	Extendable / 8.134	1
+	204		APN Rate Control Status	Extendable / 8.135	20
+	205		Extended Trace Information	Extendable / 8.136	"r-4" (see figure 8.136-1)
+	206		Monitoring Event Extension Information	Extendable / 8.137	"k-4" (See Figure 8.137-1)
+x	207 to 253		Spare. For future use.		
+	254	Extension	Special IE type for IE Type Extension	See NOTE 2	Not Applicable
+	255		Private Extension	Variable Length /8.67	Not Applicable
+x	256 to 65535		Spare. For future use.		

@@ -1,0 +1,56 @@
+package io.snice.networking.codec.gtp.gtpc.v2;
+
+/**
+ * This file has been auto generated. Do not manually edit.
+ * Please see the readme file in the codegen directory
+ * for how to update and generate this file.
+ *
+ * @author jonas@jonasborjesson.com
+ */
+public enum Gtp2InfoElement {
+
+  {%- for element in elements -%}
+    {{element['enum']}}({{element['type']}}, "{{element['friendly_name']}}", {{element['extendable']}}, {{element['octets']}}){%- if element['type'] != 255 -%},{% else %};{%- endif -%}
+
+  {%- endfor -%}
+
+    private final int typeAsDecimal;
+    private final byte type;
+
+    private final String friendlyName;
+
+    private final boolean isFixed;
+    private final boolean isExtendable;
+
+    Gtp2InfoElement(final int type, final String friendlyName, final boolean isExtendable, final int octets) {
+        this.typeAsDecimal = type;
+        this.type = (byte) type;
+        this.friendlyName = friendlyName;
+        this.isFixed = octets > 0;
+        this.isExtendable = isExtendable;
+    }
+
+    public int getTypeAsDecimal() {
+        return typeAsDecimal;
+    }
+
+    public byte getType() {
+        return type;
+    }
+
+    public String getFriendlyName() {
+        return friendlyName;
+    }
+
+    public boolean isFixed() {
+        return isFixed;
+    }
+
+    public boolean isVariable() {
+        return !isFixed;
+    }
+
+    public boolean isExtendable() {
+        return isExtendable;
+    }
+}

@@ -2,12 +2,15 @@ package io.snice.networking.app.impl;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandler;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.socket.DatagramPacket;
 import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
 import io.snice.networking.app.ConnectionContext;
+import io.snice.networking.codec.Framer;
+import io.snice.networking.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
@@ -16,6 +19,7 @@ import io.snice.networking.netty.UdpConnection;
 import io.snice.time.Clock;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
@@ -36,28 +40,45 @@ import java.util.function.BiFunction;
  * channel will have it's own handler because it stores states that is unique
  * to only that channel and as such, it cannot be shared...
  */
-public class NettyUdpInboundAdapter implements ChannelInboundHandler {
+// public class NettyUdpInboundAdapter<T> implements ChannelInboundHandler {
+public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
 
     private final Clock clock;
     private final Optional<URI> vipAddress;
     private final UUID uuid = UUID.randomUUID();
     private final List<ConnectionContext> ctxs;
+    private final SerializationFactory<T> factory;
 
-    private final Map<ConnectionId, ConnectionAdapter<UdpConnection, Buffer, ?>> adapters;
+    private final Map<ConnectionId, ConnectionAdapter<UdpConnection<T>, T>> adapters;
 
     private final ConnectionContext defaultCtx;
 
     private InetSocketAddress localAddress;
 
-    public NettyUdpInboundAdapter(final Clock clock , final Optional<URI> vipAddress, final List<ConnectionContext> ctxs) {
+    public NettyUdpInboundAdapter(final Clock clock , final SerializationFactory<T> factory, final Optional<URI> vipAddress, final List<ConnectionContext> ctxs) {
         this.clock = clock;
         this.vipAddress = vipAddress;
         this.ctxs = ctxs;
+        this.factory = factory;
 
         adapters = allocateInitialMapSize();
 
         // TODO
         defaultCtx = null;
+    }
+
+    @Override
+    public void connect(final ChannelHandlerContext ctx, final SocketAddress remoteAddress,
+                        final SocketAddress localAddress, final ChannelPromise promise) throws Exception {
+        log("Connecting...");
+        ctx.connect(remoteAddress, localAddress, promise);
+    }
+
+    @Override
+    public void bind(final ChannelHandlerContext ctx, final SocketAddress localAddress,
+                     final ChannelPromise promise) throws Exception {
+        log("Binding to: " + localAddress);
+        ctx.bind(localAddress, promise);
     }
 
     /**
@@ -70,7 +91,7 @@ public class NettyUdpInboundAdapter implements ChannelInboundHandler {
      *
      * TODO: pass in some configuration object...
      */
-    private static Map<ConnectionId, ConnectionAdapter<UdpConnection, Buffer, ?>> allocateInitialMapSize() {
+    private Map<ConnectionId, ConnectionAdapter<UdpConnection<T>, T>> allocateInitialMapSize() {
         return new HashMap<>();
     }
 
@@ -81,6 +102,7 @@ public class NettyUdpInboundAdapter implements ChannelInboundHandler {
     @Override
     public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
         try {
+            System.err.println("Rading something");
             final var pkt = (DatagramPacket) msg;
             final var remote = pkt.sender();
             final var id = ConnectionId.create(Transport.udp, remote, remote);
@@ -92,8 +114,13 @@ public class NettyUdpInboundAdapter implements ChannelInboundHandler {
 
             final var adapter = ensureConnection(ctx.channel(), id, connCtx);
             final var data = toBuffer(pkt);
-            adapter.process(data);
+            adapter.frame(data.toReadableBuffer()).ifPresent(p -> {
+                System.err.println("So got something back on the same channel " + p);
+                adapter.process(p);
+            });
+
         } catch (final ClassCastException e) {
+            e.printStackTrace();
             // WTF? This is for UDP!!! TODO: log warn, this should not happen...
             ctx.fireChannelRead(msg);
         }
@@ -106,12 +133,15 @@ public class NettyUdpInboundAdapter implements ChannelInboundHandler {
         return Buffers.wrap(b);
     }
 
-    private ConnectionContext<Connection, Buffer, ?> findContext(final ConnectionId id) {
+    private ConnectionContext<Connection, T> findContext(final ConnectionId id) {
         return ctxs.stream().filter(ctx -> ctx.test(id)).findFirst().orElse(defaultCtx);
     }
 
-    private ConnectionAdapter<UdpConnection, Buffer, ?> ensureConnection(final Channel channel, final ConnectionId id, final ConnectionContext<Connection, Buffer, ?> connCtx) {
-        return adapters.computeIfAbsent(id, cId -> new ConnectionAdapter(new UdpConnection(channel, id, vipAddress), connCtx));
+    private ConnectionAdapter<UdpConnection<T>, T> ensureConnection(final Channel channel, final ConnectionId id, final ConnectionContext<Connection, T> connCtx) {
+        return adapters.computeIfAbsent(id, cId -> {
+            final Framer<T> framer = factory.getFramer();
+            return new ConnectionAdapter(new UdpConnection(channel, id, vipAddress), framer, connCtx);
+        });
     }
 
     @Override
@@ -123,7 +153,7 @@ public class NettyUdpInboundAdapter implements ChannelInboundHandler {
 
     @Override
     public void userEventTriggered(final ChannelHandlerContext ctx, final Object evt) throws Exception {
-
+        System.err.println("Ok, user triggered event: " + evt);
     }
 
     @Override
@@ -145,6 +175,7 @@ public class NettyUdpInboundAdapter implements ChannelInboundHandler {
 
     @Override
     public void channelRegistered(final ChannelHandlerContext ctx) throws Exception {
+        System.out.println("Channel Registered");
         // TODO: create new Flow if the connection actually has a remote
         // TODO: address, if not then it is a listening socket and we
         // TODO: don't care about those (or a un-connected UDP)
@@ -174,7 +205,7 @@ public class NettyUdpInboundAdapter implements ChannelInboundHandler {
      */
     @Override
     public void channelActive(final ChannelHandlerContext ctx) throws Exception {
-        // System.err.println("UDP Decoder: Channel active " + ctx.channel());
+        log("Channel active " + ctx.channel());
         localAddress = (InetSocketAddress)ctx.channel().localAddress();
     }
 
@@ -185,7 +216,7 @@ public class NettyUdpInboundAdapter implements ChannelInboundHandler {
     public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
         // TODO: this would be the closing event
         // TODO:
-        System.err.println("UDP Decoder: Channel in-active " + ctx.channel());
+        log("Channel in-active " + ctx.channel());
     }
 
     /**

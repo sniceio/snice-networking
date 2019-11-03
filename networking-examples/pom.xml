@@ -48,6 +48,16 @@
             <artifactId>snice-commons</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.snice.networking</groupId>
+            <artifactId>codec-gtp</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.snice.networking</groupId>
+            <artifactId>codec-diameter</artifactId>
+        </dependency>
+
         <!-- For reading yaml files, which we'll use to load configuration
          from our yml files for the various examples
          -->

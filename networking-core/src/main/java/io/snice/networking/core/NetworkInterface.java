@@ -1,16 +1,17 @@
 package io.snice.networking.core;
 
 import io.snice.networking.common.Connection;
+import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 
 /**
  * @author jonas@jonasborjesson.com
  */
-public interface NetworkInterface {
+public interface NetworkInterface<T> {
 
     /**
      * Get the friendly name of this interface.
@@ -24,9 +25,9 @@ public interface NetworkInterface {
      * @return a future that when completed guarantees
      * that all listening points were successfully setup.
      */
-    CompletableFuture<Void> up();
+    CompletionStage<Void> up();
 
-    CompletableFuture<Void> down();
+    CompletionStage<Void> down();
 
     /**
      * Use this {@link NetworkInterface} to connect to a remote address using the supplied
@@ -42,7 +43,7 @@ public interface NetworkInterface {
      * @throws IllegalTransportException in case the {@link NetworkInterface} isn't configured with
      *         the specified {@link Transport}
      */
-    CompletableFuture<Connection> connect(Transport transport, InetSocketAddress remoteAddress)
+    CompletionStage<Connection<T>> connect(Transport transport, InetSocketAddress remoteAddress)
             throws IllegalTransportException;
 
     ListeningPoint getListeningPoint(Transport transport);

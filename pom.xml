@@ -43,14 +43,16 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <snice-commons.version>0.1.2-SNAPSHOT</snice-commons.version>
+        <snice-commons.version>0.1.4-SNAPSHOT</snice-commons.version>
         <hektor.version>0.0.3</hektor.version>
-        <netty.version>4.1.42.Final</netty.version>
+        <netty.version>4.1.43.Final</netty.version>
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
         <jackson.version>2.9.10</jackson.version>
         <junit.version>4.8.2</junit.version>
         <mockito.version>2.27.0</mockito.version>
+        <liqp.version>0.7.7</liqp.version>
+        <argparse.version>0.8.1</argparse.version>
     </properties>
 
     <modules>
@@ -58,12 +60,34 @@
         <module>networking-core</module>
         <module>networking-netty</module>
         <module>networking-app</module>
+        <module>codec-common</module>
+        <module>codec-diameter-codegen</module>
         <module>codec-gtp</module>
+        <module>codec-diameter</module>
         <module>networking-examples</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
+
+        <dependency>
+            <groupId>net.sourceforge.argparse4j</groupId>
+            <artifactId>argparse4j</artifactId>
+            <version>${argparse.version}</version>
+            <scope>compile</scope>
+                <type>jar</type>
+        </dependency>
+
+        <!-- For rendering liquid template -->
+
+        <dependency>
+            <groupId>nl.big-o</groupId>
+            <artifactId>liqp</artifactId>
+            <version>${liqp.version}</version>
+            <scope>compile</scope>
+                <type>jar</type>
+        </dependency>
+
 
             <dependency>
                 <groupId>io.snice.networking</groupId>
@@ -99,7 +123,31 @@
 
             <dependency>
                 <groupId>io.snice.networking</groupId>
+                <artifactId>codec-common</artifactId>
+                <version>${project.version}</version>
+                <type>jar</type>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.snice.networking</groupId>
                 <artifactId>codec-gtp</artifactId>
+                <version>${project.version}</version>
+                <type>jar</type>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.snice.networking</groupId>
+                <artifactId>codec-diameter</artifactId>
+                <version>${project.version}</version>
+                <type>jar</type>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.snice.networking</groupId>
+                <artifactId>codec-diameter-codegen</artifactId>
                 <version>${project.version}</version>
                 <type>jar</type>
                 <scope>compile</scope>

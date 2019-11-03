@@ -1,11 +1,12 @@
 package io.snice.networking.app.impl;
 
-import io.snice.buffer.Buffer;
-import io.snice.networking.app.Bootstrap;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.app.ConnectionContext.MessageProcessingBuilder;
 import io.snice.networking.app.MessagePipe;
 import io.snice.networking.app.NetworkAppConfig;
+import io.snice.networking.app.NetworkBootstrap;
+import io.snice.networking.app.SingleMessagePipe;
+import io.snice.networking.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 
@@ -22,13 +23,15 @@ import java.util.stream.Collectors;
 import static io.snice.preconditions.PreConditions.assertArgument;
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
-public class NettyBootstrap<T extends NetworkAppConfig> implements Bootstrap<T> {
+public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBootstrap<T, C> {
 
-    private final T config;
+    private SerializationFactory<T> serializationFactory;
 
-    private final List<ConnectionCtxBuilder<Connection, Buffer, ?>> rules = new ArrayList<>();
+    private final C config;
 
-    public NettyBootstrap(final T config) {
+    private final List<ConnectionCtxBuilder<Connection, T, ?>> rules = new ArrayList<>();
+
+    public NettyBootstrap(final C config) {
         this.config = config;
     }
 
@@ -36,15 +39,25 @@ public class NettyBootstrap<T extends NetworkAppConfig> implements Bootstrap<T> 
         return rules.stream().map(ConnectionCtxBuilder::build).collect(Collectors.toList());
     }
 
+    public SerializationFactory<T> getSerializationFactory() {
+        return serializationFactory;
+    }
+
     @Override
-    public T getConfiguration() {
+    public C getConfiguration() {
         return config;
     }
 
     @Override
-    public ConnectionContext.Builder<Connection, Buffer, Buffer> onConnection(final Predicate<ConnectionId> condition) {
+    public void registerSerializationFactory(final SerializationFactory<T> serializationFactory) {
+        assertNotNull(serializationFactory, "The serializationFactory cannot be null");
+        this.serializationFactory = serializationFactory;
+    }
+
+    @Override
+    public ConnectionContext.Builder<Connection, T, T> onConnection(final Predicate<ConnectionId> condition) {
         assertNotNull(condition, "The condition cannot be null");
-        final ConnectionCtxBuilder<Connection, Buffer, Buffer> builder = new ConnectionCtxBuilder<>(condition);
+        final ConnectionCtxBuilder<Connection, T, T> builder = new ConnectionCtxBuilder<>(condition);
         rules.add(builder);
         return builder;
     }
@@ -59,7 +72,7 @@ public class NettyBootstrap<T extends NetworkAppConfig> implements Bootstrap<T> 
             this.condition = condition;
         }
 
-        public ConnectionContext build() {
+        public ConnectionContext<C, T> build() {
             System.out.println("Building the connetion context");
             final List<MessagePipe<C, T, ?>> rules;
             if (confBuilderConsumer != null) {
@@ -71,7 +84,7 @@ public class NettyBootstrap<T extends NetworkAppConfig> implements Bootstrap<T> 
                 rules = List.of();
             }
 
-            return new NettyConnectionContext<>(condition, dropFunction, rules);
+            return new NettyConnectionContext<C, T>(condition, dropFunction, rules);
         }
 
         @Override
@@ -117,6 +130,16 @@ public class NettyBootstrap<T extends NetworkAppConfig> implements Bootstrap<T> 
                 rules.add(builder);
                 return builder;
             }
+
+            @Override
+            public void withPipe(final MessagePipe<C, T, ?> pipe) {
+
+            }
+
+            @Override
+            public void withPipe(final SingleMessagePipe<T, ?> pipe) {
+
+            }
         }
 
         private class MessageProcessingBuilderImpl<C extends Connection, T, R> implements MessageProcessingBuilder<C, T, R> {
@@ -126,6 +149,11 @@ public class NettyBootstrap<T extends NetworkAppConfig> implements Bootstrap<T> 
 
             private MessageProcessingBuilderImpl(final MessagePipe<C, T, R> pipe) {
                 this.pipe = pipe;
+            }
+
+            @Override
+            public <NEW_R> MessageProcessingBuilder<C, T, NEW_R> withPipe(final MessagePipe<C, ? super R, ? extends NEW_R> f) {
+                return null;
             }
 
             @Override

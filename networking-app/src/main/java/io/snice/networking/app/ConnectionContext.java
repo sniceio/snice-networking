@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public interface ConnectionContext<C extends Connection, T, R> extends Predicate<ConnectionId> {
+public interface ConnectionContext<C extends Connection, T> extends Predicate<ConnectionId> {
 
     boolean isDrop();
 
@@ -37,9 +37,15 @@ public interface ConnectionContext<C extends Connection, T, R> extends Predicate
         ConfigurationBuilder<C, T, R> withDefaultStatisticsModule();
 
         MessageProcessingBuilder<C, T, R> match(Predicate<T> filter);
+
+        void withPipe(MessagePipe<C, T, ?> pipe);
+
+        void withPipe(SingleMessagePipe<T, ?> pipe);
     }
 
     interface MessageProcessingBuilder<C extends Connection, T, R> {
+
+        <NEW_R> MessageProcessingBuilder<C, T, NEW_R> withPipe(MessagePipe<C, ? super R, ? extends NEW_R> f);
 
         MessageProcessingBuilder<C, T, R> consume(Consumer<R> consumer);
 

@@ -1,0 +1,8 @@
+
+remoteHost: 127.0.0.1
+remoteIp: 1234
+
+networkInterfaces:
+  - name: default
+    listen: ws://127.0.0.1:5678
+    transport: [udp, tcp]

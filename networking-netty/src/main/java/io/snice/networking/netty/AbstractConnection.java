@@ -5,7 +5,6 @@ package io.snice.networking.netty;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
 import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
@@ -22,7 +21,7 @@ import java.util.Optional;
 /**
  * @author jonas@jonasborjesson.com
  */
-public abstract class AbstractConnection implements Connection {
+public abstract class AbstractConnection<T> implements Connection<T> {
 
     private final ConnectionId id;
     private final Channel channel;
@@ -140,6 +139,7 @@ public abstract class AbstractConnection implements Connection {
 
     protected void write(final Object o) {
         channel.write(o, channel.voidPromise());
+        channel.flush();
     }
 
     protected ByteBuf toByteBuf(final Buffer msg) {

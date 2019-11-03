@@ -7,9 +7,10 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.snice.networking.common.Connection;
+import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
-import io.snice.networking.core.IllegalTransportException;
 import io.snice.networking.core.ListeningPoint;
+import io.snice.networking.event.ConnectionActiveIOEvent;
 import io.snice.time.Clock;
 import io.snice.time.SystemClock;
 import org.slf4j.Logger;
@@ -155,10 +156,10 @@ public abstract class NettyListeningPoint implements ListeningPoint {
             // only be one part of the overall solution. For the full stack, this
             // is being handled by the transport layer...
             final Channel channel = udpChannel.get();
-            final ChannelHandlerContext ctx = channel.pipeline().firstContext();
+            final ChannelHandlerContext ctx = channel.pipeline().lastContext();
             final Connection connection = new UdpConnection(channel, remoteAddress, getVipAddress());
             final Long arrivalTime = clock.getCurrentTimeMillis();
-            // ctx.fireUserEventTriggered(ConnectionActiveIOEvent.create(connection, arrivalTime));
+            ctx.fireUserEventTriggered(ConnectionActiveIOEvent.create(connection, arrivalTime));
             return CompletableFuture.completedFuture(connection);
         }
     }

@@ -7,6 +7,10 @@
 *.iml
 .idea
 
+# Python
+venv
+*.pyc
+
 # Where maven compiles by default
 target
 dependency-reduced-pom.xml

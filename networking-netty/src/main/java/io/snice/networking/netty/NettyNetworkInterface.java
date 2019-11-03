@@ -6,9 +6,9 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.snice.networking.common.Connection;
+import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
 import io.snice.networking.config.NetworkInterfaceConfiguration;
-import io.snice.networking.core.IllegalTransportException;
 import io.snice.networking.core.ListeningPoint;
 import io.snice.networking.core.NetworkInterface;
 import org.slf4j.Logger;
@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 
@@ -29,7 +30,7 @@ import static io.snice.preconditions.PreConditions.ensureNotNull;
 /**
  * @author jonas@jonasborjesson.com
  */
-public final class NettyNetworkInterface implements NetworkInterface, ChannelFutureListener {
+public final class NettyNetworkInterface<T> implements NetworkInterface<T>, ChannelFutureListener {
 
     private final Logger logger = LoggerFactory.getLogger(NettyNetworkInterface.class);
 
@@ -68,7 +69,7 @@ public final class NettyNetworkInterface implements NetworkInterface, ChannelFut
      * Bring this interface up, as in start listening to its dedicated listening points.
      */
     @Override
-    public CompletableFuture<Void> up() {
+    public CompletionStage<Void> up() {
         final List<CompletableFuture<Void>> futures = new CopyOnWriteArrayList<>();
         this.listeningPoints.forEach(lp -> {
             futures.add(lp.up());
@@ -77,7 +78,7 @@ public final class NettyNetworkInterface implements NetworkInterface, ChannelFut
     }
 
     @Override
-    public CompletableFuture<Void> down() {
+    public CompletionStage<Void> down() {
         final List<CompletableFuture<Void>> futures = new CopyOnWriteArrayList<>();
         this.listeningPoints.forEach(lp -> {
             futures.add(lp.down());
@@ -128,7 +129,7 @@ public final class NettyNetworkInterface implements NetworkInterface, ChannelFut
      *                                   the specified {@link Transport}
      */
     @Override
-    public CompletableFuture<Connection> connect(final Transport transport, final InetSocketAddress remoteAddress)
+    public CompletionStage<Connection<T>> connect(final Transport transport, final InetSocketAddress remoteAddress)
             throws IllegalTransportException {
         final ListeningPoint lp = listeningPointsByTransport[transport.ordinal()];
         if (lp == null) {

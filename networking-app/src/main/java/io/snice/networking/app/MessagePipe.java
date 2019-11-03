@@ -15,6 +15,37 @@ import static io.snice.preconditions.PreConditions.ensureNotNull;
  */
 public interface MessagePipe<C, T, R> extends BiFunction<C, T, R>, BiPredicate<C, T> {
 
+	static <C, T, R> MessagePipe<C, T, R> transform(final Function<T, R> f) {
+		ensureNotNull(f, "The function cannot be null");
+		return new DefaultMessagePipe((c, t) -> true).map(f);
+	}
+
+	/**
+	 * Create a new {@link MessagePipe} that consumes values of the given stype.
+	 *
+	 * @param inType the type this {@link MessagePipe} will consume.
+	 * @param <T>    the type
+	 * @return the next step in this process of building up a valid {@link MessagePipe}
+	 */
+	static <T> OutTypeStep<T> consumes(final Class<T> inType) {
+		ensureNotNull(inType, "The input type cannot be null");
+		return null;
+	}
+
+	static <T1, T2> BiOutTypeStep<T1, T2> consumes(final Class<T1> inType1, final Class<T2> inType2) {
+		ensureNotNull(inType1, "The input type cannot be null");
+		ensureNotNull(inType2, "The input type cannot be null");
+		return null;
+	}
+
+	interface OutTypeStep<T> {
+		<R> MappingStep<T, R> produces(final Class<R> outType);
+	}
+
+	interface BiOutTypeStep<T1, T2> {
+		<R> MappingStep<T1, R> produces(final Class<R> outType);
+	}
+
 	static <C, T> MessagePipe<C, T, T> match(final BiPredicate<C, T> condition) {
 		ensureNotNull(condition, "The condition cannot be null");
 		return new DefaultMessagePipe(condition);
@@ -23,6 +54,14 @@ public interface MessagePipe<C, T, R> extends BiFunction<C, T, R>, BiPredicate<C
 	static <C, T, R> MessagePipe<C, T, R> of(final Class<T> inType, final Class<R> outType, final BiPredicate<C, T> condition) {
 		ensureNotNull(condition, "The condition cannot be null");
 		return new DefaultMessagePipe(condition);
+	}
+
+	interface MappingStep<T, R> {
+		MessagePipe<T, T, R> map(Function<? super T, ? extends R> f);
+	}
+
+	interface BiMappingStep<C, T, R> {
+		MessagePipe<C, T, R> map(Function<? super T, ? extends R> f);
 	}
 
 	MessagePipe<C, T, R> consume(Consumer<R> f);

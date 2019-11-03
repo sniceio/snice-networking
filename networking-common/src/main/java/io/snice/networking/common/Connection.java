@@ -16,7 +16,7 @@ import java.util.Optional;
  * 
  * @author jonas@jonasborjesson.com
  */
-public interface Connection {
+public interface Connection<T> {
 
     ConnectionId id();
 
@@ -167,7 +167,7 @@ public interface Connection {
      * 
      * @param msg
      */
-    void send(Object msg);
+    void send(T msg);
 
     boolean connect();
 

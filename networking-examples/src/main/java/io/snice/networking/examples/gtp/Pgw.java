@@ -1,28 +1,65 @@
 package io.snice.networking.examples.gtp;
 
-import io.snice.buffer.Buffer;
-import io.snice.buffer.Buffers;
-import io.snice.networking.app.Bootstrap;
 import io.snice.networking.app.Environment;
+import io.snice.networking.app.MessagePipe;
 import io.snice.networking.app.NetworkApplication;
+import io.snice.networking.app.NetworkBootstrap;
+import io.snice.networking.codec.gtp.GtpMessage;
+import io.snice.networking.codec.gtp.GtpSerializationFactory;
+import io.snice.networking.codec.gtp.gtpc.v2.Gtp2Message;
+import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 
+import static io.snice.networking.app.MessagePipe.match;
 
-public class Pgw extends NetworkApplication<GtpConfig> {
+
+public class Pgw extends NetworkApplication<GtpMessage, GtpConfig> {
+
+    private static final MessagePipe<Connection, Gtp2Message, String> echo;
+    private static final MessagePipe<Connection, Gtp2Message, String> csr;
+
+    static {
+        // for all echo messages, simply reply back
+        echo = match(Pgw::isEcho).map(GtpMessage::toString).consume((c, s) -> c.send(s));
+        csr = match(Pgw::isEcho).map(GtpMessage::toString).consume((c, s) -> c.send(s));
+    }
+
+    public static boolean isEcho(final Connection c, final Gtp2Message gtp) {
+        return gtp.isEchoRequest();
+    }
+
+    public static boolean isCSR(final Connection c, final Gtp2Message gtp) {
+        return gtp.isEchoRequest();
+    }
+
+
+    public Pgw() {
+        super(GtpMessage.class);
+    }
 
     @Override
-    public void run(final GtpConfig configuration, final Environment environment) {
+    public void run(final GtpConfig configuration, final Environment<GtpMessage, GtpConfig> environment) {
 
     }
 
     @Override
-    public void initialize(final Bootstrap<GtpConfig> bootstrap) {
+    public void initialize(final NetworkBootstrap<GtpMessage, GtpConfig> bootstrap) {
 
-        final var hello = Buffers.wrap("hello");
+        bootstrap.registerSerializationFactory(new GtpSerializationFactory());
 
         // only accept traffic from localhost, drop the rest.
-        bootstrap.onConnection(Pgw::isFromLocalHost).accept(builder -> {
+        bootstrap.onConnection(id -> true).accept(builder -> {
             builder.withDefaultStatisticsModule();
+
+            // no GTPv1 right now so just drop it...
+            builder.match(GtpMessage::isGtpVersion1).consume((c, gtp) -> c.close());
+
+            builder.match(GtpMessage::isGtpVersion2).map(GtpMessage::toGtp2Message).withPipe(echo);
+
+
+            builder.match(gtp -> gtp.getVersion() == 2 && gtp.getMessageTypeDecimal() == 1).consume(echo -> System.out.println("Got echo request"));
+            builder.match(gtp -> gtp.getVersion() == 2 && gtp.getMessageTypeDecimal() == 32).consume(crs -> System.out.println("Got Create Session Request"));
+            /*
             builder.match(b -> b.startsWith(hello)).consume((c, h) -> {
                 System.err.println("Got a hello...");
                 c.send(Buffers.wrap("world"));
@@ -40,10 +77,11 @@ public class Pgw extends NetworkApplication<GtpConfig> {
                     System.out.println("Hmm, not true");
                 }
             });
+            */
         });
 
         // drop the rest...
-        bootstrap.onConnection(id -> true).drop();
+        // bootstrap.onConnection(id -> true).drop();
 
     }
 
