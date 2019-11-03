@@ -45,7 +45,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <snice-commons.version>0.1.4-SNAPSHOT</snice-commons.version>
         <hektor.version>0.0.3</hektor.version>
-        <netty.version>4.1.42.Final</netty.version>
+        <netty.version>4.1.43.Final</netty.version>
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
         <jackson.version>2.9.10</jackson.version>

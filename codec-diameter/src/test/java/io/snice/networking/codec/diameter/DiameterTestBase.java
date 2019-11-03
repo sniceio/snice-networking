@@ -95,6 +95,13 @@ public class DiameterTestBase {
 
     }
 
+    public static FramedAvp loadAndFrameAvp(final String resource) throws Exception {
+        final var buffer = loadBuffer(resource);
+        final FramedAvp raw = FramedAvp.frame(buffer);
+        assertThat(buffer.hasReadableBytes(), is(false));
+        return raw;
+    }
+
     public static class RawAvpHolder {
 
         public final String resource;
@@ -152,7 +159,7 @@ public class DiameterTestBase {
 
         public FramedAvp getAvp() {
             try {
-                return FramedAvp.frame(load());
+                return loadAndFrameAvp(resource);
             } catch (final Exception e) {
                 throw new RuntimeException("Issue loading the raw diameter byte-array from resource " + resource, e);
             }

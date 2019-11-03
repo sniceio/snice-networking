@@ -64,7 +64,7 @@ public class AvpHeaderTest extends DiameterTestBase {
 
     @Test
     public void testOriginHost() throws Exception {
-        final FramedAvp raw = FramedAvp.frame(loadBuffer("AVP_Origin_Host.raw"));
+        final FramedAvp raw = loadAndFrameAvp("AVP_Origin_Host.raw");
         final Avp avp = raw.ensure();
         assertThat(avp instanceof OriginHost, is(true));
         assertThat(avp.getCode(), is(264L));
@@ -76,7 +76,7 @@ public class AvpHeaderTest extends DiameterTestBase {
 
     @Test
     public void testOriginRealm() throws Exception {
-        final FramedAvp raw = FramedAvp.frame(loadBuffer("AVP_Origin_Realm.raw"));
+        final FramedAvp raw = loadAndFrameAvp("AVP_Origin_Realm.raw");
         final Avp avp = raw.ensure();
         assertThat(avp instanceof OriginRealm, is(true));
         assertThat((OriginRealm) avp instanceof OriginRealm, is(true));
@@ -88,7 +88,7 @@ public class AvpHeaderTest extends DiameterTestBase {
 
     @Test
     public void testResultCode() throws Exception {
-        final FramedAvp raw = FramedAvp.frame(loadBuffer("AVP_Result_Code.raw"));
+        final FramedAvp raw = loadAndFrameAvp("AVP_Result_Code.raw");
         final Avp<Enumerated<ResultCode.Code>> avp = raw.ensure();
         // final Avp avp = raw.ensure();
         assertThat(avp.isEnumerated(), is(true));
@@ -100,7 +100,7 @@ public class AvpHeaderTest extends DiameterTestBase {
 
     @Test
     public void testGroupedAvp() throws Exception {
-        final FramedAvp raw = FramedAvp.frame(loadBuffer("AVP_Vendor_Specific_Application.raw"));
+        final FramedAvp raw = loadAndFrameAvp("AVP_Vendor_Specific_Application.raw");
         final Avp<Grouped> avp = raw.ensure();
         assertThat(avp.getCode(), is(260L));
         final Grouped grouped = avp.getValue();

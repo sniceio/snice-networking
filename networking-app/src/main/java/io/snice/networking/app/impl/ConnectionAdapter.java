@@ -1,6 +1,6 @@
 package io.snice.networking.app.impl;
 
-import io.snice.buffer.Buffer;
+import io.snice.buffer.ReadableBuffer;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.codec.Framer;
 import io.snice.networking.common.Connection;
@@ -17,13 +17,13 @@ public class ConnectionAdapter<C extends Connection, T> {
     private final ConnectionContext<C, T> ctx;
     private final Framer<T> framer;
 
-    public ConnectionAdapter(final C connection, Framer<T> framer, final ConnectionContext<C, T> ctx) {
+    public ConnectionAdapter(final C connection, final Framer<T> framer, final ConnectionContext<C, T> ctx) {
         this.connection = connection;
         this.framer = framer;
         this.ctx = ctx;
     }
 
-    public Optional<T> frame(final Buffer data) {
+    public Optional<T> frame(final ReadableBuffer data) {
         return framer.frame(data);
     }
 

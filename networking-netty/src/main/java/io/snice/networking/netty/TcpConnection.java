@@ -4,7 +4,6 @@
 package io.snice.networking.netty;
 
 import io.netty.channel.Channel;
-import io.snice.buffer.Buffer;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
 
@@ -45,8 +44,9 @@ public final class TcpConnection extends AbstractConnection {
      */
     @Override
     public void send(final Object msg) {
-        final var byteBuf = toByteBuf((Buffer)msg);
-        write(byteBuf);
+        // final var byteBuf = toByteBuf((Buffer)msg);
+        // write(byteBuf);
+        write(msg);
     }
 
     @Override

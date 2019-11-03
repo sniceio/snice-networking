@@ -30,14 +30,16 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
 
     private static final void processCER(final Connection con, final DiameterMessage cer) {
         final var cea = cer.createAnswer(ResultCode.DiameterSuccess).build();
-        con.send(cea.getBuffer());
+        // con.send(cea.getBuffer());
+        con.send(cea);
     }
 
     private static final void processULR(final Connection con, final DiameterMessage ulr) {
         final var ula = ulr.createAnswer(ResultCode.DiameterSuccess)
                 .withAvp(ExperimentalResultCode.DiameterErrorUserUnknown)
                 .build();
-        con.send(ula.getBuffer());
+        // con.send(ula.getBuffer());
+        con.send(ula);
     }
 
     public static void main(final String... args) throws Exception {

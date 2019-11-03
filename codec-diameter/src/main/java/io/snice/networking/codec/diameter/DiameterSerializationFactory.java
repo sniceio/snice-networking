@@ -1,6 +1,6 @@
 package io.snice.networking.codec.diameter;
 
-import io.snice.buffer.Buffer;
+import io.snice.buffer.ReadableBuffer;
 import io.snice.networking.codec.Framer;
 import io.snice.networking.codec.SerializationFactory;
 import io.snice.networking.codec.diameter.impl.DiameterParser;
@@ -26,7 +26,7 @@ public class DiameterSerializationFactory implements SerializationFactory<Diamet
     private static final class StreamBasedDiameterFramer implements Framer<DiameterMessage> {
 
         @Override
-        public Optional<DiameterMessage> frame(final Buffer buffer) {
+        public Optional<DiameterMessage> frame(final ReadableBuffer buffer) {
             if (DiameterParser.canFrameMessage(buffer)) {
                 return Optional.of(DiameterMessage.frame(buffer));
             }

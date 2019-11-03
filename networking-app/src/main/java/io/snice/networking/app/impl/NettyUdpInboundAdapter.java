@@ -114,7 +114,7 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
 
             final var adapter = ensureConnection(ctx.channel(), id, connCtx);
             final var data = toBuffer(pkt);
-            adapter.frame(data).ifPresent(p -> {
+            adapter.frame(data.toReadableBuffer()).ifPresent(p -> {
                 System.err.println("So got something back on the same channel " + p);
                 adapter.process(p);
             });

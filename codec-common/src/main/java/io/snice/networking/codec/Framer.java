@@ -1,6 +1,7 @@
 package io.snice.networking.codec;
 
 import io.snice.buffer.Buffer;
+import io.snice.buffer.ReadableBuffer;
 
 import java.util.Optional;
 
@@ -21,5 +22,5 @@ public interface Framer<T> {
      * yield in a fully framed object. If the optional isn't empty then we did indeed successfully
      * framed a new object.
      */
-    Optional<T> frame(Buffer buffer);
+    Optional<T> frame(ReadableBuffer buffer);
 }

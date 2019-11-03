@@ -39,7 +39,7 @@ public class ImmutableAvpHeader implements AvpHeader {
     }
 
     @Override
-    public void writeTo(WritableBuffer out) {
+    public void writeTo(final WritableBuffer out) {
         buffer.writeTo(out);
     }
 
@@ -51,7 +51,6 @@ public class ImmutableAvpHeader implements AvpHeader {
     @Override
     public int getLength() {
         try {
-            // return DiameterParser.getIntFromThreeOctets(buffer.getByte(5), buffer.getByte(6), buffer.getByte(7));
             return buffer.getIntFromThreeOctets(5);
         } catch (final Exception e) {
             return -1;
