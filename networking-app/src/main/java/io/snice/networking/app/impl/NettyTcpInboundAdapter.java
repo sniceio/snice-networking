@@ -1,15 +1,12 @@
 package io.snice.networking.app.impl;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
-import io.snice.buffer.Buffer;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.codec.Framer;
 import io.snice.networking.codec.SerializationFactory;
 import io.snice.networking.codec.diameter.DiameterHeader;
 import io.snice.networking.codec.diameter.DiameterMessage;
-import io.snice.networking.codec.diameter.impl.DiameterParser;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
@@ -37,7 +34,7 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
     private final UUID uuid = UUID.randomUUID();
     private final List<ConnectionContext> ctxs;
     private final SerializationFactory<T> factory;
-    private int exceptionCounter = 0;
+    private final int exceptionCounter = 0;
 
     private DiameterHeader currentHeader;
     private DiameterMessage lastMessage;
@@ -146,6 +143,7 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
     }
 
     public void channelReadOld(final ChannelHandlerContext ctx, final Object msg) throws Exception {
+    /*
 
         lock.lock();
         try {
@@ -204,6 +202,7 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
         } finally {
             lock.unlock();
         }
+     */
 
 
         /*

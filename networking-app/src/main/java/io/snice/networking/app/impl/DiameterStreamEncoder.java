@@ -7,10 +7,6 @@ import io.snice.networking.codec.diameter.DiameterMessage;
 
 public class DiameterStreamEncoder extends MessageToByteEncoder<DiameterMessage> {
 
-    public DiameterStreamEncoder() {
-        System.err.println("Created");
-    }
-
     @Override
     protected void encode(final ChannelHandlerContext channelHandlerContext, final DiameterMessage diameterMessage, final ByteBuf byteBuf) throws Exception {
         // TODO: this is so dumb. We can do better.

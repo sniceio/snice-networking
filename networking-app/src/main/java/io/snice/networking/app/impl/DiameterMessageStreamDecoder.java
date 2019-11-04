@@ -5,8 +5,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.snice.buffer.Buffer;
 import io.snice.networking.codec.diameter.DiameterHeader;
-import io.snice.networking.codec.diameter.DiameterMessage;
-import io.snice.networking.codec.diameter.impl.DiameterParser;
 
 import java.util.List;
 
@@ -36,8 +34,9 @@ public class DiameterMessageStreamDecoder extends ByteToMessageDecoder {
             final DiameterHeader header = currentHeader;
             currentHeader = null;
             try {
-                final DiameterMessage diameter = DiameterParser.frame(header, avpBuffer.toReadableBuffer());
-                list.add(diameter);
+                throw new RuntimeException("testing the decoder 2 instead");
+                // final DiameterMessage diameter = DiameterParser.frame(header, avpBuffer.toReadableBuffer());
+                // list.add(diameter);
             } catch (final IndexOutOfBoundsException e) {
                 e.printStackTrace();
                 currentHeader = null;

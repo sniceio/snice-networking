@@ -28,7 +28,7 @@ public class DiameterMessageStreamDecoder2 extends ByteToMessageDecoder {
         bytebuf.readBytes(raw);
         final Buffer buffer = Buffer.of(raw);
         try {
-            list.add(DiameterParser.frame2(buffer));
+            list.add(DiameterParser.frame(buffer));
         } catch (final IndexOutOfBoundsException e) {
             e.printStackTrace();
         }

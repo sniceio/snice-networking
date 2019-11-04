@@ -62,9 +62,7 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
         network = NettyNetworkLayer.with(config.getNetworkInterfaces())
                 .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, serializationFactory, Optional.empty(), ctxs), Transport.udp)
                 .withHandler("diameter-codec-encoder", () -> new DiameterStreamEncoder(), Transport.tcp)
-                // .withHandler("diameter-codec-encoder", () -> new DiameterStreamEncoder2(), Transport.tcp)
-                // .withHandler("diameter-codec-encoder", () -> new DiameterStreamEncoder3(), Transport.tcp)
-                .withHandler("diameter-code-decoder", () -> new DiameterMessageStreamDecoder(), Transport.tcp)
+                .withHandler("diameter-code-decoder", () -> new DiameterMessageStreamDecoder2(), Transport.tcp)
                 .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, serializationFactory, Optional.empty(), ctxs), Transport.tcp)
                 .build();
         network.start();

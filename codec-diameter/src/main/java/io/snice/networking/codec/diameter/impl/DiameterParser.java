@@ -29,14 +29,13 @@ import java.util.Optional;
  */
 public class DiameterParser {
 
-    public static DiameterMessage frame2(final Buffer buffer) throws DiameterParseException {
+    public static DiameterMessage frame(final Buffer buffer) throws DiameterParseException {
         final ReadableBuffer readable = buffer.toReadableBuffer();
         final DiameterHeader header = frameHeader(readable);
 
         // don't need to do this. just keep going..
         final ReadableBuffer avps = readable.readBytes(header.getLength() - 20).toReadableBuffer();
 
-        // final int start = avps.getReaderIndex();
         final List<FramedAvp> list = new ArrayList<>(); // TODO: what's a sensible default?
 
         // certain AVPs that are used in almost all messages we want to keep
@@ -73,69 +72,6 @@ public class DiameterParser {
         }
         return new ImmutableDiameterAnswer(entireMsg, header, list, indexOfOrigHost, indexOfOrigRealm);
 
-
-    }
-
-    public static DiameterMessage frame(final ReadableBuffer buffer) throws DiameterParseException {
-        if (true)
-            return frame2(buffer);
-
-        final DiameterHeader header = frameHeader(buffer);
-
-        // the +20 because we have already consumed 20 bytes for the header but the length as stated
-        // in the diameter header actually includes these 20 bytes so...
-        if (header.getLength() > buffer.getReadableBytes() + 20) {
-            throw new DiameterParseException(20, "Not enough bytes in message to ensure out the full message");
-        }
-
-
-        final ReadableBuffer avps = buffer.readBytes(header.getLength() - 20).toReadableBuffer();
-        return frame(header, avps);
-    }
-
-    public static DiameterMessage frame(final DiameterHeader header, final ReadableBuffer avps) {
-        final int start = avps.getReaderIndex();
-        final List<FramedAvp> list = new ArrayList<>(); // TODO: what's a sensible default?
-
-        // certain AVPs that are used in almost all messages we want to keep
-        // track of since most applications will absolutely need them.
-        short indexOfOrigHost = -1;
-        short indexOfOrigRealm = -1;
-
-        while (avps.getReadableBytes() > 0) {
-            final int readerIndex = avps.getReaderIndex();
-            FramedAvp avp = FramedAvp.frame(avps);
-
-            if (OriginHost.CODE == avp.getCode()) {
-                indexOfOrigHost = (short) list.size();
-                avp = avp.ensure();
-            } else if (OriginRealm.CODE == avp.getCode()) {
-                indexOfOrigRealm = (short) list.size();
-                avp = avp.ensure();
-            }
-
-            list.add(avp);
-
-            // fail safe - if we are not making any progress
-            // then we need to bail out.
-            if (readerIndex == avps.getReaderIndex()) {
-                throw new DiameterParseException(readerIndex, "Seems like we are stuck parsing " +
-                        "AVPs for diameter message " + header.getCommandCode() + ". Bailing out");
-
-            }
-        }
-
-        // really need to make that composite buffer. For now, we'll go for correctness.
-        final Buffer avpBuffer = avps.slice(start, avps.getReaderIndex());
-        final Buffer headerBuffer = header.getBuffer();
-        final WritableBuffer writable = WritableBuffer.of(headerBuffer.capacity() + avpBuffer.capacity());
-        headerBuffer.writeTo(writable);
-        avpBuffer.writeTo(writable);
-        final Buffer entireMsg = writable.build();
-        if (header.isRequest()) {
-            return new ImmutableDiameterRequest(entireMsg, header, list, indexOfOrigHost, indexOfOrigRealm);
-        }
-        return new ImmutableDiameterAnswer(entireMsg, header, list, indexOfOrigHost, indexOfOrigRealm);
 
     }
 
