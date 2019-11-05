@@ -19,6 +19,9 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
 public interface SubscriberStatus extends Avp<Enumerated<SubscriberStatus.Code>> {
 
     int CODE = 1424;
+    
+    SubscriberStatus ServiceGranted0 = SubscriberStatus.of(0);
+    SubscriberStatus OperatorDeterminedBarring1 = SubscriberStatus.of(1);
 
     @Override
     default long getCode() {
@@ -30,9 +33,9 @@ public interface SubscriberStatus extends Avp<Enumerated<SubscriberStatus.Code>>
         buffer.write(getValue().getValue());
     }
 
-    static SubscriberStatus of(final SubscriberStatus.Code code) {
-        assertNotNull(code);
-        final SubscriberStatus.EnumeratedHolder enumerated = new SubscriberStatus.EnumeratedHolder(code.getCode(), Optional.of(code));
+    static SubscriberStatus of(final int code) {
+        final Optional<Code> c = Code.lookup(code);
+        final EnumeratedHolder enumerated = new EnumeratedHolder(code, c);
         final Avp<Enumerated> avp = Avp.ofType(Enumerated.class).withValue(enumerated).withAvpCode(CODE).build();
         return new DefaultSubscriberStatus(avp, enumerated);
     }

@@ -37,9 +37,9 @@ public class CapabilitiesExchangeTest extends DiameterTestBase {
 
     @Test
     public void testCreateCEA() {
-        final var cea = cer.createAnswer(ResultCode.DiameterSuccess).build();
+        final var cea = cer.createAnswer(ResultCode.DiameterSuccess2001).build();
         assertThat(cea.isCEA(), is(true));
-        assertThat(cea.getResultCode(), is(ResultCode.DiameterSuccess));
+        assertThat(cea.getResultCode(), is(ResultCode.DiameterSuccess2001));
         assertThat(cea.getOriginHost().getValue().asString(), is("seagull.node.epc.mnc001.mcc001.3gppnetwork.org"));
         assertThat(cea.getOriginRealm().getValue().asString(), is("epc.mnc001.mcc001.3gppnetwork.org"));
 

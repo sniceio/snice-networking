@@ -62,10 +62,6 @@ public class CodeConfig {
         this.appSettings = appSettings;
     }
 
-    /**
-     * @param avp
-     * @return a new {@link AvpCodeConfig} instance that can be used to render the liquid template.
-     */
     public Attributes createAvpConfig(final AvpPrimitive avp) {
 
         // annoying!
@@ -112,6 +108,12 @@ public class CodeConfig {
                 return e.getEnumName() + "_" + e.getEnumCode() + "(\"" + e.getEnumName() + "\", " + e.getEnumCode() + ")";
             }).collect(Collectors.toList());
             avpAttributes.put("enum_definition", enumList);
+
+            final List<String> staticVariables = enums.stream().map(e -> {
+                final String variableName = avpSettings.convert(e.getEnumName()) + e.getEnumCode();
+                return className + " " + variableName + " = " + className + ".of(" + e.getEnumCode() + ");";
+            }).collect(Collectors.toList());
+            avpAttributes.put("variable_definition", staticVariables);
 
             final List<String> enumSwitch = enums.stream().map(e -> {
                 final String fullName = e.getEnumName() + "_" + e.getEnumCode();

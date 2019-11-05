@@ -8,20 +8,29 @@ public interface OctetString extends DiameterType {
 
 
     static OctetString parse(final Buffer data) {
-        return new DefaultOctetString(data);
+        return new DefaultOctetString(data, false);
+    }
+
+    static OctetString parse(final Buffer data, final boolean isEncodedAsTBCD) {
+        return new DefaultOctetString(data, isEncodedAsTBCD);
     }
 
     String getValue();
 
     class DefaultOctetString implements OctetString {
+        private final boolean isEncodedAsTBCD;
         private final Buffer value;
 
-        private DefaultOctetString(final Buffer value) {
+        private DefaultOctetString(final Buffer value, final boolean isEncodedAsTBCD) {
             this.value = value;
+            this.isEncodedAsTBCD = isEncodedAsTBCD;
         }
 
         @Override
         public String getValue() {
+            if (isEncodedAsTBCD) {
+                return value.toTBCD();
+            }
             return value.toString();
         }
 

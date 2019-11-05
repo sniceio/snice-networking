@@ -5,11 +5,11 @@ import io.snice.buffer.WritableBuffer;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
+
 import io.snice.networking.codec.diameter.avp.impl.DiameterEnumeratedAvp;
 import io.snice.networking.codec.diameter.avp.type.Enumerated;
 
 import java.util.Optional;
-
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
 /**
@@ -18,10 +18,153 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
  */
 public interface ExperimentalResultCode extends Avp<Enumerated<ExperimentalResultCode.Code>> {
 
-    ExperimentalResultCode DiameterErrorUserUnknown = of(Code.DIAMETER_ERROR_USER_UNKNOWN_5001);
-
     int CODE = 298;
-
+    
+    ExperimentalResultCode DiameterFirstRegistration2001 = ExperimentalResultCode.of(2001);
+    ExperimentalResultCode DiameterSubsequentRegistration2002 = ExperimentalResultCode.of(2002);
+    ExperimentalResultCode DiameterUnregisteredService2003 = ExperimentalResultCode.of(2003);
+    ExperimentalResultCode DiameterSuccessServerNameNotStored2004 = ExperimentalResultCode.of(2004);
+    ExperimentalResultCode DiameterServerSelectionDeprecatedValue2005 = ExperimentalResultCode.of(2005);
+    ExperimentalResultCode DiameterPdpContextDeletionIndication2021 = ExperimentalResultCode.of(2021);
+    ExperimentalResultCode DiameterUserDataNotAvailable4100 = ExperimentalResultCode.of(4100);
+    ExperimentalResultCode DiameterPriorUpdateInProgress4101 = ExperimentalResultCode.of(4101);
+    ExperimentalResultCode DiameterErrorOutOfResources4121 = ExperimentalResultCode.of(4121);
+    ExperimentalResultCode DiameterPccBearerEvent4141 = ExperimentalResultCode.of(4141);
+    ExperimentalResultCode DiameterBearerEvent4142 = ExperimentalResultCode.of(4142);
+    ExperimentalResultCode DiameterAnGwFailed4143 = ExperimentalResultCode.of(4143);
+    ExperimentalResultCode DiameterPendingTransaction4144 = ExperimentalResultCode.of(4144);
+    ExperimentalResultCode DiameterAuthenticationDataUnavailable4181 = ExperimentalResultCode.of(4181);
+    ExperimentalResultCode DiameterErrorCamelSubscriptionPresent4182 = ExperimentalResultCode.of(4182);
+    ExperimentalResultCode DiameterErrorAbsentUser4201 = ExperimentalResultCode.of(4201);
+    ExperimentalResultCode DiameterErrorUnreachableUser4221 = ExperimentalResultCode.of(4221);
+    ExperimentalResultCode DiameterErrorSuspendedUser4222 = ExperimentalResultCode.of(4222);
+    ExperimentalResultCode DiameterErrorDetachedUser4223 = ExperimentalResultCode.of(4223);
+    ExperimentalResultCode DiameterErrorPositioningDenied4224 = ExperimentalResultCode.of(4224);
+    ExperimentalResultCode DiameterErrorPositioningFailed4225 = ExperimentalResultCode.of(4225);
+    ExperimentalResultCode DiameterErrorUnknownUnreachableLcsClient4226 = ExperimentalResultCode.of(4226);
+    ExperimentalResultCode DiameterErrorNoAvailablePolicyCountersLcsClient4241 = ExperimentalResultCode.of(4241);
+    ExperimentalResultCode RequestedServiceTemporarilyNotAuthorized4261 = ExperimentalResultCode.of(4261);
+    ExperimentalResultCode DiameterErrorUserUnknown5001 = ExperimentalResultCode.of(5001);
+    ExperimentalResultCode DiameterErrorIdentitiesDontMatch5002 = ExperimentalResultCode.of(5002);
+    ExperimentalResultCode DiameterErrorIdentityNotRegistered5003 = ExperimentalResultCode.of(5003);
+    ExperimentalResultCode DiameterErrorRoamingNotAllowed5004 = ExperimentalResultCode.of(5004);
+    ExperimentalResultCode DiameterErrorIdentityAlreadyRegistered5005 = ExperimentalResultCode.of(5005);
+    ExperimentalResultCode DiameterErrorAuthSchemeNotSupported5006 = ExperimentalResultCode.of(5006);
+    ExperimentalResultCode DiameterErrorInAssignmentType5007 = ExperimentalResultCode.of(5007);
+    ExperimentalResultCode DiameterErrorTooMuchData5008 = ExperimentalResultCode.of(5008);
+    ExperimentalResultCode DiameterErrorNotSupportedUserData5009 = ExperimentalResultCode.of(5009);
+    ExperimentalResultCode DiameterMissingUserId5010 = ExperimentalResultCode.of(5010);
+    ExperimentalResultCode DiameterErrorFeatureUnsupported5011 = ExperimentalResultCode.of(5011);
+    ExperimentalResultCode DiameterErrorServingNodeFeatureUnsupported5012 = ExperimentalResultCode.of(5012);
+    ExperimentalResultCode DiameterErrorUserNoWlanSubscription5041 = ExperimentalResultCode.of(5041);
+    ExperimentalResultCode DiameterErrorWApnUnusedByUser5042 = ExperimentalResultCode.of(5042);
+    ExperimentalResultCode DiameterErrorWDiameterErrorNoAccessIndependentSubscription5043 = ExperimentalResultCode.of(5043);
+    ExperimentalResultCode DiameterErrorUserNoWApnSubscription5044 = ExperimentalResultCode.of(5044);
+    ExperimentalResultCode DiameterErrorUnsuitableNetwork5045 = ExperimentalResultCode.of(5045);
+    ExperimentalResultCode InvalidServiceInformation5061 = ExperimentalResultCode.of(5061);
+    ExperimentalResultCode FilterRestrictions5062 = ExperimentalResultCode.of(5062);
+    ExperimentalResultCode RequestedServiceNotAuthorized5063 = ExperimentalResultCode.of(5063);
+    ExperimentalResultCode DuplicatedAfSession5064 = ExperimentalResultCode.of(5064);
+    ExperimentalResultCode IpCanSessionNotAvailable5065 = ExperimentalResultCode.of(5065);
+    ExperimentalResultCode UnauthorizedNonEmergencySession5066 = ExperimentalResultCode.of(5066);
+    ExperimentalResultCode UnauthorizedSponsoredDataConnectivity5067 = ExperimentalResultCode.of(5067);
+    ExperimentalResultCode TemporaryNetworkFailure5068 = ExperimentalResultCode.of(5068);
+    ExperimentalResultCode DiameterErrorUserDataNotRecognized5100 = ExperimentalResultCode.of(5100);
+    ExperimentalResultCode DiameterErrorOperationNotAllowed5101 = ExperimentalResultCode.of(5101);
+    ExperimentalResultCode DiameterErrorUserDataCannotBeRead5102 = ExperimentalResultCode.of(5102);
+    ExperimentalResultCode DiameterErrorUserDataCannotBeModified5103 = ExperimentalResultCode.of(5103);
+    ExperimentalResultCode DiameterErrorUserDataCannotBeNotified5104 = ExperimentalResultCode.of(5104);
+    ExperimentalResultCode DiameterErrorTransparentDataOutOfSync5105 = ExperimentalResultCode.of(5105);
+    ExperimentalResultCode DiameterErrorSubsDataAbsent5106 = ExperimentalResultCode.of(5106);
+    ExperimentalResultCode DiameterErrorNoSubscriptionToData5107 = ExperimentalResultCode.of(5107);
+    ExperimentalResultCode DiameterErrorDsaiNotAvailable5108 = ExperimentalResultCode.of(5108);
+    ExperimentalResultCode DiameterErrorStartIndication5120 = ExperimentalResultCode.of(5120);
+    ExperimentalResultCode DiameterErrorStopIndication5121 = ExperimentalResultCode.of(5121);
+    ExperimentalResultCode DiameterErrorUnknownMbmsBearerService5122 = ExperimentalResultCode.of(5122);
+    ExperimentalResultCode DiameterErrorServiceArea5123 = ExperimentalResultCode.of(5123);
+    ExperimentalResultCode DiameterErrorInitialParameters5140 = ExperimentalResultCode.of(5140);
+    ExperimentalResultCode DiameterErrorTriggerEvent5141 = ExperimentalResultCode.of(5141);
+    ExperimentalResultCode DiameterPccRuleEvent5142 = ExperimentalResultCode.of(5142);
+    ExperimentalResultCode DiameterErrorBearerNotAuthorized5143 = ExperimentalResultCode.of(5143);
+    ExperimentalResultCode DiameterErrorTrafficMappingInfoRejected5144 = ExperimentalResultCode.of(5144);
+    ExperimentalResultCode DiameterQosRuleEvent5145 = ExperimentalResultCode.of(5145);
+    ExperimentalResultCode DiameterErrorTrafficMappingInfoRejected5146 = ExperimentalResultCode.of(5146);
+    ExperimentalResultCode DiameterErrorConflictingRequest5147 = ExperimentalResultCode.of(5147);
+    ExperimentalResultCode DiameterAdcRuleEvent5148 = ExperimentalResultCode.of(5148);
+    ExperimentalResultCode DiameterErrorNbifomNotAuthorized5149 = ExperimentalResultCode.of(5149);
+    ExperimentalResultCode DiameterErrorImpiUnknown5401 = ExperimentalResultCode.of(5401);
+    ExperimentalResultCode DiameterErrorNotAuthorized5402 = ExperimentalResultCode.of(5402);
+    ExperimentalResultCode DiameterErrorTransactionIdentifierInvalid5403 = ExperimentalResultCode.of(5403);
+    ExperimentalResultCode DiameterErrorUnknownEpsSubscription5420 = ExperimentalResultCode.of(5420);
+    ExperimentalResultCode DiameterErrorRatNotAllowed5421 = ExperimentalResultCode.of(5421);
+    ExperimentalResultCode DiameterErrorEquipmentUnknown5422 = ExperimentalResultCode.of(5422);
+    ExperimentalResultCode DiameterErrorUnknownServingNode5423 = ExperimentalResultCode.of(5423);
+    ExperimentalResultCode DiameterErrorUserNoNon3gppSubscription5450 = ExperimentalResultCode.of(5450);
+    ExperimentalResultCode DiameterErrorUserNoApnSubscription5451 = ExperimentalResultCode.of(5451);
+    ExperimentalResultCode DiameterErrorRatTypeNotAllowed5452 = ExperimentalResultCode.of(5452);
+    ExperimentalResultCode DiameterErrorLateOverlappingRequest5453 = ExperimentalResultCode.of(5453);
+    ExperimentalResultCode DiameterErrorTimedOutRequest5454 = ExperimentalResultCode.of(5454);
+    ExperimentalResultCode DiameterErrorSubsession5470 = ExperimentalResultCode.of(5470);
+    ExperimentalResultCode DiameterErrorOngoingSessionEstablishment5471 = ExperimentalResultCode.of(5471);
+    ExperimentalResultCode DiameterErrorUnauthorizedRequestingNetwork5490 = ExperimentalResultCode.of(5490);
+    ExperimentalResultCode DiameterErrorUnauthorizedRequestingEntity5510 = ExperimentalResultCode.of(5510);
+    ExperimentalResultCode DiameterErrorUnauthorizedService5511 = ExperimentalResultCode.of(5511);
+    ExperimentalResultCode DiameterErrorRequestedRangeIsNotAllowed5512 = ExperimentalResultCode.of(5512);
+    ExperimentalResultCode DiameterErrorConfigurationEventStorageNotSuccessful5513 = ExperimentalResultCode.of(5513);
+    ExperimentalResultCode DiameterErrorConfigurationEventNonExistant5514 = ExperimentalResultCode.of(5514);
+    ExperimentalResultCode DiameterErrorScefReferenceIdUnknown5515 = ExperimentalResultCode.of(5515);
+    ExperimentalResultCode DiameterErrorInvalidSmeAddress5530 = ExperimentalResultCode.of(5530);
+    ExperimentalResultCode DiameterErrorScCongestion5531 = ExperimentalResultCode.of(5531);
+    ExperimentalResultCode DiameterErrorSmProtocol5532 = ExperimentalResultCode.of(5532);
+    ExperimentalResultCode DiameterErrorTriggerReplaceFailure5533 = ExperimentalResultCode.of(5533);
+    ExperimentalResultCode DiameterErrorTriggerRecallFailure5534 = ExperimentalResultCode.of(5534);
+    ExperimentalResultCode DiameterErrorOriginalMessageNotPending5535 = ExperimentalResultCode.of(5535);
+    ExperimentalResultCode DiameterErrorAbsentUser5550 = ExperimentalResultCode.of(5550);
+    ExperimentalResultCode DiameterErrorUserBusyForMtSms5551 = ExperimentalResultCode.of(5551);
+    ExperimentalResultCode DiameterErrorFacilityNotSupported5552 = ExperimentalResultCode.of(5552);
+    ExperimentalResultCode DiameterErrorIllegalUser5553 = ExperimentalResultCode.of(5553);
+    ExperimentalResultCode DiameterErrorIllegalEquipment5554 = ExperimentalResultCode.of(5554);
+    ExperimentalResultCode DiameterErrorSmDeliveryFailure5555 = ExperimentalResultCode.of(5555);
+    ExperimentalResultCode DiameterErrorServiceNotSubscribed5556 = ExperimentalResultCode.of(5556);
+    ExperimentalResultCode DiameterErrorServiceBarred5557 = ExperimentalResultCode.of(5557);
+    ExperimentalResultCode DiameterErrorMwdListFull5558 = ExperimentalResultCode.of(5558);
+    ExperimentalResultCode DiameterErrorUnknownPolicyCounters5570 = ExperimentalResultCode.of(5570);
+    ExperimentalResultCode DiameterErrorOriginAluidUnknown5590 = ExperimentalResultCode.of(5590);
+    ExperimentalResultCode DiameterErrorTargetAluidUnknown5591 = ExperimentalResultCode.of(5591);
+    ExperimentalResultCode DiameterErrorPfidUnknown5592 = ExperimentalResultCode.of(5592);
+    ExperimentalResultCode DiameterErrorAppRegisterReject5593 = ExperimentalResultCode.of(5593);
+    ExperimentalResultCode DiameterErrorProseMapRequestDisallowed5594 = ExperimentalResultCode.of(5594);
+    ExperimentalResultCode DiameterErrorMapRequestReject5595 = ExperimentalResultCode.of(5595);
+    ExperimentalResultCode DiameterErrorRequestingRpauidUnknown5596 = ExperimentalResultCode.of(5596);
+    ExperimentalResultCode DiameterErrorUnknownOrInvalidTargetSet5597 = ExperimentalResultCode.of(5597);
+    ExperimentalResultCode DiameterErrorMissingApplicationData5598 = ExperimentalResultCode.of(5598);
+    ExperimentalResultCode DiameterErrorAuthorizationReject5599 = ExperimentalResultCode.of(5599);
+    ExperimentalResultCode DiameterErrorDiscoveryNotPermitted5600 = ExperimentalResultCode.of(5600);
+    ExperimentalResultCode DiameterErrorTargetRpauidUnknown5601 = ExperimentalResultCode.of(5601);
+    ExperimentalResultCode DiameterErrorInvalidApplicationData5602 = ExperimentalResultCode.of(5602);
+    ExperimentalResultCode DiameterErrorUnknownProseSubscription5610 = ExperimentalResultCode.of(5610);
+    ExperimentalResultCode ProseNotAllowed5611 = ExperimentalResultCode.of(5611);
+    ExperimentalResultCode DiameterErrorUeLocationUnknown5612 = ExperimentalResultCode.of(5612);
+    ExperimentalResultCode DiameterErrorNoAssociatedDiscoveryFilter5630 = ExperimentalResultCode.of(5630);
+    ExperimentalResultCode DiameterErrorAnnouncingUnauthorizedInPlmn5631 = ExperimentalResultCode.of(5631);
+    ExperimentalResultCode DiameterErrorInvalidApplicationCode5632 = ExperimentalResultCode.of(5632);
+    ExperimentalResultCode DiameterErrorProximityUnauthorized5633 = ExperimentalResultCode.of(5633);
+    ExperimentalResultCode DiameterErrorProximityRejected5634 = ExperimentalResultCode.of(5634);
+    ExperimentalResultCode DiameterErrorNoProximityRequest5635 = ExperimentalResultCode.of(5635);
+    ExperimentalResultCode DiameterErrorUnauthorizedServiceInThisPlmn5636 = ExperimentalResultCode.of(5636);
+    ExperimentalResultCode DiameterErrorProximityCancelled5637 = ExperimentalResultCode.of(5637);
+    ExperimentalResultCode DiameterErrorInvalidTargetPduid5638 = ExperimentalResultCode.of(5638);
+    ExperimentalResultCode DiameterErrorInvalidTargetRpauid5639 = ExperimentalResultCode.of(5639);
+    ExperimentalResultCode DiameterErrorNoAssociatedRestrictedCode5640 = ExperimentalResultCode.of(5640);
+    ExperimentalResultCode DiameterErrorInvalidDiscoveryType5641 = ExperimentalResultCode.of(5641);
+    ExperimentalResultCode DiameterErrorRequestedLocationNotServed5650 = ExperimentalResultCode.of(5650);
+    ExperimentalResultCode DiameterErrorInvalidEpsBearer5651 = ExperimentalResultCode.of(5651);
+    ExperimentalResultCode DiameterErrorNiddConfigurationNotAvailable5652 = ExperimentalResultCode.of(5652);
+    ExperimentalResultCode DiameterErrorUserTemporarilyUnreachable5653 = ExperimentalResultCode.of(5653);
+    ExperimentalResultCode DiameterErrorUnknkownData5670 = ExperimentalResultCode.of(5670);
+    ExperimentalResultCode DiameterErrorRequiredKeyNotProvided5671 = ExperimentalResultCode.of(5671);
+    ExperimentalResultCode DiameterErrorUnknownV2xSubscription5690 = ExperimentalResultCode.of(5690);
+    ExperimentalResultCode DiameterErrorV2xNotAllowed5691 = ExperimentalResultCode.of(5691);
 
     @Override
     default long getCode() {
@@ -33,9 +176,9 @@ public interface ExperimentalResultCode extends Avp<Enumerated<ExperimentalResul
         buffer.write(getValue().getValue());
     }
 
-    static ExperimentalResultCode of(final ExperimentalResultCode.Code code) {
-        assertNotNull(code);
-        final ExperimentalResultCode.EnumeratedHolder enumerated = new ExperimentalResultCode.EnumeratedHolder(code.getCode(), Optional.of(code));
+    static ExperimentalResultCode of(final int code) {
+        final Optional<Code> c = Code.lookup(code);
+        final EnumeratedHolder enumerated = new EnumeratedHolder(code, c);
         final Avp<Enumerated> avp = Avp.ofType(Enumerated.class).withValue(enumerated).withAvpCode(CODE).build();
         return new DefaultExperimentalResultCode(avp, enumerated);
     }

@@ -26,7 +26,6 @@ public interface Msisdn extends Avp<OctetString> {
         return this;
     }
 
-
     static Msisdn parse(final FramedAvp raw) {
         if (CODE != raw.getCode()) {
             throw new AvpParseException("AVP Code mismatch - unable to parse the AVP into a " + Msisdn.class.getName());
@@ -36,13 +35,7 @@ public interface Msisdn extends Avp<OctetString> {
 
     class DefaultMsisdn extends DiameterOctetStringAvp implements Msisdn {
         private DefaultMsisdn(final FramedAvp raw) {
-            super(raw);
+            super(raw, true);
         }
-
-        @Override
-        public String toString() {
-            return getData().toTBCD();
-        }
-
     }
 }

@@ -18,6 +18,8 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
 public interface {{java.class.name}} extends Avp<{{avp.type.interface}}<{{java.class.name}}.Code>> {
 
     int CODE = {{avp.code}};
+    {% for variable in avp.variable_definition %}
+    {{ variable }}{% endfor %}
 
     @Override
     default long getCode() {
@@ -29,9 +31,9 @@ public interface {{java.class.name}} extends Avp<{{avp.type.interface}}<{{java.c
         buffer.write(getValue().getValue());
     }
 
-    static {{java.class.name}} of(final {{java.class.name}}.Code code) {
-        assertNotNull(code);
-        final {{java.class.name}}.EnumeratedHolder enumerated = new {{java.class.name}}.EnumeratedHolder(code.getCode(), Optional.of(code));
+    static {{java.class.name}} of(final int code) {
+        final Optional<Code> c = Code.lookup(code);
+        final EnumeratedHolder enumerated = new EnumeratedHolder(code, c);
         final Avp<Enumerated> avp = Avp.ofType(Enumerated.class).withValue(enumerated).withAvpCode(CODE).build();
         return new Default{{java.class.name}}(avp, enumerated);
     }

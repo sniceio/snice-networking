@@ -24,19 +24,20 @@ package:
 
 avp:
     include:
-        # - User-Name
-        # - Session-Id
-        # - Experimental-Result-Code
+        - Result-Code
+        - User-Name
+        - Session-Id
+        - Experimental-Result-Code
         - Subscription-Data
         - Subscriber-Status
         - MSISDN
-        # - Result-Code
-        # - Origin-Host
-        # - Origin-Realm
-        # - Destination-Host
-        # - Destination-Realm
-        # - Vendor-Id
-        # - Acct-Application-Id
-        # - Auth-Application-Id
-        # - Vendor-Specific-Application-Id
-        # - Redirect-Host-Usage
+        - Result-Code
+        - Origin-Host
+        - Origin-Realm
+        - Destination-Host
+        - Destination-Realm
+        - Vendor-Id
+        - Acct-Application-Id
+        - Auth-Application-Id
+        - Vendor-Specific-Application-Id
+        - Redirect-Host-Usage

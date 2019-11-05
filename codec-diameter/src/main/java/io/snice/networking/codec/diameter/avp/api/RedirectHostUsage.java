@@ -1,28 +1,51 @@
 package io.snice.networking.codec.diameter.avp.api;
 
 import io.snice.buffer.Buffer;
+import io.snice.buffer.WritableBuffer;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
+
 import io.snice.networking.codec.diameter.avp.impl.DiameterEnumeratedAvp;
 import io.snice.networking.codec.diameter.avp.type.Enumerated;
 
 import java.util.Optional;
+import static io.snice.preconditions.PreConditions.assertNotNull;
 
 /**
  * 
  nisse
  */
-public interface RedirectHostUsage extends Avp<Enumerated<RedirectHostUsage.RedirectHostUsageEnum>> {
+public interface RedirectHostUsage extends Avp<Enumerated<RedirectHostUsage.Code>> {
 
     int CODE = 261;
+    
+    RedirectHostUsage DontCare0 = RedirectHostUsage.of(0);
+    RedirectHostUsage AllSession1 = RedirectHostUsage.of(1);
+    RedirectHostUsage AllRealm2 = RedirectHostUsage.of(2);
+    RedirectHostUsage RealmAndApplication3 = RedirectHostUsage.of(3);
+    RedirectHostUsage AllApplication4 = RedirectHostUsage.of(4);
+    RedirectHostUsage AllHost5 = RedirectHostUsage.of(5);
+    RedirectHostUsage AllUser6 = RedirectHostUsage.of(6);
 
     @Override
     default long getCode() {
         return CODE;
     }
 
-    enum RedirectHostUsageEnum { 
+    @Override
+    default void writeValue(final WritableBuffer buffer) {
+        buffer.write(getValue().getValue());
+    }
+
+    static RedirectHostUsage of(final int code) {
+        final Optional<Code> c = Code.lookup(code);
+        final EnumeratedHolder enumerated = new EnumeratedHolder(code, c);
+        final Avp<Enumerated> avp = Avp.ofType(Enumerated.class).withValue(enumerated).withAvpCode(CODE).build();
+        return new DefaultRedirectHostUsage(avp, enumerated);
+    }
+
+    enum Code { 
         Dont_Care_0("Dont_Care", 0),
         All_Session_1("All_Session", 1),
         All_Realm_2("All_Realm", 2),
@@ -34,12 +57,16 @@ public interface RedirectHostUsage extends Avp<Enumerated<RedirectHostUsage.Redi
         private final String name;
         private final int code;
 
-        RedirectHostUsageEnum(final String name, final int code) {
+        Code(final String name, final int code) {
             this.name = name;
             this.code = code;
         }
 
-        static Optional<RedirectHostUsageEnum> lookup(final int code) {
+        public int getCode() {
+            return code;
+        }
+
+        static Optional<Code> lookup(final int code) {
             switch (code) { 
                 case 0: return Optional.of(Dont_Care_0);
                 case 1: return Optional.of(All_Session_1);
@@ -54,22 +81,22 @@ public interface RedirectHostUsage extends Avp<Enumerated<RedirectHostUsage.Redi
         }
     }
 
-    default Optional<RedirectHostUsageEnum> getAsEnum() {
+    default Optional<Code> getAsEnum() {
         return getValue().getAsEnum();
     }
 
     static RedirectHostUsage parse(final FramedAvp raw) {
         if (CODE != raw.getCode()) {
-            throw new AvpParseException("AVP Code mismatch - unable to ensure the AVP into a " + RedirectHostUsage.class.getName());
+            throw new AvpParseException("AVP Code mismatch - unable to parse the AVP into a " + RedirectHostUsage.class.getName());
         }
         final Buffer data = raw.getData();
         final int value = data.getInt(0);
-        final Optional<RedirectHostUsageEnum> e = RedirectHostUsageEnum.lookup(value);
+        final Optional<Code> e = Code.lookup(value);
         final EnumeratedHolder holder = new EnumeratedHolder(value, e);
         return new DefaultRedirectHostUsage(raw, holder);
     }
 
-    class DefaultRedirectHostUsage extends DiameterEnumeratedAvp<RedirectHostUsageEnum> implements RedirectHostUsage {
+    class DefaultRedirectHostUsage extends DiameterEnumeratedAvp<Code> implements RedirectHostUsage {
         private DefaultRedirectHostUsage(final FramedAvp raw, final EnumeratedHolder value) {
             super(raw, value);
         }
@@ -78,18 +105,18 @@ public interface RedirectHostUsage extends Avp<Enumerated<RedirectHostUsage.Redi
     /**
      * Ah! Must be a better way. I ran out of steam - getting late so it is what it is.
      */
-    class EnumeratedHolder implements Enumerated<RedirectHostUsageEnum> {
+    class EnumeratedHolder implements Enumerated<Code> {
 
         private final int code;
-        private final Optional<RedirectHostUsageEnum> e;
+        private final Optional<Code> e;
 
-        private EnumeratedHolder(final int code, final Optional<RedirectHostUsageEnum> e) {
+        private EnumeratedHolder(final int code, final Optional<Code> e) {
             this.code = code;
             this.e = e;
         }
 
         @Override
-        public Optional<RedirectHostUsageEnum> getAsEnum() {
+        public Optional<Code> getAsEnum() {
             return e;
         }
 

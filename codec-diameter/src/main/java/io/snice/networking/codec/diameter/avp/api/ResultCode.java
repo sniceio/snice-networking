@@ -2,16 +2,14 @@ package io.snice.networking.codec.diameter.avp.api;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.WritableBuffer;
-import io.snice.networking.codec.diameter.DiameterException;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
+
 import io.snice.networking.codec.diameter.avp.impl.DiameterEnumeratedAvp;
 import io.snice.networking.codec.diameter.avp.type.Enumerated;
 
-import java.util.Objects;
 import java.util.Optional;
-
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
 /**
@@ -20,9 +18,82 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
  */
 public interface ResultCode extends Avp<Enumerated<ResultCode.Code>> {
 
-    ResultCode DiameterSuccess = of(Code.DIAMETER_SUCCESS_2001);
-
     int CODE = 268;
+    
+    ResultCode DiameterMultiRoundAuth1001 = ResultCode.of(1001);
+    ResultCode DiameterSuccess2001 = ResultCode.of(2001);
+    ResultCode DiameterLimitedSuccess2002 = ResultCode.of(2002);
+    ResultCode DiameterFirstRegistration2003 = ResultCode.of(2003);
+    ResultCode DiameterSubsequentRegistration2004 = ResultCode.of(2004);
+    ResultCode DiameterUnregisteredService2005 = ResultCode.of(2005);
+    ResultCode DiameterSuccessServerNameNotStored2006 = ResultCode.of(2006);
+    ResultCode DiameterServerSelection2007 = ResultCode.of(2007);
+    ResultCode DiameterSuccessAuthSentServerNotStored2008 = ResultCode.of(2008);
+    ResultCode DiameterSuccessRelocateHa2009 = ResultCode.of(2009);
+    ResultCode DiameterCommandUnsupported3001 = ResultCode.of(3001);
+    ResultCode DiameterUnableToDeliver3002 = ResultCode.of(3002);
+    ResultCode DiameterRealmNotServed3003 = ResultCode.of(3003);
+    ResultCode DiameterTooBusy3004 = ResultCode.of(3004);
+    ResultCode DiameterLoopDetected3005 = ResultCode.of(3005);
+    ResultCode DiameterRedirectIndication3006 = ResultCode.of(3006);
+    ResultCode DiameterApplicationUnsupported3007 = ResultCode.of(3007);
+    ResultCode DiameterInvalidHdrBits3008 = ResultCode.of(3008);
+    ResultCode DiameterInvalidAvpBits3009 = ResultCode.of(3009);
+    ResultCode DiameterUnknownPeer3010 = ResultCode.of(3010);
+    ResultCode DiameterRealmRedirectIndication3011 = ResultCode.of(3011);
+    ResultCode DiameterAuthenticationRejected4001 = ResultCode.of(4001);
+    ResultCode DiameterOutOfSpace4002 = ResultCode.of(4002);
+    ResultCode DiameterElectionLost4003 = ResultCode.of(4003);
+    ResultCode DiameterErrorMipReplyFailure4005 = ResultCode.of(4005);
+    ResultCode DiameterErrorHaNotAvailable4006 = ResultCode.of(4006);
+    ResultCode DiameterErrorBadKey4007 = ResultCode.of(4007);
+    ResultCode DiameterErrorMipFilterNotSupported4008 = ResultCode.of(4008);
+    ResultCode DiameterEndUserServiceDenied4010 = ResultCode.of(4010);
+    ResultCode DiameterCreditControlNotApplicable4011 = ResultCode.of(4011);
+    ResultCode DiameterCreditLimitReached4012 = ResultCode.of(4012);
+    ResultCode DiameterUserNameRequired4013 = ResultCode.of(4013);
+    ResultCode ResourceFailure4014 = ResultCode.of(4014);
+    ResultCode DiameterEndUserServiceDenied4241 = ResultCode.of(4241);
+    ResultCode DiameterAvpUnsupported5001 = ResultCode.of(5001);
+    ResultCode DiameterUnknownSessionId5002 = ResultCode.of(5002);
+    ResultCode DiameterAuthorizationRejected5003 = ResultCode.of(5003);
+    ResultCode DiameterInvalidAvpValue5004 = ResultCode.of(5004);
+    ResultCode DiameterMissingAvp5005 = ResultCode.of(5005);
+    ResultCode DiameterResourcesExceeded5006 = ResultCode.of(5006);
+    ResultCode DiameterContradictingAvps5007 = ResultCode.of(5007);
+    ResultCode DiameterAvpNotAllowed5008 = ResultCode.of(5008);
+    ResultCode DiameterAvpOccursTooManyTimes5009 = ResultCode.of(5009);
+    ResultCode DiameterNoCommonApplication5010 = ResultCode.of(5010);
+    ResultCode DiameterUnsupportedVersion5011 = ResultCode.of(5011);
+    ResultCode DiameterUnableToComply5012 = ResultCode.of(5012);
+    ResultCode DiameterInvalidBitInHeader5013 = ResultCode.of(5013);
+    ResultCode DiameterInvalidAvpLength5014 = ResultCode.of(5014);
+    ResultCode DiameterInvalidMessageLength5015 = ResultCode.of(5015);
+    ResultCode DiameterInvalidAvpBitCombo5016 = ResultCode.of(5016);
+    ResultCode DiameterNoCommonSecurity5017 = ResultCode.of(5017);
+    ResultCode DiameterRadiusAvpUntranslatable5018 = ResultCode.of(5018);
+    ResultCode DiameterErrorNoForeignHaService5024 = ResultCode.of(5024);
+    ResultCode DiameterErrorEndToEndMipKeyEncryption5025 = ResultCode.of(5025);
+    ResultCode DiameterUserUnknown5030 = ResultCode.of(5030);
+    ResultCode DiameterRatingFailed5031 = ResultCode.of(5031);
+    ResultCode DiameterErrorUserUnknown5032 = ResultCode.of(5032);
+    ResultCode DiameterErrorIdentitiesDontMatch5033 = ResultCode.of(5033);
+    ResultCode DiameterErrorIdentityNotRegistered5034 = ResultCode.of(5034);
+    ResultCode DiameterErrorRoamingNotAllowed5035 = ResultCode.of(5035);
+    ResultCode DiameterErrorIdentityAlreadyRegistered5036 = ResultCode.of(5036);
+    ResultCode DiameterErrorAuthSchemeNotSupported5037 = ResultCode.of(5037);
+    ResultCode DiameterErrorInAssignmentType5038 = ResultCode.of(5038);
+    ResultCode DiameterErrorTooMuchData5039 = ResultCode.of(5039);
+    ResultCode DiameterErrorNotSupportedUserData5040 = ResultCode.of(5040);
+    ResultCode DiameterErrorMip6AuthMode5041 = ResultCode.of(5041);
+    ResultCode UnknownBindingTemplateName5042 = ResultCode.of(5042);
+    ResultCode BindingFailure5043 = ResultCode.of(5043);
+    ResultCode MaxBindingsSetFailure5044 = ResultCode.of(5044);
+    ResultCode MaximumBindingsReachedForEndpoint5045 = ResultCode.of(5045);
+    ResultCode SessionExists5046 = ResultCode.of(5046);
+    ResultCode InsufficientClassifiers5047 = ResultCode.of(5047);
+    ResultCode DiameterErrorEapCodeUnknown5048 = ResultCode.of(5048);
+    ResultCode DiameterEndUserNotFound5241 = ResultCode.of(5241);
 
     @Override
     default long getCode() {
@@ -34,14 +105,14 @@ public interface ResultCode extends Avp<Enumerated<ResultCode.Code>> {
         buffer.write(getValue().getValue());
     }
 
-    static ResultCode of(final Code code) {
-        assertNotNull(code);
-        final EnumeratedHolder enumerated = new EnumeratedHolder(code.getCode(), Optional.of(code));
+    static ResultCode of(final int code) {
+        final Optional<Code> c = Code.lookup(code);
+        final EnumeratedHolder enumerated = new EnumeratedHolder(code, c);
         final Avp<Enumerated> avp = Avp.ofType(Enumerated.class).withValue(enumerated).withAvpCode(CODE).build();
         return new DefaultResultCode(avp, enumerated);
     }
 
-    enum Code {
+    enum Code { 
         DIAMETER_MULTI_ROUND_AUTH_1001("DIAMETER_MULTI_ROUND_AUTH", 1001),
         DIAMETER_SUCCESS_2001("DIAMETER_SUCCESS", 2001),
         DIAMETER_LIMITED_SUCCESS_2002("DIAMETER_LIMITED_SUCCESS", 2002),
@@ -215,12 +286,9 @@ public interface ResultCode extends Avp<Enumerated<ResultCode.Code>> {
         return getValue().getAsEnum();
     }
 
-    // TODO: will change this to use the ResultCode classes instead of creating a new one every time.
-    // the problem is that we want to use an Enum (or do we actually care?) and an enum cannot extend
-    // or implement an interface.
     static ResultCode parse(final FramedAvp raw) {
         if (CODE != raw.getCode()) {
-            throw new AvpParseException("AVP Code mismatch - unable to ensure the AVP into a " + ResultCode.class.getName());
+            throw new AvpParseException("AVP Code mismatch - unable to parse the AVP into a " + ResultCode.class.getName());
         }
         final Buffer data = raw.getData();
         final int value = data.getInt(0);
@@ -243,10 +311,6 @@ public interface ResultCode extends Avp<Enumerated<ResultCode.Code>> {
         private final int code;
         private final Optional<Code> e;
 
-        private EnumeratedHolder(final ResultCode.Code code) {
-            this(code.getCode(), Optional.of(code));
-        }
-
         private EnumeratedHolder(final int code, final Optional<Code> e) {
             this.code = code;
             this.e = e;
@@ -260,19 +324,6 @@ public interface ResultCode extends Avp<Enumerated<ResultCode.Code>> {
         @Override
         public int getValue() {
             return code;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            final EnumeratedHolder that = (EnumeratedHolder) o;
-            return code == that.code;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(code);
         }
     }
 

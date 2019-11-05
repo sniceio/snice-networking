@@ -45,7 +45,7 @@ public class TestUpdateLocation extends DiameterTestBase {
         // TODO: will redo the result codes at some point to only have fixed classes
         // that are essentially used as enums
         final var resultCode = ula.getResultCode();
-        assertThat(resultCode.getAsEnum().get(), is(ResultCode.DiameterSuccess.getAsEnum().get()));
+        assertThat(resultCode.getAsEnum().get(), is(ResultCode.DiameterSuccess2001.getAsEnum().get()));
 
         final var subscriptionData = (SubscriptionData) ula.getAvp(SubscriptionData.CODE).get().ensure();
 
@@ -53,7 +53,7 @@ public class TestUpdateLocation extends DiameterTestBase {
         assertThat(subscriberStatus.getAsEnum().get(), is(SubscriberStatus.Code.SERVICE_GRANTED_0));
 
         final var msisdn = (Msisdn) subscriptionData.getValue().getFramedAvp(Msisdn.CODE).get().ensure();
-        assertThat(msisdn.toString(), is("43939393939393930303"));
+        assertThat(msisdn.getValue().getValue(), is("43939393939393930303"));
         assertThat(msisdn.getPadding(), is(2));
     }
 

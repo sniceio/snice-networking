@@ -19,6 +19,6 @@ public class OctetStringTest extends DiameterTest {
         // consideration the underlying encoding... Or, do we do this when parsing?
         // probably not because we want to keep the formatting as we got it over the
         // wire.
-        assertThat(msisdn.toString(), is("43939393939393930303"));
+        assertThat(msisdn.getValue().getValue(), is("43939393939393930303"));
     }
 }
