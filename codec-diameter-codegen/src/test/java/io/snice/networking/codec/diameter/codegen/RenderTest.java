@@ -25,7 +25,8 @@ public class RenderTest extends CodeGenTestBase {
         // final String rendered = renderer.renderAvp("User-Name");
         // final String rendered = renderer.renderAvp("Redirect-Host-Usage");
         // final String rendered = renderer.renderAvp("Result-Code");
-        final String rendered = renderer.renderAvp("Result-Code");
+        // final String rendered = renderer.renderAvp("Result-Code");
+        final String rendered = renderer.renderAvp("Subscription-Data");
         System.out.println(rendered);
     }
 }

@@ -8,7 +8,6 @@ public interface OctetString extends DiameterType {
 
 
     static OctetString parse(final Buffer data) {
-        // TODO: this is not really correct. Will fix later.
         return new DefaultOctetString(data);
     }
 
@@ -28,7 +27,6 @@ public interface OctetString extends DiameterType {
 
         @Override
         public int size() {
-            System.err.println("Size of OctetString: " + value.capacity());
             return value.capacity();
         }
 

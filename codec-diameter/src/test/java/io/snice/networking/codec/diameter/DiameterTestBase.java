@@ -39,6 +39,7 @@ public class DiameterTestBase {
             new RawAvpHolder("AVP_3GPP_SGSN_MCC_MNC.raw", 18, 17, Optional.of(10415L), true, false, false),
             new RawAvpHolder("AVP_Framed_IP_Address.raw", 8, 12, Optional.empty(), false, true, false),
             new RawAvpHolder("AVP_PDN_Connection_ID.raw", 1065, 13, Optional.of(10415L), true, false, false),
+            new RawAvpHolder("AVP_MSISDN.raw", 701, 22, Optional.of(10415L), true, true, false),
     };
 
     /**
@@ -63,7 +64,10 @@ public class DiameterTestBase {
             new RawDiameterMessageHolder("012_diameter_credit_control_answer.raw", 220, false, true, false, false, 272, 16777238L, 0x12681e59, 0x0636af14, 7),
             new RawDiameterMessageHolder("013_diameter_device_watchdog_request.raw", 112, true, false, false, false, 280, 0L, 0x12681e5b, 0x0636af14, 2),
             new RawDiameterMessageHolder("014_diameter_device_watchdog_answer.raw", 124, false, false, false, false, 280, 0L, 0x12681e5b, 0x0636af14, 3),
-            new RawDiameterMessageHolder("capabilities_exchange_request.raw", 232, true, false, false, false, 257, 0L, 0x0098f24d, 0x013188cd, 7)
+            new RawDiameterMessageHolder("capabilities_exchange_request.raw", 232, true, false, false, false, 257, 0L, 0x0098f24d, 0x013188cd, 7),
+            new RawDiameterMessageHolder("capabilities_exchange_answer.raw", 212, false, false, false, false, 257, 0L, 0x0098f24d, 0x013188cd, 10),
+            new RawDiameterMessageHolder("ulr.raw", 360, true, true, false, false, 316, 16777251L, 0x0098f24e, 0x013188ce, 11),
+            new RawDiameterMessageHolder("ula.raw", 984, false, true, false, false, 316, 16777251L, 0x0098f24e, 0x013188ce, 7)
     };
 
     /**

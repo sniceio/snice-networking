@@ -18,16 +18,7 @@ public class IMSIImpl extends BaseTLIV implements IMSI {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < value.capacity(); ++i) {
-            final var b = value.getByte(i);
-            final int i1 = (b & 0xF0) >> 4;
-            final int i2 = b & 0x0F;
-            sb.append(i2);
-            sb.append(i1);
-        }
-
-        return sb.toString();
+        return value.toTBCD();
     }
 
 }

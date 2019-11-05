@@ -16,6 +16,7 @@ public class CodeGenTest {
 
         final CodeConfig config = CodeConfig.of().build();
         final Renderer renderer = new Renderer(config, collector);
-        renderer.renderAvp("Session-Id");
+        // renderer.renderAvp("Session-Id");
+        renderer.renderAvp("Subscription-Data");
     }
 }

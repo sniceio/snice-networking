@@ -2,6 +2,7 @@ package io.snice.networking.codec.diameter.avp.api;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.WritableBuffer;
+import io.snice.networking.codec.diameter.DiameterException;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
@@ -214,6 +215,9 @@ public interface ResultCode extends Avp<Enumerated<ResultCode.Code>> {
         return getValue().getAsEnum();
     }
 
+    // TODO: will change this to use the ResultCode classes instead of creating a new one every time.
+    // the problem is that we want to use an Enum (or do we actually care?) and an enum cannot extend
+    // or implement an interface.
     static ResultCode parse(final FramedAvp raw) {
         if (CODE != raw.getCode()) {
             throw new AvpParseException("AVP Code mismatch - unable to ensure the AVP into a " + ResultCode.class.getName());

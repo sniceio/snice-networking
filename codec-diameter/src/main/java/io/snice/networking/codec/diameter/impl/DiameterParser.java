@@ -2,7 +2,6 @@ package io.snice.networking.codec.diameter.impl;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.ReadableBuffer;
-import io.snice.buffer.WritableBuffer;
 import io.snice.networking.codec.diameter.DiameterHeader;
 import io.snice.networking.codec.diameter.DiameterMessage;
 import io.snice.networking.codec.diameter.DiameterParseException;
@@ -10,10 +9,14 @@ import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpHeader;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.api.AuthApplicationId;
+import io.snice.networking.codec.diameter.avp.api.Msisdn;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.codec.diameter.avp.api.OriginRealm;
 import io.snice.networking.codec.diameter.avp.api.ResultCode;
 import io.snice.networking.codec.diameter.avp.api.SessionId;
+import io.snice.networking.codec.diameter.avp.api.SubscriberStatus;
+import io.snice.networking.codec.diameter.avp.api.SubscriptionData;
+import io.snice.networking.codec.diameter.avp.api.UserName;
 import io.snice.networking.codec.diameter.avp.api.VendorId;
 import io.snice.networking.codec.diameter.avp.api.VendorSpecificApplicationId;
 import io.snice.networking.codec.diameter.avp.impl.ImmutableAvpHeader;
@@ -143,6 +146,8 @@ public class DiameterParser {
                 return OriginHost.parse(raw);
             case OriginRealm.CODE:
                 return OriginRealm.parse(raw);
+            case UserName.CODE:
+                return UserName.parse(raw);
             case VendorId.CODE:
                 return VendorId.parse(raw);
             case AuthApplicationId.CODE:
@@ -153,6 +158,12 @@ public class DiameterParser {
                 return VendorSpecificApplicationId.parse(raw);
             case SessionId.CODE:
                 return SessionId.parse(raw);
+            case Msisdn.CODE:
+                return Msisdn.parse(raw);
+            case SubscriptionData.CODE:
+                return SubscriptionData.parse(raw);
+            case SubscriberStatus.CODE:
+                return SubscriberStatus.parse(raw);
             default:
                 throw new RuntimeException("AVP " + raw.getCode() + " has not yet been implemented");
         }

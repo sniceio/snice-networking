@@ -26,7 +26,10 @@ avp:
     include:
         # - User-Name
         # - Session-Id
-        - Experimental-Result-Code
+        # - Experimental-Result-Code
+        - Subscription-Data
+        - Subscriber-Status
+        - MSISDN
         # - Result-Code
         # - Origin-Host
         # - Origin-Realm
