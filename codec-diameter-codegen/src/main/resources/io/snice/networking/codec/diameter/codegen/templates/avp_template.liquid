@@ -35,7 +35,7 @@ public interface {{java.class.name}} extends Avp<{{avp.type.interface}}> {
 
     class Default{{java.class.name}} extends {{avp.type.class}} implements {{java.class.name}} {
         private Default{{java.class.name}}(final FramedAvp raw) {
-            super(raw);
+            {% if avp.tbcd_formatted %}super(raw, true);{% else %}super(raw);{% endif %}
         }
     }
 }

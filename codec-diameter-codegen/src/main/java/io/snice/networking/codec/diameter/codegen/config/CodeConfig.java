@@ -9,7 +9,6 @@ import io.snice.networking.codec.diameter.avp.type.DiameterType;
 import io.snice.networking.codec.diameter.codegen.Typedef;
 import io.snice.networking.codec.diameter.codegen.primitives.AvpPrimitive;
 import io.snice.networking.codec.diameter.codegen.primitives.EnumPrimitive;
-import io.snice.preconditions.PreConditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,11 +80,16 @@ public class CodeConfig {
         javaAttributes.put("class", javaClassAttributes);
 
         avpAttributes.put("type", avpTypeAttributes);
+        avpAttributes.put("tbcd_formatted", false);
 
         // The Java interface name of our avp and the package
         final String className = avpSettings.convert(avp.getName());
         javaClassAttributes.put("name", className);
         javaAttributes.put("package", avpSettings.getPackageName());
+
+        if ("Msisdn".equals(className)) {
+            avpAttributes.put("tbcd_formatted", true);
+        }
 
         avpAttributes.put("code", avp.getCode());
 
@@ -109,6 +113,14 @@ public class CodeConfig {
             }).collect(Collectors.toList());
             avpAttributes.put("enum_definition", enumList);
 
+            // For enums, and the way we have structured Avp<? extends DiameterPrimitive>,
+            // it means that we have an actual enum generated but then we also need to follow the AVP<?>
+            // structure and an enum cannot be extended in java so we are also creating a wrapper
+            // interface. In that case, we still want to actually be able to reference it like an enum
+            // with final static single instance variables of a particular "enum", the below does that.
+            //
+            // Unfortunately, we also have to stick the code value at the end because there are overlapping
+            // enum names
             final List<String> staticVariables = enums.stream().map(e -> {
                 final String variableName = avpSettings.convert(e.getEnumName()) + e.getEnumCode();
                 return className + " " + variableName + " = " + className + ".of(" + e.getEnumCode() + ");";

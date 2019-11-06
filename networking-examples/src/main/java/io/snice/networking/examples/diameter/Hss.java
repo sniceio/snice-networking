@@ -19,8 +19,6 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
     @Override
     public void initialize(final NetworkBootstrap<DiameterMessage, HssConfig> bootstrap) {
 
-        bootstrap.registerSerializationFactory(new DiameterSerializationFactory());
-
         bootstrap.onConnection(ACCEPT_ALL).accept(b -> {
             b.match(DiameterMessage::isCER).consume(Hss::processCER);
             b.match(DiameterMessage::isULR).consume(Hss::processULR);

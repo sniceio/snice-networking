@@ -56,10 +56,16 @@ public abstract class NetworkApplication<T, C extends NetworkAppConfig> {
         final NettyBootstrap<T, C> bootstrap = new NettyBootstrap<>(config);
         initialize(bootstrap);
         final List<ConnectionContext> connectionContexts = bootstrap.getConnectionContexts();
-        final SerializationFactory<T> serializationFactory = ensureSerializationFactory(bootstrap);
+
+        // TODO: will probably do it differently... better to make use of
+        // Netty pipelines, which locks the various things down a little to Netty
+        // but whatever. Probably won't integrating with another framework anyway.
+        // Thinking about doing some kind of "CodecBundle" where you configure
+        // all of those etc etc. Then we can have a NettyCodecBundle
+        // final SerializationFactory<T> serializationFactory = ensureSerializationFactory(bootstrap);
 
         final var network = NetworkStack.ofType(type)
-                .withSerializationFactory(serializationFactory)
+                .withSerializationFactory(null)
                 .withConfiguration(config)
                 .withConnectionContexts(connectionContexts)
                 .withApplication(this)
