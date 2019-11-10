@@ -1,19 +1,21 @@
-package io.snice.networking.event;
+package io.snice.networking.common.event;
 
-
+import io.snice.networking.common.ChannelContext;
 import io.snice.networking.common.Connection;
 
 /**
  * @author jonas@jonasborjesson.com
  */
-public interface IOEvent {
+public interface IOEvent<T> {
 
     /**
      * The {@link Connection} over which this event took place.
      *
      * @return
      */
-    Connection connection();
+    Connection<T> connection();
+
+    ChannelContext<T> channelContext();
 
     /**
      * The time at which this event took place. If the event came off of the network
@@ -31,6 +33,10 @@ public interface IOEvent {
      */
     default boolean isConnectionIOEvent() {
         return false;
+    }
+
+    default ConnectionIOEvent toConnectionIOEvent() {
+        throw new ClassCastException("Cannot cast " + getClass().getName() + " into a " + ConnectionIOEvent.class.getName());
     }
 
     default boolean isConnectionOpenedIOEvent() {
@@ -61,20 +67,12 @@ public interface IOEvent {
         return false;
     }
 
-    default ConnectionIOEvent toConnectionIOEvent() {
-        throw new ClassCastException("Cannot cast " + getClass().getName() + " into a " + ConnectionIOEvent.class.getName());
-    }
-
-    default TransactionTimeoutEvent toTimeoutEvent() {
-        throw new ClassCastException("Cannot cast " + getClass().getName() + " into a " + TransactionTimeoutEvent.class.getName());
-    }
-
-    default boolean isPingMessageIOEvent() {
+    default boolean isMessageIOEvent() {
         return false;
     }
 
-    default boolean isPongMessageIOEvent() {
-        return false;
+    default MessageIOEvent<T> toMessageIOEvent() {
+        throw new ClassCastException("Cannot cast " + getClass().getName() + " into a " + MessageIOEvent.class.getName());
     }
 
 }

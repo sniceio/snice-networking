@@ -15,21 +15,25 @@ import static io.snice.networking.app.MessagePipe.match;
 
 public class Pgw extends NetworkApplication<GtpMessage, GtpConfig> {
 
-    private static final MessagePipe<Connection, Gtp2Message, String> echo;
-    private static final MessagePipe<Connection, Gtp2Message, String> csr;
+    private static final MessagePipe<Connection<GtpMessage>, Gtp2Message, Gtp2Message> echo;
+    private static final MessagePipe<Connection<GtpMessage>, Gtp2Message, Gtp2Message> csr;
 
     static {
         // for all echo messages, simply reply back
-        echo = match(Pgw::isEcho).map(GtpMessage::toString).consume((c, s) -> c.send(s));
-        csr = match(Pgw::isEcho).map(GtpMessage::toString).consume((c, s) -> c.send(s));
+
+        // TODO: not done yet. Need to actually create the echo response
+        echo = match(Pgw::isEcho).consume((c, gtp) -> c.send(gtp));
+
+        // TODO: Not done yet. Need to create a create session response
+        csr = match(Pgw::isCSR).consume((c, gtp) -> c.send(gtp));
     }
 
-    public static boolean isEcho(final Connection c, final Gtp2Message gtp) {
+    public static boolean isEcho(final Connection<GtpMessage> c, final Gtp2Message gtp) {
         return gtp.isEchoRequest();
     }
 
-    public static boolean isCSR(final Connection c, final Gtp2Message gtp) {
-        return gtp.isEchoRequest();
+    public static boolean isCSR(final Connection<GtpMessage> c, final Gtp2Message gtp) {
+        return gtp.isCreateSessionRequest();
     }
 
 

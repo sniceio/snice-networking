@@ -9,14 +9,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public interface ConnectionContext<C extends Connection, T> extends Predicate<ConnectionId> {
+public interface ConnectionContext<C extends Connection<T>, T> extends Predicate<ConnectionId> {
 
     boolean isDrop();
 
 
     MessagePipe<C, T, ?> match(C connection, T data);
 
-    interface Builder<C extends Connection, T, R> {
+    interface Builder<C extends Connection<T>, T, R> {
         /**
          * If you decide to accept the incoming connection, then you must also specify what
          * operations to perform on the incoming data.

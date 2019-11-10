@@ -9,6 +9,7 @@ import io.snice.networking.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
+import io.snice.networking.diameter.peer.PeerFactory;
 import io.snice.networking.netty.NettyNetworkLayer;
 import io.snice.time.Clock;
 import io.snice.time.SystemClock;
@@ -44,7 +45,7 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
     public static <T> FramerFactoryStep<T> ofType(final Class<T> type) {
         assertNotNull(type, "The type cannot be null");
         return framerFactory -> {
-            assertNotNull(framerFactory, "The Framer Factory cannot be null");
+            // assertNotNull(framerFactory, "The Framer Factory cannot be null");
             return new ConfigurationStep<T>() {
                 @Override
                 public <C extends NetworkAppConfig> Builder<T, C> withConfiguration(final C config) {
@@ -59,11 +60,30 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
 
     @Override
     public void start() {
+
+
+        final var appLayer = new NettyApplicationLayer();
+        final var fsmFactory = PeerFactory.createDefault();
+
         network = NettyNetworkLayer.with(config.getNetworkInterfaces())
-                .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, serializationFactory, Optional.empty(), ctxs), Transport.udp)
+                // TODO: the encoder/decoder will be injected by the application but for now, while working out the details,
+                // i'm doing it manually here...
                 .withHandler("diameter-codec-encoder", () -> new DiameterStreamEncoder(), Transport.tcp)
                 .withHandler("diameter-code-decoder", () -> new DiameterMessageStreamDecoder2(), Transport.tcp)
+
+                .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, serializationFactory, Optional.empty(), ctxs), Transport.udp)
                 .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, serializationFactory, Optional.empty(), ctxs), Transport.tcp)
+
+                // the optional fsm layer - will also be injected dynamically depending on whether
+                // the user actually wants an FSM layer or not.
+                // Also, whether there is a separate FSM layer per connection or a shared
+                // one for the entire stack will be dependent on the actual need of the implementation.
+                .withHandler("fsm-layer", () -> new NettyFsmLayer(fsmFactory), Transport.tcp)
+
+                // App layer is not optional so it will always be injected but it will need to be configured by
+                // the NetworkApplication etc in order to inject the message pipelines and whatnot.
+                .withHandler("app-layer", () -> appLayer, Transport.tcp)
+                .withHandler("app-layer", () -> appLayer, Transport.udp)
                 .build();
         network.start();
     }

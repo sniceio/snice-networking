@@ -50,6 +50,6 @@ public interface NetworkBootstrap<T, C extends NetworkAppConfig> {
      * @param condition
      * @return
      */
-    ConnectionContext.Builder<Connection, T, T> onConnection(Predicate<ConnectionId> condition);
+    ConnectionContext.Builder<Connection<T>, T, T> onConnection(Predicate<ConnectionId> condition);
 
 }

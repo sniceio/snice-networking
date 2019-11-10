@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class NettyConnectionContext<C extends Connection, T> implements ConnectionContext<C, T> {
+public class NettyConnectionContext<C extends Connection<T>, T> implements ConnectionContext<C, T> {
 
     private final Predicate<ConnectionId> condition;
     private final Function<C, T> dropFunction;
@@ -22,7 +22,8 @@ public class NettyConnectionContext<C extends Connection, T> implements Connecti
         this.rules = rules;
     }
 
-    public MessagePipe<C, T, ?> match(C connection, T data) {
+    @Override
+    public MessagePipe<C, T, ?> match(final C connection, final T data) {
         // TODO: insert default rule...
         return rules.stream().filter(pipe -> pipe.test(connection, data)).findFirst().orElseThrow(RuntimeException::new);
     }

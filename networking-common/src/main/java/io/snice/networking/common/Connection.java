@@ -13,7 +13,12 @@ import java.util.Optional;
  * Represents a connection between two end-points and its primary purpose is to
  * encapsulate specific knowledge of which type of underlying implementation is
  * being used.
- * 
+ *
+ * It is also worth noting that the {@link Connection} is meant for the
+ * application built on top of this framework. If you, as the developer
+ * building a particular networking stack using Snice, then you will
+ * most likely work with the {@link ChannelContext} instead.
+ *
  * @author jonas@jonasborjesson.com
  */
 public interface Connection<T> {

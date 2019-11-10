@@ -29,7 +29,7 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBoo
 
     private final C config;
 
-    private final List<ConnectionCtxBuilder<Connection, T, ?>> rules = new ArrayList<>();
+    private final List<ConnectionCtxBuilder<Connection<T>, T, ?>> rules = new ArrayList<>();
 
     public NettyBootstrap(final C config) {
         this.config = config;
@@ -55,14 +55,14 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBoo
     }
 
     @Override
-    public ConnectionContext.Builder<Connection, T, T> onConnection(final Predicate<ConnectionId> condition) {
+    public ConnectionContext.Builder<Connection<T>, T, T> onConnection(final Predicate<ConnectionId> condition) {
         assertNotNull(condition, "The condition cannot be null");
-        final ConnectionCtxBuilder<Connection, T, T> builder = new ConnectionCtxBuilder<>(condition);
+        final ConnectionCtxBuilder<Connection<T>, T, T> builder = new ConnectionCtxBuilder<>(condition);
         rules.add(builder);
         return builder;
     }
 
-    private static class ConnectionCtxBuilder<C extends Connection, T, R> implements ConnectionContext.Builder<C, T, R> {
+    private static class ConnectionCtxBuilder<C extends Connection<T>, T, R> implements ConnectionContext.Builder<C, T, R> {
 
         private final Predicate<ConnectionId> condition;
         private Function<C, T> dropFunction;

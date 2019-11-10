@@ -1,12 +1,12 @@
-package io.snice.networking.event;
+package io.snice.networking.common.event;
 
 /**
  * @author jonas@jonasborjesson.com
  */
-public interface ConnectionIOEvent extends IOEvent {
+public interface ConnectionIOEvent<T> extends IOEvent<T> {
 
     @Override
-    default ConnectionIOEvent toConnectionIOEvent() {
+    default ConnectionIOEvent<T> toConnectionIOEvent() {
         return this;
     }
 

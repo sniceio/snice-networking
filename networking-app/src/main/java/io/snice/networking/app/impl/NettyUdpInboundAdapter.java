@@ -9,12 +9,11 @@ import io.netty.channel.socket.DatagramPacket;
 import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
 import io.snice.networking.app.ConnectionContext;
-import io.snice.networking.codec.Framer;
 import io.snice.networking.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
-import io.snice.networking.event.ConnectionIOEvent;
+import io.snice.networking.common.event.ConnectionIOEvent;
 import io.snice.networking.netty.UdpConnection;
 import io.snice.time.Clock;
 
@@ -114,10 +113,17 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
 
             final var adapter = ensureConnection(ctx.channel(), id, connCtx);
             final var data = toBuffer(pkt);
+            // TODO: have changed how things work so have to re-work this.
+            // We will now always expect that there is a encoder/decoder
+            // netty style in the pipeline and won't be asking the
+            // context like so:
+            /*
             adapter.frame(data.toReadableBuffer()).ifPresent(p -> {
                 System.err.println("So got something back on the same channel " + p);
                 adapter.process(p);
             });
+             */
+
 
         } catch (final ClassCastException e) {
             e.printStackTrace();
@@ -133,15 +139,12 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
         return Buffers.wrap(b);
     }
 
-    private ConnectionContext<Connection, T> findContext(final ConnectionId id) {
+    private ConnectionContext<Connection<T>, T> findContext(final ConnectionId id) {
         return ctxs.stream().filter(ctx -> ctx.test(id)).findFirst().orElse(defaultCtx);
     }
 
-    private ConnectionAdapter<UdpConnection<T>, T> ensureConnection(final Channel channel, final ConnectionId id, final ConnectionContext<Connection, T> connCtx) {
-        return adapters.computeIfAbsent(id, cId -> {
-            final Framer<T> framer = factory.getFramer();
-            return new ConnectionAdapter(new UdpConnection(channel, id, vipAddress), framer, connCtx);
-        });
+    private ConnectionAdapter<UdpConnection<T>, T> ensureConnection(final Channel channel, final ConnectionId id, final ConnectionContext<Connection<T>, T> connCtx) {
+        return adapters.computeIfAbsent(id, cId -> new ConnectionAdapter(new UdpConnection(channel, id, vipAddress), connCtx));
     }
 
     @Override

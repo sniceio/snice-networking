@@ -28,7 +28,6 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
 
     private static final void processCER(final Connection con, final DiameterMessage cer) {
         final var cea = cer.createAnswer(ResultCode.DiameterSuccess2001).build();
-        // con.send(cea.getBuffer());
         con.send(cea);
     }
 
@@ -37,7 +36,6 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
                 .withAvp(ExperimentalResultCode.DiameterErrorUserUnknown5001)
                 .withAvp(null)
                 .build();
-        // con.send(ula.getBuffer());
         con.send(ula);
     }
 

@@ -14,7 +14,7 @@ import java.util.Optional;
 /**
  * @author jonas@jonasborjesson.com
  */
-public final class TcpConnection extends AbstractConnection {
+public final class TcpConnection<T> extends AbstractConnection<T> {
 
 
     public TcpConnection(final Channel channel, final ConnectionId id, final Optional<URI> vipAddress) {
@@ -43,7 +43,7 @@ public final class TcpConnection extends AbstractConnection {
      * {@inheritDoc}
      */
     @Override
-    public void send(final Object msg) {
+    public void send(final T msg) {
         // final var byteBuf = toByteBuf((Buffer)msg);
         // write(byteBuf);
         write(msg);

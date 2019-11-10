@@ -6,11 +6,12 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.snice.networking.common.ChannelContext;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
+import io.snice.networking.common.event.ConnectionActiveIOEvent;
 import io.snice.networking.core.ListeningPoint;
-import io.snice.networking.event.ConnectionActiveIOEvent;
 import io.snice.time.Clock;
 import io.snice.time.SystemClock;
 import org.slf4j.Logger;
@@ -159,7 +160,11 @@ public abstract class NettyListeningPoint implements ListeningPoint {
             final ChannelHandlerContext ctx = channel.pipeline().lastContext();
             final Connection connection = new UdpConnection(channel, remoteAddress, getVipAddress());
             final Long arrivalTime = clock.getCurrentTimeMillis();
-            ctx.fireUserEventTriggered(ConnectionActiveIOEvent.create(connection, arrivalTime));
+
+            // TODO: not sure how to get this working nicely since we will also
+            // need to insert the user pipeline stuff, which we haven't really
+            // thought of for the outbound case just yet.
+            ctx.fireUserEventTriggered(ConnectionActiveIOEvent.create(null, arrivalTime));
             return CompletableFuture.completedFuture(connection);
         }
     }
