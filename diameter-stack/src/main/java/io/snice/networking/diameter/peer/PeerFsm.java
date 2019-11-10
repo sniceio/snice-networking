@@ -44,7 +44,7 @@ public class PeerFsm {
          *
          *
          */
-        closed.transitionTo(OPEN).onEvent(DiameterMessage.class).withGuard(DiameterMessage::isCER).withAction(PeerFsm::closeStateAccept);
+        closed.transitionTo(OPEN).onEvent(DiameterMessage.class).withGuard(DiameterMessage::isCER).withAction(PeerFsm::processCER);
         closed.transitionTo(TERMINATED).onEvent(String.class).withGuard("die"::equals);
 
 
@@ -59,11 +59,23 @@ public class PeerFsm {
          *                  R-Rcv-DPR        R-Snd-DPA        Closing
          *                  R-Peer-Disc      R-Disc           Closed
          */
+        open.transitionTo(OPEN).onEvent(DiameterMessage.class).withGuard(PeerFsm::isRetransmission).withAction(PeerFsm::handleRetransmission);
         open.transitionTo(OPEN).onEvent(DiameterMessage.class).withAction(PeerFsm::acceptAction);
         open.transitionTo(CLOSED).onEvent(String.class).withGuard("Disconnect"::equals);
 
         definition = builder.build();
     }
+
+    private static final boolean isRetransmission(final DiameterMessage msg, final PeerContext ctx, final PeerData data) {
+        final boolean yes = data.hasOutstandingTransaction(msg);
+        System.err.println("outstanding: " + yes);
+        return yes;
+    }
+
+    private static final void handleRetransmission(final DiameterMessage msg, final PeerContext ctx, final PeerData data) {
+        System.err.println("handling retransmission");
+    }
+
 
     // ----------------------------------------------------------------------
     // ----------------------------------------------------------------------
@@ -71,7 +83,7 @@ public class PeerFsm {
     // ----------------------------------------------------------------------
     // ----------------------------------------------------------------------
 
-    private static final void closeStateAccept(final DiameterMessage cer, final PeerContext ctx, final PeerData data) {
+    private static final void processCER(final DiameterMessage cer, final PeerContext ctx, final PeerData data) {
         logger.info("Processing CER {}", cer);
         final var cea = cer.createAnswer(ResultCode.DiameterSuccess2001).build();
         ctx.getChannelContext().sendDownstream(cea);
@@ -96,6 +108,7 @@ public class PeerFsm {
      * Quite simple, just push the message up the handler chain and eventually to the app.
      */
     private static final void acceptAction(final DiameterMessage msg, final PeerContext ctx, final PeerData data) {
+        data.storeTransaction(msg);
         ctx.getChannelContext().sendUpstream(msg);
     }
 

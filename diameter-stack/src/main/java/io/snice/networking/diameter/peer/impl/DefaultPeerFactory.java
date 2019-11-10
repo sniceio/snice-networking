@@ -9,6 +9,7 @@ import io.snice.networking.common.ConnectionEndpointId;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.fsm.FsmKey;
 import io.snice.networking.common.fsm.FsmSupport;
+import io.snice.networking.diameter.peer.PeerConfiguration;
 import io.snice.networking.diameter.peer.PeerContext;
 import io.snice.networking.diameter.peer.PeerData;
 import io.snice.networking.diameter.peer.PeerFactory;
@@ -23,6 +24,7 @@ import java.util.Optional;
 public class DefaultPeerFactory implements PeerFactory {
 
     private static final FsmSupport<PeerState> loggingSupport = new FsmSupport<>(PeerFsm.class);
+    private final PeerConfiguration peerConfiguration = new PeerConfiguration();
 
     @Override
     public FsmKey calculateKey(final ConnectionId connectionId, final Optional<DiameterMessage> msg) {
@@ -33,7 +35,7 @@ public class DefaultPeerFactory implements PeerFactory {
 
     @Override
     public PeerData createNewDataBag(final FsmKey key) {
-        return new PeerData();
+        return new PeerData(peerConfiguration);
     }
 
     @Override

@@ -2,9 +2,6 @@ package io.snice.networking.common;
 
 public interface ChannelContext<T> {
 
-    // TODO: not sure we should expose the underlying connection
-    // Connection<T> getConnection();
-
     ConnectionId getConnectionId();
 
     /**
@@ -25,6 +22,5 @@ public interface ChannelContext<T> {
      */
     void sendUpstream(T msg);
 
-    // TODO: need to expose ExecutorService and Scheduler etc here as well
 
 }

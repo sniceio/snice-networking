@@ -21,12 +21,12 @@ public class DefaultChannelContext<T> implements ChannelContext<T> {
     }
 
     @Override
-    public void sendDownstream(T msg) {
+    public void sendDownstream(final T msg) {
         connection.send(msg);
     }
 
     @Override
-    public void sendUpstream(T msg) {
+    public void sendUpstream(final T msg) {
         System.err.println("Yay, sending the crap upstream");
     }
 }
