@@ -16,8 +16,8 @@ public class FsmSupport<S extends Enum<S>> {
     }
 
     public void onTransition(final S currentState, final S toState, final Object event) {
-        logger.info("{} -> {} Event: {}", currentState, toState, event);
+        if (currentState != toState) {
+            logger.info("{} -> {} Event: {}", currentState, toState, event);
+        }
     }
-
-
 }

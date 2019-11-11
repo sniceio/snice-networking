@@ -3,10 +3,14 @@
  */
 package io.snice.networking.codec.diameter;
 
+import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
 import io.snice.buffer.ReadableBuffer;
+import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpHeader;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
+import io.snice.networking.codec.diameter.avp.api.OriginHost;
+import io.snice.networking.codec.diameter.avp.type.OctetString;
 import io.snice.networking.codec.diameter.impl.DiameterParser;
 import org.junit.After;
 import org.junit.Before;
@@ -169,6 +173,16 @@ public class DiameterTestBase {
             }
         }
     }
+
+    public static OriginHost createOriginHost(final Buffer value, final boolean isMandatory) {
+        return (OriginHost) Avp.ofType(OctetString.class)
+                .withValue(OctetString.parse(value))
+                .withAvpCode(OriginHost.CODE)
+                .isMandatory(isMandatory)
+                .build()
+                .ensure();
+    }
+
 
     /**
      * Simple class to hold information about the raw diameter messages

@@ -35,8 +35,7 @@ public interface UTF8String extends DiameterType {
 
         @Override
         public void writeValue(final WritableBuffer buffer) {
-            // TODO: add methods for writing the raw buffer instead.
-            buffer.write(value);
+            raw.writeTo(buffer);
         }
 
         @Override

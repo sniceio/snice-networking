@@ -67,13 +67,11 @@ public class PeerFsm {
     }
 
     private static final boolean isRetransmission(final DiameterMessage msg, final PeerContext ctx, final PeerData data) {
-        final boolean yes = data.hasOutstandingTransaction(msg);
-        System.err.println("outstanding: " + yes);
-        return yes;
+        return data.hasOutstandingTransaction(msg);
     }
 
     private static final void handleRetransmission(final DiameterMessage msg, final PeerContext ctx, final PeerData data) {
-        System.err.println("handling retransmission");
+        // TODO:
     }
 
 

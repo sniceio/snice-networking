@@ -3,10 +3,11 @@ package io.snice.networking.diameter.peer;
 import io.hektor.fsm.Data;
 import io.snice.networking.codec.diameter.DiameterMessage;
 import io.snice.networking.codec.diameter.TransactionIdentifier;
-import io.snice.preconditions.PreConditions;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static io.snice.preconditions.PreConditions.assertNull;
 
 public class PeerData implements Data {
 
@@ -27,10 +28,11 @@ public class PeerData implements Data {
     }
 
     public void storeTransaction(final DiameterMessage msg) {
-        final var previous = oustandingTransactions.put(TransactionIdentifier.from(msg), msg);
+        final var id = TransactionIdentifier.from(msg);
+        final var previous = oustandingTransactions.put(id, msg);
         // TODO: need to handle this in a better way. Also need to check
         // with the application id as a precaution for phishing.
-        PreConditions.assertNull(previous, "We overwrote a previous transaction. Something is wrong.");
+        assertNull(previous, "We overwrote a previous transaction. Something is wrong.");
     }
 
 

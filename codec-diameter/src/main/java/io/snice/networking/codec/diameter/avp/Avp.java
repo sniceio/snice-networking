@@ -64,12 +64,26 @@ public interface Avp<T extends DiameterType> extends FramedAvp {
          * <p>
          * Default value is false.
          */
-        Builder<T> isMandatory();
+        default Builder<T> isMandatory() {
+            return isMandatory(true);
+        }
+
+        /**
+         * Set the value of the 'M' bit, which indicates whether this {@link Avp} is mandatory
+         * or not.
+         * <p>
+         * Default value is false.
+         */
+        Builder<T> isMandatory(boolean value);
 
         /**
          * Set the 'P' big, which indicates that this {@link Avp} is protected.
          */
-        Builder<T> isProtected();
+        default Builder<T> isProtected() {
+            return isProtected(true);
+        }
+
+        Builder<T> isProtected(boolean value);
 
         /**
          * Set the optional vendor id. If set, the 'V' bit will also
@@ -128,14 +142,14 @@ public interface Avp<T extends DiameterType> extends FramedAvp {
         }
 
         @Override
-        public Builder<T> isMandatory() {
-            this.isMandatory = true;
+        public Builder<T> isMandatory(final boolean value) {
+            this.isMandatory = value;
             return this;
         }
 
         @Override
-        public Builder<T> isProtected() {
-            this.isProtected = true;
+        public Builder<T> isProtected(final boolean value) {
+            this.isProtected = value;
             return this;
         }
 

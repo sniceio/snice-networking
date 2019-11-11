@@ -1,6 +1,7 @@
 package io.snice.networking.codec.diameter.avp.type;
 
 import io.snice.buffer.Buffer;
+import io.snice.buffer.WritableBuffer;
 
 import java.util.Objects;
 
@@ -27,6 +28,11 @@ public interface OctetString extends DiameterType {
         }
 
         @Override
+        public void writeValue(final WritableBuffer buffer) {
+            value.writeTo(buffer);
+        }
+
+        @Override
         public String getValue() {
             if (isEncodedAsTBCD) {
                 return value.toTBCD();
@@ -49,6 +55,7 @@ public interface OctetString extends DiameterType {
 
         @Override
         public int hashCode() {
+            System.err.println("OctetString.hashCode");
             return Objects.hash(value);
         }
     }

@@ -33,7 +33,7 @@ public class ImmutableAvp<T extends DiameterType> implements Avp<T> {
     }
 
     @Override
-    public void writeTo(WritableBuffer out) {
+    public void writeTo(final WritableBuffer out) {
         raw.writeTo(out);
     }
 
@@ -44,6 +44,30 @@ public class ImmutableAvp<T extends DiameterType> implements Avp<T> {
 
     @Override
     public Avp<T> ensure() {
-        return this;
+        return raw.ensure();
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("AVP [");
+        sb.append(raw.getHeader().toString());
+        sb.append(" ");
+        sb.append(value);
+        sb.append("]");
+        return sb.toString();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final ImmutableAvp<?> that = (ImmutableAvp<?>) o;
+        return value.equals(that.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return value.hashCode();
     }
 }

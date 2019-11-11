@@ -13,6 +13,11 @@ import static io.snice.preconditions.PreConditions.assertArgument;
  */
 public class ImmutableAvpHeader implements AvpHeader {
 
+    /**
+     * just the SEPARATOR we use for the toString-method
+     */
+    private static final String SEPARATOR = ":";
+
     private final Buffer buffer;
     private final Optional<Long> vendorId;
 
@@ -80,17 +85,16 @@ public class ImmutableAvpHeader implements AvpHeader {
 
     @Override
     public String toString() {
-        final String separator = ":";
         final StringBuffer sb = new StringBuffer();
-        sb.append(getCode()).append(separator);
-        sb.append(isVendorSpecific() ? "V" : "o");
-        sb.append(isMandatory() ? "M" : "o");
-        sb.append(isProtected() ? "P" : "o");
-        sb.append(separator);
+        sb.append(getCode()).append(SEPARATOR);
+        sb.append(isVendorSpecific() ? "V" : "v");
+        sb.append(isMandatory() ? "M" : "m");
+        sb.append(isProtected() ? "P" : "p");
+        sb.append(SEPARATOR);
         sb.append(getLength());
-        sb.append(separator);
+        sb.append(SEPARATOR);
         vendorId.ifPresent(sb::append);
-        sb.append(separator);
+        sb.append(SEPARATOR);
         return sb.toString();
     }
 

@@ -3,6 +3,8 @@ package io.snice.networking.app.impl;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.snice.networking.app.ConnectionContext;
+import io.snice.networking.common.Connection;
 import io.snice.networking.common.event.MessageIOEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +18,15 @@ public class NettyApplicationLayer<T> extends ChannelInboundHandlerAdapter {
     public void channelRead(final ChannelHandlerContext ctx, final Object object) throws Exception {
         final var event = (MessageIOEvent<T>) object;
         final var msg = event.getMessage();
+        final var channelContext = (DefaultChannelContext<T>) event.channelContext();
 
-        System.err.println("And now we need to invoke the application: " + msg);
+        invokeApplication(msg, ctx, channelContext.getConnectionContext());
+    }
+
+    private void invokeApplication(final T msg, final ChannelHandlerContext ctx, final ConnectionContext<Connection<T>, T> appRules) {
+        final var bufferingConnection = new BufferingConnection<T>(null);
+        appRules.match(bufferingConnection, msg).apply(bufferingConnection, msg);
+        bufferingConnection.processMessage(ctx);
     }
 
     @Override

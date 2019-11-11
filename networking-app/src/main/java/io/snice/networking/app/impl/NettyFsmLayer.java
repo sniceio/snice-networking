@@ -70,7 +70,6 @@ public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D 
     @Override
     public void userEventTriggered(final ChannelHandlerContext ctx, final Object evt) throws Exception {
         final var ioEvent = (IOEvent<T>) evt;
-        logger.info("Yeah, user event triggered: " + ioEvent);
         ctx.fireUserEventTriggered(evt);
     }
 
@@ -78,11 +77,9 @@ public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D 
     private FsmExecutionContext<T, S, C, D> ensureExecutionContext(final MessageIOEvent<T> msgEvent,
                                                                    final ChannelHandlerContext nettyCtx) {
         if (fsmExecutionContext != null) {
-            System.err.println("reusing the new one");
             return fsmExecutionContext;
         }
 
-        System.err.println("yeah, creating a new execution context");
         final var msg = msgEvent.getMessage();
         final var channelCtx = msgEvent.channelContext();
         final var connectionId = channelCtx.getConnectionId();

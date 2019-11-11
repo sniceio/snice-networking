@@ -20,7 +20,6 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
     public void initialize(final NetworkBootstrap<DiameterMessage, HssConfig> bootstrap) {
 
         bootstrap.onConnection(ACCEPT_ALL).accept(b -> {
-            b.match(DiameterMessage::isCER).consume(Hss::processCER);
             b.match(DiameterMessage::isULR).consume(Hss::processULR);
         });
 
@@ -31,7 +30,7 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
         con.send(cea);
     }
 
-    private static final void processULR(final Connection con, final DiameterMessage ulr) {
+    private static final void processULR(final Connection<DiameterMessage> con, final DiameterMessage ulr) {
         final var ula = ulr.createAnswer(ResultCode.DiameterSuccess2001)
                 .withAvp(ExperimentalResultCode.DiameterErrorUserUnknown5001)
                 .withAvp(null)

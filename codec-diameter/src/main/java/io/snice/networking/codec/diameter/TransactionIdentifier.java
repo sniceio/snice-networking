@@ -36,6 +36,11 @@ public interface TransactionIdentifier {
         return new DefaultTransactionIdentifier(msg.getHeader().getEndToEndId(), msg.getOriginHost());
     }
 
+    static TransactionIdentifier of(final long endToEndId, final OriginHost originHost) {
+        assertNotNull(originHost);
+        return new DefaultTransactionIdentifier(endToEndId, originHost);
+    }
+
     class DefaultTransactionIdentifier implements TransactionIdentifier {
         private final long endToEndId;
         private final OriginHost originHost;
@@ -54,14 +59,22 @@ public interface TransactionIdentifier {
 
             if (endToEndId != that.endToEndId) return false;
             return originHost.equals(that.originHost);
-
         }
 
         @Override
         public int hashCode() {
-            int result = (int) (endToEndId ^ (endToEndId >>> 32));
-            result = 31 * result + originHost.hashCode();
-            return result;
+            final int result = (int) (endToEndId ^ (endToEndId >>> 32));
+            return 31 * result + originHost.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("TransactionIdentifier [");
+            sb.append("End-To-End-ID: [").append(endToEndId);
+            sb.append("] ");
+            sb.append(originHost);
+            sb.append("]");
+            return sb.toString();
         }
     }
 }

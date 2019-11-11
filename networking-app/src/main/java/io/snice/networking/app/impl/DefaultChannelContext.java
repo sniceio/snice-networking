@@ -20,6 +20,10 @@ public class DefaultChannelContext<T> implements ChannelContext<T> {
         return connection.id();
     }
 
+    public ConnectionContext<Connection<T>, T> getConnectionContext() {
+        return ctx;
+    }
+
     @Override
     public void sendDownstream(final T msg) {
         connection.send(msg);

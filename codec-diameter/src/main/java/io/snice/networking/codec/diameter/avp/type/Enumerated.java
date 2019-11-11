@@ -35,5 +35,19 @@ public interface Enumerated<T extends Enum<T>> extends Integer32 {
         public Optional<T> getAsEnum() {
             return null;
         }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            final DefaultEnumerated<?> that = (DefaultEnumerated<?>) o;
+            return value == that.value;
+        }
+
+        @Override
+        public int hashCode() {
+            return value;
+        }
     }
 }
