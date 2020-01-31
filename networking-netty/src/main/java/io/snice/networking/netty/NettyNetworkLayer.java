@@ -277,7 +277,8 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
             if (this.ifs.isEmpty()) {
                 final Inet4Address address = findPrimaryAddress();
                 final String ip = address.getHostAddress();
-                throw new IllegalArgumentException("Not finished so you have to specify at least one listening point");
+                throw new IllegalArgumentException("Sorry, but I haven't finished implementing this so you have to " +
+                        "specify at least one listening point in your configuration");
             } else {
                 this.ifs.forEach(i -> {
                     final NettyNetworkInterface.Builder ifBuilder = NettyNetworkInterface.with(i);

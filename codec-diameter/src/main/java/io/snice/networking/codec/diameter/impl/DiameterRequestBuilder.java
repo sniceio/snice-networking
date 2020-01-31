@@ -7,15 +7,30 @@ import io.snice.networking.codec.diameter.avp.FramedAvp;
 
 import java.util.List;
 
-public class DiameterRequestBuilder extends DiameterMessageBuilder<DiameterRequest> {
+public class DiameterRequestBuilder extends DiameterMessageBuilder<DiameterRequest> implements DiameterRequest.Builder {
 
-    @Override
-    public DiameterRequest build() {
-        return null;
+    private DiameterRequestBuilder(final DiameterHeader.Builder header) {
+        super(header);
+    }
+
+    public static DiameterRequestBuilder createCER() {
+        final var header = createHeader(257);
+        header.withApplicationId(0L);
+        return new DiameterRequestBuilder(header);
+    }
+
+    private static DiameterHeader.Builder createHeader(final int commandCode) {
+        final var header = DiameterHeader.of();
+        header.withCommandCode(commandCode);
+        header.isRequest();
+        return header;
     }
 
     @Override
-    protected DiameterRequest internalBuild(final Buffer message, final DiameterHeader header, final List<FramedAvp> avps, final short indexOfOriginHost, final short indexOfOriginRealm, final short indexOfDestinationHos, final short indexOfDestinationRealm) {
-        return null;
+    protected DiameterRequest internalBuild(final Buffer message, final DiameterHeader header,
+                                            final List<FramedAvp> avps, final short indexOfOriginHost,
+                                            final short indexOfOriginRealm, final short indexOfDestinationHos,
+                                            final short indexOfDestinationRealm) {
+        return new ImmutableDiameterRequest(message, header, avps, indexOfOriginHost, indexOfOriginRealm);
     }
 }

@@ -37,12 +37,21 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
     private short indexOfDestinationHost = -1;
     private short indexOfDestinationRealm = -1;
 
-    protected DiameterMessageBuilder(final int avpSizeHint) {
+    protected DiameterMessageBuilder(final int avpSizeHint, final DiameterHeader.Builder header) {
         avps = new ArrayList<>(avpSizeHint);
+        this.header = header;
+    }
+
+    protected DiameterMessageBuilder(final int avpSizeHint) {
+        this(avpSizeHint, null);
     }
 
     protected DiameterMessageBuilder() {
         this(10);
+    }
+
+    protected DiameterMessageBuilder(final DiameterHeader.Builder header) {
+        this(10, header);
     }
 
     @Override

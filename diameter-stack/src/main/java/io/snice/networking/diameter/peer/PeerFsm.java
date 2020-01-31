@@ -49,6 +49,8 @@ public class PeerFsm {
 
 
         /**
+         * state            event              action         next state
+         * -----------------------------------------------------------------
          * R-Open           Send-Message     R-Snd-Message    R-Open
          *                  R-Rcv-Message    Process          R-Open
          *                  R-Rcv-DWR        Process-DWR,     R-Open
@@ -82,7 +84,6 @@ public class PeerFsm {
     // ----------------------------------------------------------------------
 
     private static final void processCER(final DiameterMessage cer, final PeerContext ctx, final PeerData data) {
-        logger.info("Processing CER {}", cer);
         final var cea = cer.createAnswer(ResultCode.DiameterSuccess2001).build();
         ctx.getChannelContext().sendDownstream(cea);
     }
