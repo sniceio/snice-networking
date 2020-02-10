@@ -1,5 +1,9 @@
 package io.snice.networking.codec.diameter.codegen.primitives;
 
+import io.snice.networking.codec.diameter.avp.AvpMandatory;
+import io.snice.networking.codec.diameter.avp.AvpProtected;
+import io.snice.networking.codec.diameter.avp.AvpVendor;
+import io.snice.networking.codec.diameter.avp.Vendor;
 import io.snice.networking.codec.diameter.codegen.CodeGenParseException;
 import io.snice.networking.codec.diameter.codegen.DiameterCollector;
 import io.snice.networking.codec.diameter.codegen.Typedef;
@@ -10,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static io.snice.networking.codec.diameter.codegen.Typedef.ENUMERATED;
 import static io.snice.networking.codec.diameter.codegen.Typedef.GROUPED;
@@ -70,19 +75,79 @@ public interface AvpPrimitive extends DiameterPrimitive {
      */
     long getCode();
 
+    /**
+     * Indication of whether the mandatory bit is a must, must-not, may or should-not
+     */
+    AvpMandatory getMandatoryBit();
+
+    /**
+     * Indication of whether the vendor bit is a must, must-not, may or should-not
+     */
+    AvpVendor getVendorBit();
+
+    /**
+     * Indication of whether the protected bit is a must, must-not, may or should-not
+     */
+    AvpProtected getProtectedBit();
+
+    boolean getMayEncryptBit();
+
+    Optional<Vendor> getVendor();
+
+
     static Builder of(final AttributeContext ctx) throws CodeGenParseException {
         ctx.ensureElementName(NAME);
 
         final String name = ctx.getString("name");
         final long code = ctx.getLong("code");
 
-        return new Builder(ctx, name, code);
+
+        final AvpMandatory mandatoryBit = map(ctx, name, "mandatory", v -> AvpMandatory.getValue(v));
+        final AvpProtected protectedBit = map(ctx, name, "protected", v -> AvpProtected.getValue(v));
+        final AvpVendor vendorBit = map(ctx, name, "vendor-bit", v -> AvpVendor.getValue(v));
+        final boolean mayEncrypt = mapYesNo(name, ctx.getString("may-encrypt"));
+        final Optional<Vendor> vendor = mapVendor(ctx);
+
+        return new Builder(ctx, name, code, mandatoryBit, protectedBit, vendorBit, mayEncrypt, vendor);
+    }
+
+    private static Optional<Vendor> mapVendor(final AttributeContext ctx) {
+        final Optional<String> value = ctx.getOptionalString("vendor-id");
+        return value.flatMap(Vendor::getValue);
+    }
+
+    /**
+     * Map the value "yes" to true and "no" to false. Any other combination will lead to
+     * an {@link IllegalArgumentException} because we want to make sure that there is
+     * no other value of this at some point and then we may map it to the wrong value.
+     */
+    private static boolean mapYesNo(final String avp, final String value) {
+        if ("yes".equalsIgnoreCase(value)) {
+            return true;
+        }
+
+        if ("no".equalsIgnoreCase(value)) {
+            return false;
+        }
+
+        throw new IllegalArgumentException("Unable to map the value " + value + " to a boolean for AVP " + avp);
+    }
+
+    private static <T> T map(final AttributeContext ctx, final String name, final String key, final Function<String, Optional<T>> fn) {
+        final String value = ctx.getString(key);
+        return fn.apply(value).orElseThrow(() -> new IllegalArgumentException("Unable to map the "
+                + key + " field for AVP " + name + ". Value was " + value));
     }
 
     class Builder extends DiameterSaxBuilder.BaseBuilder<AvpPrimitive> {
 
         private final String name;
         private final long code;
+        private final AvpMandatory mandatoryBit;
+        private final AvpProtected protectedBit;
+        private final AvpVendor vendorBit;
+        private final boolean mayEntrypt;
+        private final Optional<Vendor> vendor;
 
         /**
          * Those elements that we have builders for and that we should accept.
@@ -95,10 +160,18 @@ public interface AvpPrimitive extends DiameterPrimitive {
             acceptableChildElements.add(GroupedPrimitive.NAME);
         }
 
-        private Builder(final AttributeContext ctx, final String name, final long code) {
+        private Builder(final AttributeContext ctx, final String name, final long code,
+                        final AvpMandatory mandatoryBit, final AvpProtected protectedBit,
+                        final AvpVendor vendorBit, final boolean mayEncrypt,
+                        final Optional<Vendor> vendor) {
             super(ctx);
             this.name = name;
             this.code = code;
+            this.mandatoryBit = mandatoryBit;
+            this.protectedBit = protectedBit;
+            this.vendorBit = vendorBit;
+            this.mayEntrypt = mayEncrypt;
+            this.vendor = vendor;
         }
 
         @Override
@@ -130,7 +203,8 @@ public interface AvpPrimitive extends DiameterPrimitive {
             if (grouped.isPresent() && typedef.isPresent()) {
                 throw createException("For a Grouped AVP, we don't expect a type");
             } else if (grouped.isPresent()) {
-                final AvpPrimitive avp = new GroupedAvpPrimitive(name, code, grouped.get());
+                final AvpPrimitive avp = new GroupedAvpPrimitive(name, code, grouped.get(), mandatoryBit,
+                        protectedBit, vendorBit, mayEntrypt, vendor);
                 ctx.collectAvp(avp);
                 return avp;
             }
@@ -140,7 +214,8 @@ public interface AvpPrimitive extends DiameterPrimitive {
             final Typedef base = typedef.orElse(Typedef.OCTET_STRING).getBaseType();
             final boolean isInteger32 = base.isInteger32() || base.isUnsigned32();
             if (isNotEmpty(enums) && isInteger32) {
-                final AvpPrimitive avp = new EnumeratedAvpPrimitive(name, code, enums);
+                final AvpPrimitive avp = new EnumeratedAvpPrimitive(name, code, enums, mandatoryBit,
+                        protectedBit, vendorBit, mayEntrypt, vendor);
                 ctx.collectAvp(avp);
                 return avp;
             } else if (isNotEmpty(enums)) {
@@ -152,7 +227,8 @@ public interface AvpPrimitive extends DiameterPrimitive {
             // only one thing left and that is a regular typed AVP so make sure
             // that the type is indeed specified and if so, create the AVP
             final AvpPrimitive avp = new TypedAvpPrimitive(name, code,
-                    typedef.orElseThrow(() -> createException("The AVP must specify the type")));
+                    typedef.orElseThrow(() -> createException("The AVP must specify the type")), mandatoryBit,
+                    protectedBit, vendorBit, mayEntrypt, vendor);
             ctx.collectAvp(avp);
             return avp;
         }
@@ -161,10 +237,48 @@ public interface AvpPrimitive extends DiameterPrimitive {
     abstract class BaseAvpPrimitive implements AvpPrimitive {
         private final String name;
         private final long code;
+        private final AvpMandatory mandatoryBit;
+        private final AvpProtected protectedBit;
+        private final AvpVendor vendorBit;
+        private final boolean mayEntrypt;
+        private final Optional<Vendor> vendor;
 
-        private BaseAvpPrimitive(final String name, final long code) {
+        private BaseAvpPrimitive(final String name, final long code,
+                                 final AvpMandatory mandatoryBit, final AvpProtected protectedBit,
+                                 final AvpVendor vendorBit, final boolean mayEncrypt,
+                                 final Optional<Vendor> vendor) {
             this.name = name;
             this.code = code;
+            this.mandatoryBit = mandatoryBit;
+            this.protectedBit = protectedBit;
+            this.vendorBit = vendorBit;
+            this.mayEntrypt = mayEncrypt;
+            this.vendor = vendor;
+        }
+
+        @Override
+        public AvpMandatory getMandatoryBit() {
+            return mandatoryBit;
+        }
+
+        @Override
+        public AvpVendor getVendorBit() {
+            return vendorBit;
+        }
+
+        @Override
+        public AvpProtected getProtectedBit() {
+            return protectedBit;
+        }
+
+        @Override
+        public boolean getMayEncryptBit() {
+            return mayEntrypt;
+        }
+
+        @Override
+        public Optional<Vendor> getVendor() {
+            return vendor;
         }
 
         @Override
@@ -186,8 +300,11 @@ public interface AvpPrimitive extends DiameterPrimitive {
             return true;
         }
 
-        private TypedAvpPrimitive(final String name, final long code, final Typedef typedef) {
-            super(name, code);
+        private TypedAvpPrimitive(final String name, final long code, final Typedef typedef,
+                                  final AvpMandatory mandatoryBit, final AvpProtected protectedBit,
+                                  final AvpVendor vendorBit, final boolean mayEncrypt,
+                                  final Optional<Vendor> vendor) {
+            super(name, code, mandatoryBit, protectedBit, vendorBit, mayEncrypt, vendor);
             this.typedef = typedef;
         }
 
@@ -216,8 +333,11 @@ public interface AvpPrimitive extends DiameterPrimitive {
             return this;
         }
 
-        private GroupedAvpPrimitive(final String name, final long code, final GroupedPrimitive grouped) {
-            super(name, code);
+        private GroupedAvpPrimitive(final String name, final long code, final GroupedPrimitive grouped,
+                                    final AvpMandatory mandatoryBit, final AvpProtected protectedBit,
+                                    final AvpVendor vendorBit, final boolean mayEncrypt,
+                                    final Optional<Vendor> vendor) {
+            super(name, code, mandatoryBit, protectedBit, vendorBit, mayEncrypt, vendor);
             this.grouped = grouped;
         }
 
@@ -258,8 +378,11 @@ public interface AvpPrimitive extends DiameterPrimitive {
             return enums;
         }
 
-        private EnumeratedAvpPrimitive(final String name, final long code, final List<EnumPrimitive> enums) {
-            super(name, code);
+        private EnumeratedAvpPrimitive(final String name, final long code, final List<EnumPrimitive> enums,
+                                       final AvpMandatory mandatoryBit, final AvpProtected protectedBit,
+                                       final AvpVendor vendorBit, final boolean mayEncrypt,
+                                       final Optional<Vendor> vendor) {
+            super(name, code, mandatoryBit, protectedBit, vendorBit, mayEncrypt, vendor);
             this.enums = enums;
         }
 

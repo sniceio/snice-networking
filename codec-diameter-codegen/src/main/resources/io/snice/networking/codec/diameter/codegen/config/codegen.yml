@@ -24,6 +24,7 @@ package:
 
 avp:
     include:
+        - Destination-Host
         - MSISDN
         - Result-Code
         - User-Name

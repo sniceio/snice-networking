@@ -301,6 +301,20 @@ public interface ResultCode extends Avp<Enumerated<ResultCode.Code>> {
         private DefaultResultCode(final FramedAvp raw, final EnumeratedHolder value) {
             super(raw, value);
         }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            final DefaultResultCode that = (DefaultResultCode) o;
+            return getValue().equals(that.getValue());
+        }
+
+        @Override
+        public int hashCode() {
+            return getValue().hashCode();
+        }
     }
 
     /**
@@ -314,6 +328,24 @@ public interface ResultCode extends Avp<Enumerated<ResultCode.Code>> {
         private EnumeratedHolder(final int code, final Optional<Code> e) {
             this.code = code;
             this.e = e;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            final EnumeratedHolder that = (EnumeratedHolder) o;
+
+            if (code != that.code) return false;
+            return e.equals(that.e);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = code;
+            result = 31 * result + e.hashCode();
+            return result;
         }
 
         @Override

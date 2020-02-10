@@ -9,6 +9,7 @@ import io.snice.networking.codec.diameter.avp.impl.ImmutableAvpHeader;
 import io.snice.networking.codec.diameter.avp.impl.ImmutableFramedAvp;
 import io.snice.networking.codec.diameter.avp.type.DiameterType;
 import io.snice.networking.codec.diameter.avp.type.Enumerated;
+import io.snice.preconditions.PreConditions;
 
 import java.util.Optional;
 
@@ -94,6 +95,8 @@ public interface Avp<T extends DiameterType> extends FramedAvp {
          */
         Builder<T> withVendorId(long vendorId);
 
+        Builder<T> withVendor(Vendor vendor);
+
         Avp<T> build();
     }
 
@@ -157,6 +160,16 @@ public interface Avp<T extends DiameterType> extends FramedAvp {
         public Builder<T> withVendorId(final long vendorId) {
             this.vendorId = vendorId;
             return this;
+        }
+
+        @Override
+        public Builder<T> withVendor(final Vendor vendor) {
+            PreConditions.assertNotNull(vendor);
+            if (vendor == Vendor.NONE) {
+                return this;
+            }
+
+            return withVendorId(vendor.getCode());
         }
 
         @Override

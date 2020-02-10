@@ -55,7 +55,6 @@ public interface OctetString extends DiameterType {
 
         @Override
         public int hashCode() {
-            System.err.println("OctetString.hashCode");
             return Objects.hash(value);
         }
     }

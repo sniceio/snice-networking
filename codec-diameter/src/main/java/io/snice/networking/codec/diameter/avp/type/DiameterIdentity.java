@@ -1,6 +1,7 @@
 package io.snice.networking.codec.diameter.avp.type;
 
 import io.snice.buffer.Buffer;
+import io.snice.buffer.WritableBuffer;
 
 import java.util.Objects;
 
@@ -17,6 +18,11 @@ public interface DiameterIdentity extends DiameterType {
 
         private DefaultDiameterIdentity(final Buffer value) {
             this.value = value;
+        }
+
+        @Override
+        public void writeValue(final WritableBuffer buffer) {
+            buffer.write(value);
         }
 
         @Override

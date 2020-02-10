@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import io.snice.networking.codec.diameter.avp.Avp;
+import io.snice.networking.codec.diameter.avp.Vendor;
 import io.snice.networking.codec.diameter.avp.type.DiameterType;
 import io.snice.networking.codec.diameter.codegen.Typedef;
 import io.snice.networking.codec.diameter.codegen.primitives.AvpPrimitive;
@@ -92,6 +93,11 @@ public class CodeConfig {
         }
 
         avpAttributes.put("code", avp.getCode());
+        avpAttributes.put("mandatory_bit", avp.getMandatoryBit().toString());
+        avpAttributes.put("protected_bit", avp.getProtectedBit().toString());
+        avpAttributes.put("vendor_bit", avp.getVendorBit().toString());
+        avpAttributes.put("may_encrypt_bit", avp.getMayEncryptBit());
+        avpAttributes.put("vendor", avp.getVendor().orElse(Vendor.NONE).toString());
 
         final Typedef typedef = avp.getTypedef();
         final Class<? extends DiameterType> typeInterface =

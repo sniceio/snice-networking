@@ -3,6 +3,7 @@ package io.snice.networking.codec.diameter.avp.api;
 import io.snice.buffer.Buffer;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpHeader;
+import io.snice.networking.codec.diameter.avp.Vendor;
 import io.snice.networking.codec.diameter.avp.type.DiameterType;
 import io.snice.networking.codec.diameter.avp.type.Enumerated;
 import io.snice.networking.codec.diameter.avp.type.Integer32;
@@ -18,6 +19,28 @@ import static org.junit.Assert.assertThat;
 public class AvpTest {
 
     @Test
+    public void testCreatingDestinationHost() {
+        final DestinationHost host = DestinationHost.of("hello.epc.mnc001.mcc001.3gppnetwork.org");
+        assertThat(host.getData().toString(), is("hello.epc.mnc001.mcc001.3gppnetwork.org"));
+        assertThat(host.getValue().asString(), is("hello.epc.mnc001.mcc001.3gppnetwork.org"));
+        ensureAvpHeader(host.getHeader(), 293, true, false, Optional.empty());
+    }
+
+    @Test
+    public void testCreateMSISDN() {
+        final Msisdn msisdn = Msisdn.of("45678901");
+        ensureAvpHeader(msisdn.getHeader(), 701, true, false, Vendor.TGPP);
+    }
+
+    @Test
+    public void testCreateSessionId() {
+        final SessionId session = SessionId.of("asdf-1234");
+        assertThat(session.getValue().getValue(), is("asdf-1234"));
+        ensureAvpHeader(session.getHeader(), 263, true, false, Optional.empty());
+    }
+
+
+    @Test
     public void testBasicAvp() {
         final var avp = Avp.ofType(Integer32.class).withValue(Integer32.of(234)).withAvpCode(100).build();
         assertThat(avp.getData().toReadableBuffer().readInt(), is(234));
@@ -25,7 +48,6 @@ public class AvpTest {
         // in the above example, there is no vendor id so 12 it is...
         // and the length of the header without the vendor id is 8
         ensureAvp(avp, Integer32.of(234), 100L, 8, 12, false, false, Optional.empty());
-
 
         final var avp2 = Avp.ofType(UTF8String.class)
                 .withValue(UTF8String.of("hello world"))
@@ -123,5 +145,28 @@ public class AvpTest {
         assertThat(actual.isProtected(), is(expectedProtected));
         assertThat(actual.getVendorId(), is(expectedVendorId));
         assertThat(actual.isVendorSpecific(), is(expectedVendorId.isPresent()));
+    }
+
+    private void ensureAvpHeader(final AvpHeader actual,
+                                 final long expectedCode,
+                                 final boolean expectedMandatory,
+                                 final boolean expectedProtected,
+                                 final Optional<Vendor> expectedVendor) {
+        assertThat(actual.getCode(), is(expectedCode));
+        assertThat(actual.isMandatory(), is(expectedMandatory));
+        assertThat(actual.isProtected(), is(expectedProtected));
+        assertThat(actual.getVendorId(), is(expectedVendor.map(Vendor::getCode)));
+
+        // if the vendor is set and therefore present, the vendor bit needs
+        // to be flipped on...
+        assertThat(actual.isVendorSpecific(), is(expectedVendor.isPresent()));
+    }
+
+    private void ensureAvpHeader(final AvpHeader actual,
+                                 final long expectedCode,
+                                 final boolean expectedMandatory,
+                                 final boolean expectedProtected,
+                                 final Vendor expectedVendor) {
+        ensureAvpHeader(actual, expectedCode, expectedMandatory, expectedProtected, Optional.ofNullable(expectedVendor));
     }
 }

@@ -327,11 +327,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9</version>
+                <version>3.1.1</version>
                 <configuration>
                     <additionalparam>-Xdoclint:none</additionalparam>
+		    <additionalJOption>-Xdoclint:none</additionalJOption>
                     <!-- See for why source 8: https://bugs.openjdk.java.net/browse/JDK-8212233 -->
-                    <source>8</source>
+                    <source>11</source>
                 </configuration>
                 <executions>
                     <execution>
