@@ -9,6 +9,8 @@ import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpHeader;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.api.AuthApplicationId;
+import io.snice.networking.codec.diameter.avp.api.DestinationHost;
+import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
 import io.snice.networking.codec.diameter.avp.api.Msisdn;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.codec.diameter.avp.api.OriginRealm;
@@ -142,6 +144,8 @@ public class DiameterParser {
         // and a jump. Will do some performance test doing this vs map or something else. We will
         // auto generate all of this anyway.
         switch ((int) raw.getCode()) {
+            case DestinationHost.CODE:
+                return DestinationHost.parse(raw);
             case OriginHost.CODE:
                 return OriginHost.parse(raw);
             case OriginRealm.CODE:
@@ -164,6 +168,8 @@ public class DiameterParser {
                 return SubscriptionData.parse(raw);
             case SubscriberStatus.CODE:
                 return SubscriberStatus.parse(raw);
+            case HostIpAddress.CODE:
+                return HostIpAddress.parse(raw);
             default:
                 throw new RuntimeException("AVP " + raw.getCode() + " has not yet been implemented");
         }
