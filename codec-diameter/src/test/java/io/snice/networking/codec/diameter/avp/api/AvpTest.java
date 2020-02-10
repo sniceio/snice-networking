@@ -39,6 +39,12 @@ public class AvpTest {
         ensureAvpHeader(session.getHeader(), 263, true, false, Optional.empty());
     }
 
+    @Test
+    public void testHostIpAddress() {
+        final HostIpAddress host = HostIpAddress.of("127.0.0.1");
+        assertThat(host.getValue().asString(), is("127.0.0.1"));// this is not actually correct. Will fix later
+        ensureAvpHeader(host.getHeader(), 257, true, false, Optional.empty());
+    }
 
     @Test
     public void testBasicAvp() {

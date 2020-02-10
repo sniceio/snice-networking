@@ -29,6 +29,7 @@ avp:
         - Result-Code
         - User-Name
         - Session-Id
+        - Host-IP-Address
         - Experimental-Result-Code
         - Subscription-Data
         - Subscriber-Status

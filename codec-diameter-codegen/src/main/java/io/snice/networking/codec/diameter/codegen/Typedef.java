@@ -5,6 +5,7 @@ import io.snice.networking.codec.diameter.avp.impl.DiameterEnumeratedAvp;
 import io.snice.networking.codec.diameter.avp.impl.DiameterGroupedAvp;
 import io.snice.networking.codec.diameter.avp.impl.DiameterIdentityAvp;
 import io.snice.networking.codec.diameter.avp.impl.DiameterInteger32Avp;
+import io.snice.networking.codec.diameter.avp.impl.DiameterIpAddressAvp;
 import io.snice.networking.codec.diameter.avp.impl.DiameterOctetStringAvp;
 import io.snice.networking.codec.diameter.avp.impl.DiameterUnsigned32Avp;
 import io.snice.networking.codec.diameter.avp.impl.DiameterUtf8StringAvp;
@@ -14,6 +15,7 @@ import io.snice.networking.codec.diameter.avp.type.Enumerated;
 import io.snice.networking.codec.diameter.avp.type.Grouped;
 import io.snice.networking.codec.diameter.avp.type.Integer32;
 import io.snice.networking.codec.diameter.avp.type.Integer64;
+import io.snice.networking.codec.diameter.avp.type.IpAddress;
 import io.snice.networking.codec.diameter.avp.type.OctetString;
 import io.snice.networking.codec.diameter.avp.type.UTF8String;
 import io.snice.networking.codec.diameter.avp.type.Unsigned32;
@@ -36,7 +38,7 @@ public enum Typedef {
     GROUPED("Grouped", null, Grouped.class, DiameterGroupedAvp.class),
     GAVP("Gavp", null, Grouped.class, DiameterGroupedAvp.class),
     DIAMETER_URI("DiameterURI", UTF8_STRING, null, null),
-    IP_ADDRESS("IPAddress", OCTET_STRING, null, null),
+    IP_ADDRESS("IPAddress", OCTET_STRING, IpAddress.class, DiameterIpAddressAvp.class),
     DIAMETER_IDENTITY("DiameterIdentity", OCTET_STRING, DiameterIdentity.class, DiameterIdentityAvp.class),
     IP_FILTER_RULE("IPFilterRule", OCTET_STRING, null, null),
     QoS_FILTER_RULE("QoSFilterRule", OCTET_STRING, null, null),
