@@ -19,6 +19,11 @@ public class DiameterRequestBuilder extends DiameterMessageBuilder<DiameterReque
         return new DiameterRequestBuilder(header);
     }
 
+    public static DiameterRequestBuilder createRequest(final int commandCode) {
+        final var header = createHeader(257);
+        return new DiameterRequestBuilder(header);
+    }
+
     private static DiameterHeader.Builder createHeader(final int commandCode) {
         final var header = DiameterHeader.of();
         header.withCommandCode(commandCode);
@@ -29,8 +34,9 @@ public class DiameterRequestBuilder extends DiameterMessageBuilder<DiameterReque
     @Override
     protected DiameterRequest internalBuild(final Buffer message, final DiameterHeader header,
                                             final List<FramedAvp> avps, final short indexOfOriginHost,
-                                            final short indexOfOriginRealm, final short indexOfDestinationHos,
+                                            final short indexOfOriginRealm, final short indexOfDestinationHost,
                                             final short indexOfDestinationRealm) {
-        return new ImmutableDiameterRequest(message, header, avps, indexOfOriginHost, indexOfOriginRealm);
+        return new ImmutableDiameterRequest(message, header, avps, indexOfOriginHost, indexOfOriginRealm,
+                indexOfDestinationHost, indexOfDestinationRealm);
     }
 }

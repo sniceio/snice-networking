@@ -11,6 +11,10 @@ public interface DiameterRequest extends DiameterMessage {
         return DiameterRequestBuilder.createCER();
     }
 
+    static DiameterRequestBuilder createRequest(final int commandCode) {
+        return DiameterRequestBuilder.createRequest(commandCode);
+    }
+
 
     interface Builder extends DiameterMessage.Builder<DiameterRequest> {
 

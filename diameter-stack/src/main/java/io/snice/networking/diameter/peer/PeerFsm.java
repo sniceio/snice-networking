@@ -83,6 +83,17 @@ public class PeerFsm {
     // ----------------------------------------------------------------------
     // ----------------------------------------------------------------------
 
+    /**
+     * According to spec, upon receiving a CER the FSM should perform the following three actions:
+     * <ul>
+     *     <li>R-Accept</li>
+     *     <li>Process-CER</li>
+     *     <li>R-Snd-CEA</li>
+     * </ul>
+     *
+     * which is the responsibility of this method (well, accepting the CER I guess was done
+     * as part of just calling this method!)
+     */
     private static final void processCER(final DiameterMessage cer, final PeerContext ctx, final PeerData data) {
         final var cea = cer.createAnswer(ResultCode.DiameterSuccess2001).build();
         ctx.getChannelContext().sendDownstream(cea);

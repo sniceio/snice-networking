@@ -1,22 +1,64 @@
 package io.snice.networking.codec.diameter.avp.type;
 
 import io.snice.buffer.Buffer;
+import io.snice.buffer.Buffers;
 import io.snice.buffer.WritableBuffer;
+import io.snice.net.IPv4;
 
 import java.util.Objects;
+
+import static io.snice.preconditions.PreConditions.assertArgument;
+import static io.snice.preconditions.PreConditions.assertNotEmpty;
+import static io.snice.preconditions.PreConditions.assertNotNull;
 
 public interface IpAddress extends DiameterType {
 
     static IpAddress parse(final Buffer data) {
-        return new DefaultIPAddress(data);
+        assertNotNull(data);
+        assertArgument(data.capacity() >= 2 + 4, "The buffer cannot contain a valid Diameter Address because it is less than 6 bytes long");
+        final var isIPv4 = data.getByte(1) == 0x01;
+        final var isIPv6 = data.getByte(1) == 0x02;
+
+        if (!isIPv4 && !isIPv6) {
+            throw new IllegalArgumentException("Unknown Address family. Only IPv4 and IPv6 are valid address families");
+        }
+
+        final var size = isIPv4 ? 2 + 4 : 2 + 16;
+        assertArgument(data.capacity() >= size, "Not enough data in the buffer to create a Diameter Address");
+
+        final var b = data.slice(size);
+        return new DefaultIPAddress(isIPv4, b);
+    }
+
+    /**
+     * Create a IPv4 address based on the given string, which is expected
+     * to be in a human readable form, i.e. the 10.36.10.1 form.
+     *
+     * @param ip
+     * @return
+     */
+    static IpAddress createIpv4Address(final String ip) {
+        assertNotEmpty(ip, "The IP address cannot be null or the empty string");
+        // 2 for address family, 4 for the 32bit encoding of the ip and 2 for padding since
+        // an AVP needs to have 8 bit boundaries.
+        final byte[] buffer = new byte[2 + 4 + 2];
+        buffer[1] = (byte)0x01;
+        IPv4.fromString(buffer, 2, ip);
+        return new DefaultIPAddress(true, Buffers.wrap(buffer));
     }
 
     String asString();
 
-    class DefaultIPAddress implements IpAddress {
-        final Buffer value;
+    boolean isIPv4();
 
-        private DefaultIPAddress(final Buffer value) {
+    boolean isIPv6();
+
+    class DefaultIPAddress implements IpAddress {
+        private final Buffer value;
+        private final boolean isIPv4;
+
+        private DefaultIPAddress(final boolean isIPv4, final Buffer value) {
+            this.isIPv4 = isIPv4;
             this.value = value;
         }
 
@@ -26,13 +68,18 @@ public interface IpAddress extends DiameterType {
         }
 
         @Override
-        public String toString() {
-            return value.toString();
+        public String asString() {
+            return toString();
         }
 
         @Override
-        public String asString() {
-            return value.toString();
+        public boolean isIPv4() {
+            return isIPv4;
+        }
+
+        @Override
+        public boolean isIPv6() {
+            return !isIPv4;
         }
 
         @Override
@@ -51,6 +98,15 @@ public interface IpAddress extends DiameterType {
         @Override
         public int hashCode() {
             return Objects.hash(value);
+        }
+
+        @Override
+        public String toString() {
+            if (isIPv4) {
+                return value.toIPv4String(2);
+            }
+
+            return value.dumpAsHex();
         }
     }
 }

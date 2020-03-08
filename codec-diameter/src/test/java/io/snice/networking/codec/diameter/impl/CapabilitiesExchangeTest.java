@@ -3,12 +3,17 @@ package io.snice.networking.codec.diameter.impl;
 import io.snice.networking.codec.diameter.DiameterMessage;
 import io.snice.networking.codec.diameter.DiameterRequest;
 import io.snice.networking.codec.diameter.DiameterTestBase;
+import io.snice.networking.codec.diameter.avp.Avp;
+import io.snice.networking.codec.diameter.avp.FramedAvp;
+import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
 import io.snice.networking.codec.diameter.avp.api.ResultCode;
 import io.snice.networking.codec.diameter.avp.api.VendorId;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.util.Optional.empty;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
 public class CapabilitiesExchangeTest extends DiameterTestBase {
@@ -33,6 +38,18 @@ public class CapabilitiesExchangeTest extends DiameterTestBase {
         final var productName = cer.getAvp(VendorId.CODE);
         final var vendorId = (VendorId) productName.get().ensure();
         assertThat(vendorId.getValue().getValue(), is(10415L));
+
+        final var hostIp = cer.getAvp(HostIpAddress.CODE);
+        assertThat(hostIp, not(empty()));
+        assertThat(hostIp.get(), is(HostIpAddress.of("127.0.0.1")));
+    }
+
+    @Test
+    public void frameCerNo2() throws Exception {
+        final var cer = loadDiameterMessage("capabilities_exchange_request_002.raw").toRequest();
+        final var hostIp = cer.getAvp(HostIpAddress.CODE).map(FramedAvp::ensure).map(Avp::toHostIpAddress);
+        assertThat(hostIp, not(empty()));
+        assertThat(hostIp.get(), is(HostIpAddress.of("127.0.0.1")));
     }
 
     @Test

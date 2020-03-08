@@ -8,7 +8,6 @@ import io.snice.networking.codec.diameter.avp.AvpParseException;
 import io.snice.networking.codec.diameter.avp.AvpProtected;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.Vendor;
-
 import io.snice.networking.codec.diameter.avp.impl.DiameterIdentityAvp;
 import io.snice.networking.codec.diameter.avp.type.DiameterIdentity;
 
@@ -37,7 +36,6 @@ public interface DestinationRealm extends Avp<DiameterIdentity> {
     static DestinationRealm of(final String value) {
         return of(Buffers.wrap(value));
     }
-    
 
     @Override
     default long getCode() {
@@ -48,6 +46,7 @@ public interface DestinationRealm extends Avp<DiameterIdentity> {
         return true;
     }
 
+    @Override
     default DestinationRealm toDestinationRealm() {
         return this;
     }

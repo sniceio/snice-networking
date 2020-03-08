@@ -17,8 +17,10 @@ public class ImmutableDiameterRequest extends ImmutableDiameterMessage implement
                                     final DiameterHeader header,
                                     final List<FramedAvp> avps,
                                     final short indexOriginHost,
-                                    final short indexOriginRealm) {
-        super(raw, header, avps, indexOriginHost, indexOriginRealm);
+                                    final short indexOriginRealm,
+                                    final short indexOfDestinationHost,
+                                    final short indexOfDestinationRealm) {
+        super(raw, header, avps, indexOriginHost, indexOriginRealm, indexOfDestinationHost, indexOfDestinationRealm);
     }
 
     @Override

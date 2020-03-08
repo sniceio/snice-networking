@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
 
 public abstract class DiameterMessageBuilder<T extends DiameterMessage> implements DiameterMessage.Builder<T> {
@@ -71,6 +72,18 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
     }
 
     @Override
+    public DiameterMessage.Builder<T> withOriginHost(final Buffer originHost) {
+        indexOfOriginHost = addTrackedAvp(indexOfOriginHost, OriginHost.of(originHost));
+        return this;
+    }
+
+    @Override
+    public DiameterMessage.Builder<T> withOriginHost(final String originHost) {
+        indexOfOriginHost = addTrackedAvp(indexOfOriginHost, OriginHost.of(originHost));
+        return this;
+    }
+
+    @Override
     public DiameterMessage.Builder<T> withOriginHost(final OriginHost originHost) {
         if (originHost != null) {
             indexOfOriginHost = addTrackedAvp(indexOfOriginHost, originHost);
@@ -79,26 +92,47 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
     }
 
     @Override
+    public DiameterMessage.Builder<T> withOriginRealm(final Buffer originRealm) {
+        indexOfOriginRealm = addTrackedAvp(indexOfOriginRealm, OriginRealm.of(originRealm));
+        return this;
+    }
+
+    @Override
+    public DiameterMessage.Builder<T> withOriginRealm(final String originRealm) {
+        indexOfOriginRealm = addTrackedAvp(indexOfOriginRealm, OriginRealm.of(originRealm));
+        return this;
+    }
+
+    @Override
     public DiameterMessage.Builder<T> withOriginRealm(final OriginRealm originRealm) {
-        if (originRealm != null) {
-            indexOfOriginRealm = addTrackedAvp(indexOfOriginRealm, originRealm);
-        }
+        assertNotNull(originRealm, "The OriginRealm cannot be null");
+        indexOfOriginRealm = addTrackedAvp(indexOfOriginRealm, originRealm);
         return this;
     }
 
     @Override
     public DiameterMessage.Builder<T> withDestinationHost(final DestinationHost destHost) {
-        if (destHost != null) {
-            indexOfDestinationHost = addTrackedAvp(indexOfDestinationHost, destHost);
-        }
+        assertNotNull(destHost, "The DestinationHost cannot be null");
+        indexOfDestinationHost = addTrackedAvp(indexOfDestinationHost, destHost);
+        return this;
+    }
+
+    @Override
+    public DiameterMessage.Builder<T> withDestinationRealm(final Buffer destRealm) {
+        indexOfDestinationRealm = addTrackedAvp(indexOfDestinationRealm, DestinationRealm.of(destRealm));
+        return this;
+    }
+
+    @Override
+    public DiameterMessage.Builder<T> withDestinationRealm(final String destRealm) {
+        indexOfDestinationRealm = addTrackedAvp(indexOfDestinationRealm, DestinationRealm.of(destRealm));
         return this;
     }
 
     @Override
     public DiameterMessage.Builder<T> withDestinationRealm(final DestinationRealm destRealm) {
-        if (destRealm != null) {
-            indexOfDestinationRealm = addTrackedAvp(indexOfDestinationRealm, destRealm);
-        }
+        assertNotNull(destRealm, "The DestinationRealm cannot be null");
+        indexOfDestinationRealm = addTrackedAvp(indexOfDestinationRealm, destRealm);
         return this;
     }
 

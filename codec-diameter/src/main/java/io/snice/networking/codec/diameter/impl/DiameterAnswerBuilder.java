@@ -19,7 +19,8 @@ public class DiameterAnswerBuilder extends DiameterMessageBuilder<DiameterAnswer
     @Override
     protected DiameterAnswer internalBuild(final Buffer message, final DiameterHeader header, final List<FramedAvp> avps,
                                            final short indexOfOriginHost, final short indexOfOriginRealm,
-                                           final short indexOfDestinationHos, final short indexOfDestinationRealm) {
-        return new ImmutableDiameterAnswer(message, header, avps, indexOfOriginHost, indexOfOriginRealm);
+                                           final short indexOfDestinationHost, final short indexOfDestinationRealm) {
+        return new ImmutableDiameterAnswer(message, header, avps, indexOfOriginHost, indexOfOriginRealm,
+                indexOfDestinationHost, indexOfDestinationRealm);
     }
 }

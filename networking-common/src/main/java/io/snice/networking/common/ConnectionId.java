@@ -9,9 +9,8 @@ import io.snice.buffer.Buffers;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 
+import static io.snice.net.IPv4.convertToStringIP;
 import static io.snice.preconditions.PreConditions.assertArgument;
-import static io.snice.preconditions.PreConditions.assertNotNull;
-import static io.snice.preconditions.PreConditions.ensureNotEmpty;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
 
 /**
@@ -71,18 +70,6 @@ public interface ConnectionId {
 
     default boolean isWSS() {
         return getProtocol() == Transport.wss;
-    }
-
-    /**
-     * Helper method to convert an IPv4 address represented as a byte-array
-     * into a human readable String.
-     */
-    static String convertToStringIP(final byte[] ip) {
-        final short a = (short) (ip[0] & 0xFF);
-        final short b = (short) (ip[1] & 0xFF);
-        final short c = (short) (ip[2] & 0xFF);
-        final short d = (short) (ip[3] & 0xFF);
-        return a + "." + b + "." + c + "." + d;
     }
 
     static ConnectionId create(final Transport transport, final InetSocketAddress local, final InetSocketAddress remote) {
@@ -358,7 +345,7 @@ public interface ConnectionId {
             return new String(translate(toEncode));
         }
 
-        private char[] translate(final byte[] values) {
+        private static char[] translate(final byte[] values) {
             int pos = 0;
             final char[] array = new char[values.length * 2];
             for (final byte value : values) {

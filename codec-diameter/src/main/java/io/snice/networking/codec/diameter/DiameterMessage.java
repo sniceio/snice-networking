@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author jonas@jonasborjesson.com
@@ -27,7 +28,25 @@ public interface DiameterMessage extends Cloneable {
 
     DiameterMessage clone();
 
+    /**
+     * Get an {@link FramedAvp}. If there are multiple AVPs present,
+     * only the first one will be returned. Use {@link #getAvps(long)}
+     * to retrieve those AVPs that may be present multiple times.
+     *
+     * @param code
+     * @return an {@link Optional} {@link FramedAvp}
+     */
     Optional<FramedAvp> getAvp(long code);
+
+    /**
+     * Retrieve all AVPs for the given code.
+     *
+     * @param code
+     * @return a list of AVPs, or an empty list of none were found.
+     */
+    default List<FramedAvp> getAvps(long code) {
+        return getAllAvps().stream().filter(avp -> avp.getCode() == code).collect(Collectors.toList());
+    }
 
     Builder<? extends DiameterMessage> copy();
 
@@ -84,6 +103,10 @@ public interface DiameterMessage extends Cloneable {
      * The {@link OriginRealm} MUST be present in all diameter messages.
      */
     OriginRealm getOriginRealm();
+
+    Optional<DestinationRealm> getDestinationRealm();
+
+    Optional<DestinationHost> getDestinationHost();
 
     static DiameterMessage frame(final Buffer buffer) {
         return DiameterParser.frame(buffer.toReadableBuffer());
@@ -158,12 +181,18 @@ public interface DiameterMessage extends Cloneable {
          */
         Builder<T> withAvp(Avp avp);
 
+        Builder<T> withOriginHost(String originHost);
+        Builder<T> withOriginHost(Buffer originHost);
         Builder<T> withOriginHost(OriginHost originHost);
 
+        Builder<T> withOriginRealm(Buffer originHost);
+        Builder<T> withOriginRealm(String originHost);
         Builder<T> withOriginRealm(OriginRealm originHost);
 
         Builder<T> withDestinationHost(DestinationHost destHost);
 
+        Builder<T> withDestinationRealm(Buffer destRealm);
+        Builder<T> withDestinationRealm(String destRealm);
         Builder<T> withDestinationRealm(DestinationRealm destRealm);
 
         /**

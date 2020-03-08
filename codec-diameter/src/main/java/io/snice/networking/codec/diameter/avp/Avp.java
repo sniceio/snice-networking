@@ -2,6 +2,9 @@ package io.snice.networking.codec.diameter.avp;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.WritableBuffer;
+import io.snice.networking.codec.diameter.avp.api.DestinationHost;
+import io.snice.networking.codec.diameter.avp.api.DestinationRealm;
+import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.codec.diameter.avp.api.OriginRealm;
 import io.snice.networking.codec.diameter.avp.impl.ImmutableAvp;
@@ -129,6 +132,21 @@ public interface Avp<T extends DiameterType> extends FramedAvp {
     default OriginRealm toOriginRealm() {
         throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
                 + " to type " + OriginRealm.class.getName());
+    }
+
+    default DestinationRealm toDestinationRealm() {
+        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
+                + " to type " + DestinationRealm.class.getName());
+    }
+
+    default DestinationHost toDestinationHost() {
+        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
+                + " to type " + DestinationHost.class.getName());
+    }
+
+    default HostIpAddress toHostIpAddress() {
+        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
+                + " to type " + HostIpAddress.class.getName());
     }
 
     class DefaultBuilder<T extends DiameterType> implements Builder<T> {
