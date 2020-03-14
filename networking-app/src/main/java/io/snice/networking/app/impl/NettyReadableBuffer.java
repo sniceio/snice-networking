@@ -222,6 +222,11 @@ public class NettyReadableBuffer implements ReadableBuffer {
     }
 
     @Override
+    public int countOccurences(final int startIndex, final int maxBytes, final byte b) throws IndexOutOfBoundsException {
+        throw new RuntimeException("not yet implemented");
+    }
+
+    @Override
     public void writeTo(final OutputStream out) throws IOException {
         throw new RuntimeException("not yet implemented");
     }

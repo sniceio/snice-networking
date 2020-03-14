@@ -16,7 +16,7 @@ public class PeerData implements Data {
 
     public PeerData(final PeerConfiguration config) {
         this.config = config;
-        oustandingTransactions = new HashMap<>(config.getPeerTransactionTableInitialSize(), 0.75f);
+        oustandingTransactions = new HashMap<>(PeerConfiguration.getPeerTransactionTableInitialSize(), 0.75f);
     }
 
     public boolean hasOutstandingTransaction(final DiameterMessage msg) {

@@ -22,7 +22,6 @@ public interface Integer32 extends DiameterType {
         buffer.write(getValue());
     }
 
-
     @Override
     default int size() {
         return 4;

@@ -14,7 +14,6 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
 
 /**
  * 
- nisse
  */
 public interface ExperimentalResultCode extends Avp<Enumerated<ExperimentalResultCode.Code>> {
 
@@ -169,6 +168,14 @@ public interface ExperimentalResultCode extends Avp<Enumerated<ExperimentalResul
     @Override
     default long getCode() {
         return CODE;
+    }
+
+    default ExperimentalResultCode toExperimentalResultCode() {
+        return this;
+    }
+
+    default boolean isExperimentalResultCode() {
+        return true;
     }
 
     @Override

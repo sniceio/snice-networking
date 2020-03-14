@@ -14,7 +14,6 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
 
 /**
  * 
- nisse
  */
 public interface ResultCode extends Avp<Enumerated<ResultCode.Code>> {
 
@@ -98,6 +97,14 @@ public interface ResultCode extends Avp<Enumerated<ResultCode.Code>> {
     @Override
     default long getCode() {
         return CODE;
+    }
+
+    default ResultCode toResultCode() {
+        return this;
+    }
+
+    default boolean isResultCode() {
+        return true;
     }
 
     @Override

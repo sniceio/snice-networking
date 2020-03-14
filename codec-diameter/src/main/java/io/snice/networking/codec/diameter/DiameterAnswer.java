@@ -1,5 +1,7 @@
 package io.snice.networking.codec.diameter;
 
+import io.snice.functional.Either;
+import io.snice.networking.codec.diameter.avp.api.ExperimentalResultCode;
 import io.snice.networking.codec.diameter.avp.api.ResultCode;
 import io.snice.networking.codec.diameter.impl.ImmutableDiameterAnswer;
 
@@ -8,7 +10,13 @@ import io.snice.networking.codec.diameter.impl.ImmutableDiameterAnswer;
  */
 public interface DiameterAnswer extends DiameterMessage {
 
-    ResultCode getResultCode();
+    /**
+     * Every {@link DiameterAnswer} will have a result code. Either is is the standard
+     * {@link ResultCode} or it will be a {@link ExperimentalResultCode}.
+     *
+     * @return
+     */
+    Either<ExperimentalResultCode, ResultCode> getResultCode();
 
     static Builder withResultCode(final ResultCode resultCode) {
         return ImmutableDiameterAnswer.withResultCode(resultCode);

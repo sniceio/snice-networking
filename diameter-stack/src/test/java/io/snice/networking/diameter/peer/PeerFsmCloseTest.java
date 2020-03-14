@@ -34,7 +34,7 @@ public class PeerFsmCloseTest extends PeerFsmTestBase {
         final var cer = someCer();
         fsm.onEvent(cer);
 
-        final var expectedCEA = someCea(ResultCode.DiameterSuccess2001);
+        final var expectedCEA = someCea(ResultCode.DiameterSuccess2001, LOCAL_PEER_IP_ADDRESS, defaultProductName);
         verify(channelCtx).sendDownstream(expectedCEA);
         verifyNoMoreInteractions(channelCtx);
     }

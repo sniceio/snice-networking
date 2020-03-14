@@ -35,8 +35,9 @@ public class DiameterRequestBuilder extends DiameterMessageBuilder<DiameterReque
     protected DiameterRequest internalBuild(final Buffer message, final DiameterHeader header,
                                             final List<FramedAvp> avps, final short indexOfOriginHost,
                                             final short indexOfOriginRealm, final short indexOfDestinationHost,
-                                            final short indexOfDestinationRealm) {
+                                            final short indexOfDestinationRealm, final short indexResultCode,
+                                            final short indexExperimentalResultCode) {
         return new ImmutableDiameterRequest(message, header, avps, indexOfOriginHost, indexOfOriginRealm,
-                indexOfDestinationHost, indexOfDestinationRealm);
+                indexOfDestinationHost, indexOfDestinationRealm, indexResultCode, indexExperimentalResultCode);
     }
 }

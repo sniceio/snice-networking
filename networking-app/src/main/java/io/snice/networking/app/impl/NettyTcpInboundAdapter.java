@@ -4,8 +4,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.codec.SerializationFactory;
-import io.snice.networking.codec.diameter.DiameterHeader;
-import io.snice.networking.codec.diameter.DiameterMessage;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
@@ -45,9 +43,6 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
     private final List<ConnectionContext> ctxs;
     private final SerializationFactory<T> factory;
     private final int exceptionCounter = 0;
-
-    private DiameterHeader currentHeader;
-    private DiameterMessage lastMessage;
 
     private final ReentrantLock lock = new ReentrantLock();
 

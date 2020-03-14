@@ -8,6 +8,8 @@ import io.snice.networking.codec.diameter.avp.AvpParseException;
 import io.snice.networking.codec.diameter.avp.AvpProtected;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.Vendor;
+
+import static io.snice.preconditions.PreConditions.assertNotNull;
 {% for import in java.imports %}
 import {{ import }};{% endfor %}
 
@@ -24,9 +26,18 @@ public interface {{java.class.name}} extends Avp<{{avp.type.interface}}> {
     {% else %}
     static {{java.class.name}} of(final Buffer value) {
         final {{avp.type.interface}} v = {{avp.type.interface}}.{% if avp.tbcd_formatted %}parse(value, true);{% else %}parse(value);{% endif %}
+        return of(v);
+    }
+
+    static {{java.class.name}} of(final String value) {
+        return of(Buffers.wrap(value));
+    }
+
+    static {{java.class.name}} of(final {{avp.type.interface}} value) {
+        assertNotNull(value);
         final Builder<{{avp.type.interface}}> builder =
                 Avp.ofType({{avp.type.interface}}.class)
-                        .withValue(v)
+                        .withValue(value)
                         .withAvpCode(CODE)
                         .isMandatory(AvpMandatory.{{avp.mandatory_bit}}.isMandatory())
                         .isProtected(AvpProtected.{{avp.protected_bit}}.isProtected())
@@ -35,9 +46,6 @@ public interface {{java.class.name}} extends Avp<{{avp.type.interface}}> {
         return new Default{{java.class.name}}(builder.build());
     }
 
-    static {{java.class.name}} of(final String value) {
-        return of(Buffers.wrap(value));
-    }
     {% endif %}
 
     @Override
@@ -63,6 +71,30 @@ public interface {{java.class.name}} extends Avp<{{avp.type.interface}}> {
     class Default{{java.class.name}} extends {{avp.type.class}} implements {{java.class.name}} {
         private Default{{java.class.name}}(final FramedAvp raw) {
             {% if avp.tbcd_formatted %}super(raw, true);{% else %}super(raw);{% endif %}
+        }
+
+        @Override
+        public {{java.class.name}} ensure() {
+            return this;
+        }
+
+        @Override
+        public boolean equals(final Object other) {
+            if (this == other) {
+                return true;
+            }
+
+            if (other == null) {
+                return false;
+            }
+
+            try {
+                final {{java.class.name}} o = ({{java.class.name}})other;
+                final {{avp.type.interface}} v = getValue();
+                return v.equals(o.getValue());
+            } catch (final ClassCastException e) {
+                return false;
+            }
         }
     }
 }

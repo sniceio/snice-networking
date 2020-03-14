@@ -14,7 +14,6 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
 
 /**
  * 
- nisse
  */
 public interface RedirectHostUsage extends Avp<Enumerated<RedirectHostUsage.Code>> {
 
@@ -31,6 +30,14 @@ public interface RedirectHostUsage extends Avp<Enumerated<RedirectHostUsage.Code
     @Override
     default long getCode() {
         return CODE;
+    }
+
+    default RedirectHostUsage toRedirectHostUsage() {
+        return this;
+    }
+
+    default boolean isRedirectHostUsage() {
+        return true;
     }
 
     @Override

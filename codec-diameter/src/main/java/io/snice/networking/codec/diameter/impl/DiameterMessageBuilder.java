@@ -8,8 +8,10 @@ import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.api.DestinationHost;
 import io.snice.networking.codec.diameter.avp.api.DestinationRealm;
+import io.snice.networking.codec.diameter.avp.api.ExperimentalResultCode;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.codec.diameter.avp.api.OriginRealm;
+import io.snice.networking.codec.diameter.avp.api.ResultCode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,18 +35,46 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
 
     private Function<Avp, Avp> onAvpFunction;
 
+    private short indexOfResultCode = -1;
+    private short indexOfExperimentalResultCode = -1;
     private short indexOfOriginHost = -1;
     private short indexOfOriginRealm = -1;
     private short indexOfDestinationHost = -1;
     private short indexOfDestinationRealm = -1;
 
     protected DiameterMessageBuilder(final int avpSizeHint, final DiameterHeader.Builder header) {
+        this(avpSizeHint, header, null, null);
+    }
+
+    /**
+     * Constructor for Answer
+     *
+     */
+    protected DiameterMessageBuilder(final int avpSizeHint, final DiameterHeader.Builder header,
+                                     final ResultCode resultCode, final ExperimentalResultCode experimentalResultCode) {
         avps = new ArrayList<>(avpSizeHint);
+        if (resultCode != null) {
+            indexOfResultCode = 0;
+            avps.add(resultCode);
+        }
+
+        if (experimentalResultCode != null) {
+            indexOfExperimentalResultCode = 0;
+            avps.add(experimentalResultCode);
+        }
         this.header = header;
     }
 
     protected DiameterMessageBuilder(final int avpSizeHint) {
         this(avpSizeHint, null);
+    }
+
+    protected DiameterMessageBuilder(final ResultCode resultCode) {
+        this(10, null, resultCode, null);
+    }
+
+    protected DiameterMessageBuilder(final ExperimentalResultCode resultCode) {
+        this(10, null, null, resultCode);
     }
 
     protected DiameterMessageBuilder() {
@@ -192,7 +222,7 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
         final Buffer buffer = writable.build();
 
         return internalBuild(buffer, finalHeader, finalAvps, indexOfOriginHost, indexOfOriginRealm,
-                indexOfDestinationHost, indexOfDestinationRealm);
+                indexOfDestinationHost, indexOfDestinationRealm, indexOfResultCode, indexOfExperimentalResultCode);
     }
 
     /**
@@ -229,6 +259,7 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
         if (avp.isOriginHost()) {
             indexOfOriginHost = addTrackedAvp(indexOfOriginHost, avp);
         }
+
         addAvp(avp);
     }
 
@@ -251,5 +282,7 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
                                        short indexOfOriginHost,
                                        short indexOfOriginRealm,
                                        short indexOfDestinationHos,
-                                       short indexOfDestinationRealm);
+                                       short indexOfDestinationRealm,
+                                       short indexResultCode,
+                                       short indexOfExperimentalResultCode);
 }

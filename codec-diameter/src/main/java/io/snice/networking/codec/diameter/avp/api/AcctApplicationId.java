@@ -9,6 +9,8 @@ import io.snice.networking.codec.diameter.avp.AvpProtected;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.Vendor;
 
+import static io.snice.preconditions.PreConditions.assertNotNull;
+
 import io.snice.networking.codec.diameter.avp.impl.DiameterUnsigned32Avp;
 import io.snice.networking.codec.diameter.avp.type.Unsigned32;
 
@@ -23,9 +25,18 @@ public interface AcctApplicationId extends Avp<Unsigned32> {
     
     static AcctApplicationId of(final Buffer value) {
         final Unsigned32 v = Unsigned32.parse(value);
+        return of(v);
+    }
+
+    static AcctApplicationId of(final String value) {
+        return of(Buffers.wrap(value));
+    }
+
+    static AcctApplicationId of(final Unsigned32 value) {
+        assertNotNull(value);
         final Builder<Unsigned32> builder =
                 Avp.ofType(Unsigned32.class)
-                        .withValue(v)
+                        .withValue(value)
                         .withAvpCode(CODE)
                         .isMandatory(AvpMandatory.MUST.isMandatory())
                         .isProtected(AvpProtected.MUST_NOT.isProtected())
@@ -34,9 +45,6 @@ public interface AcctApplicationId extends Avp<Unsigned32> {
         return new DefaultAcctApplicationId(builder.build());
     }
 
-    static AcctApplicationId of(final String value) {
-        return of(Buffers.wrap(value));
-    }
     
 
     @Override
@@ -62,6 +70,30 @@ public interface AcctApplicationId extends Avp<Unsigned32> {
     class DefaultAcctApplicationId extends DiameterUnsigned32Avp implements AcctApplicationId {
         private DefaultAcctApplicationId(final FramedAvp raw) {
             super(raw);
+        }
+
+        @Override
+        public AcctApplicationId ensure() {
+            return this;
+        }
+
+        @Override
+        public boolean equals(final Object other) {
+            if (this == other) {
+                return true;
+            }
+
+            if (other == null) {
+                return false;
+            }
+
+            try {
+                final AcctApplicationId o = (AcctApplicationId)other;
+                final Unsigned32 v = getValue();
+                return v.equals(o.getValue());
+            } catch (final ClassCastException e) {
+                return false;
+            }
         }
     }
 }

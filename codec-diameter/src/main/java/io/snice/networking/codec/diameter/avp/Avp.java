@@ -2,16 +2,10 @@ package io.snice.networking.codec.diameter.avp;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.WritableBuffer;
-import io.snice.networking.codec.diameter.avp.api.DestinationHost;
-import io.snice.networking.codec.diameter.avp.api.DestinationRealm;
-import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
-import io.snice.networking.codec.diameter.avp.api.OriginHost;
-import io.snice.networking.codec.diameter.avp.api.OriginRealm;
 import io.snice.networking.codec.diameter.avp.impl.ImmutableAvp;
 import io.snice.networking.codec.diameter.avp.impl.ImmutableAvpHeader;
 import io.snice.networking.codec.diameter.avp.impl.ImmutableFramedAvp;
 import io.snice.networking.codec.diameter.avp.type.DiameterType;
-import io.snice.networking.codec.diameter.avp.type.Enumerated;
 import io.snice.preconditions.PreConditions;
 
 import java.util.Optional;
@@ -28,8 +22,6 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
  * is simply just easier to work with.
  */
 public interface Avp<T extends DiameterType> extends FramedAvp {
-
-    String CANNOT_CAST_AVP_OF_TYPE = "Cannot cast AVP of type ";
 
     T getValue();
 
@@ -52,6 +44,11 @@ public interface Avp<T extends DiameterType> extends FramedAvp {
         };
     }
 
+    // @Override
+    // default Avp<T> ensure() {
+        // return this;
+    // }
+
     interface ValueStep<T extends DiameterType> {
         AvpCodeStep<T> withValue(T value);
     }
@@ -59,7 +56,6 @@ public interface Avp<T extends DiameterType> extends FramedAvp {
     interface AvpCodeStep<T extends DiameterType> {
         Builder<T> withAvpCode(long code);
     }
-
 
     interface Builder<T extends DiameterType> {
 
@@ -101,52 +97,6 @@ public interface Avp<T extends DiameterType> extends FramedAvp {
         Builder<T> withVendor(Vendor vendor);
 
         Avp<T> build();
-    }
-
-    /**
-     * Check if this AVP is an enumerated AVP.
-     *
-     * @return
-     */
-    default boolean isEnumerated() {
-        return false;
-    }
-
-    default <E extends Enum<E>> Avp<Enumerated<E>> toEnumerated() throws ClassCastException {
-        throw new ClassCastException("Unable to cast a " + this.getClass().getName() + " into a " + Enumerated.class.getName());
-    }
-
-    default boolean isOriginHost() {
-        return false;
-    }
-
-    default OriginHost toOriginHost() {
-        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
-                + " to type " + OriginHost.class.getName());
-    }
-
-    default boolean isOriginRealm() {
-        return false;
-    }
-
-    default OriginRealm toOriginRealm() {
-        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
-                + " to type " + OriginRealm.class.getName());
-    }
-
-    default DestinationRealm toDestinationRealm() {
-        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
-                + " to type " + DestinationRealm.class.getName());
-    }
-
-    default DestinationHost toDestinationHost() {
-        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
-                + " to type " + DestinationHost.class.getName());
-    }
-
-    default HostIpAddress toHostIpAddress() {
-        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
-                + " to type " + HostIpAddress.class.getName());
     }
 
     class DefaultBuilder<T extends DiameterType> implements Builder<T> {

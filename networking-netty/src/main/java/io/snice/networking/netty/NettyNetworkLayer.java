@@ -45,6 +45,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
 
+import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.ensureNotEmpty;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
 
@@ -166,10 +167,18 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
             this(name, () -> handler, transports);
         }
 
-        private Handler(final String name, final Supplier<ChannelHandler> handler, final Transport... transports) {
+        private Handler(final String name, final ChannelHandler handler, final List<Transport> transports) {
+            this(name, () -> handler, transports);
+        }
+
+        private Handler(final String name, final Supplier<ChannelHandler> handler, final List<Transport> transports) {
             this.name = name;
             this.handler = handler;
-            this.transports = Arrays.asList(transports);
+            this.transports = transports;
+        }
+
+        private Handler(final String name, final Supplier<ChannelHandler> handler, final Transport... transports) {
+            this(name, handler, Arrays.asList(transports));
         }
 
         public String getName() {
@@ -226,7 +235,27 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
             return this;
         }
 
+        public Builder withHandler(final List<ProtocolHandler> handlers) {
+            assertNotNull(handlers);
+            handlers.forEach(this::withHandler);
+            return this;
+        }
+
+        public Builder withHandler(final ProtocolHandler handler) {
+            assertNotNull(handler);
+            withHandler(handler.getName(), handler.getDecoder(), handler.getTransports());
+            return this;
+        }
+
         public Builder withHandler(final String handlerName, final Supplier<ChannelHandler> handler, final Transport... transports) {
+            ensureNotEmpty(handlerName, "The name of the handler cannot be null or the empty string");
+            ensureNotNull(handler, "The handler cannot be null");
+            ensureNotNull(transports, "You must specify at least one transport that this handler will be installed");
+            handlers.add(new Handler(handlerName, handler, transports));
+            return this;
+        }
+
+        public Builder withHandler(final String handlerName, final Supplier<ChannelHandler> handler, final List<Transport> transports) {
             ensureNotEmpty(handlerName, "The name of the handler cannot be null or the empty string");
             ensureNotNull(handler, "The handler cannot be null");
             ensureNotNull(transports, "You must specify at least one transport that this handler will be installed");

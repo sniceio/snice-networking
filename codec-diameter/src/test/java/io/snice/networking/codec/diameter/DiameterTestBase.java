@@ -9,7 +9,12 @@ import io.snice.buffer.ReadableBuffer;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpHeader;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
+import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
+import io.snice.networking.codec.diameter.avp.api.OriginRealm;
+import io.snice.networking.codec.diameter.avp.api.ProductName;
+import io.snice.networking.codec.diameter.avp.api.ResultCode;
+import io.snice.networking.codec.diameter.avp.type.IpAddress;
 import io.snice.networking.codec.diameter.avp.type.OctetString;
 import io.snice.networking.codec.diameter.impl.DiameterParser;
 import org.junit.After;
@@ -24,6 +29,7 @@ import java.util.Optional;
 
 import static io.snice.networking.codec.diameter.impl.DiameterParser.couldBeDiameterMessage;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -31,6 +37,11 @@ import static org.junit.Assert.assertTrue;
  * @author jonas@jonasborjesson.com
  */
 public class DiameterTestBase {
+
+    protected static OriginRealm defaultOriginRealm = OriginRealm.of("epc.mnc001.mcc001.3gppnetwork.org");
+    protected static OriginHost defaultOriginHost = OriginHost.of("unit.test.node.epc.mnc001.mcc001.3gppnetwork.org");
+    protected static HostIpAddress defaultHostIpAddress = HostIpAddress.of(IpAddress.createIpv4Address("10.11.12.13"));
+    protected static ProductName defaultProductName = ProductName.of("Snice Unit Test Product");
 
     /**
      * These are "raw" AVPs that we have stored in raw files based off of exporting them from wireshark.
@@ -183,6 +194,44 @@ public class DiameterTestBase {
                 .ensure();
     }
 
+    public static DiameterRequest someCer() {
+        return someCer(defaultHostIpAddress, defaultOriginRealm, defaultOriginHost);
+    }
+
+    public static DiameterRequest someCer(final HostIpAddress ip, final OriginRealm originRealm, final OriginHost originHost) {
+        return DiameterRequest.createCER()
+                .withAvp(ip)
+                .withOriginRealm(originRealm)
+                .withOriginHost(originHost)
+                .build();
+    }
+
+    public static DiameterAnswer someCea(final ResultCode code) {
+        return someCea(code, defaultHostIpAddress, defaultProductName);
+    }
+
+    public static DiameterAnswer someCea(final ResultCode code, final HostIpAddress address, final ProductName productName) {
+        final var header = DiameterHeader.of().isAnswer().withCommandCode(257);
+        return DiameterAnswer.withResultCode(code)
+                .withDiameterHeader(header)
+                .withAvp(address)
+                .withAvp(productName)
+                .withOriginHost(defaultOriginHost)
+                .withOriginRealm(defaultOriginRealm)
+                .build();
+    }
+
+    public static void ensureEquality(final DiameterMessage a, final DiameterMessage b) {
+        assertThat(a, is(b));
+        assertThat(b, is(a));
+        assertThat(a, is(a));
+        assertThat(b, is(b));
+    }
+
+    public static void ensureNotEquals(final DiameterMessage a, final DiameterMessage b) {
+        assertThat(a, not(b));
+        assertThat(b, not(a));
+    }
 
     /**
      * Simple class to hold information about the raw diameter messages

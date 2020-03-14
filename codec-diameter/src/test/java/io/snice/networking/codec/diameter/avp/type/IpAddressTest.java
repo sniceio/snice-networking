@@ -27,6 +27,30 @@ public class IpAddressTest {
     }
 
     @Test
+    public void testEquality() {
+        ensureEquals("127.0.0.1", "127.0.0.1");
+        ensureEquals("10.36.10.10", "10.36.10.10");
+
+        final var buffer = Buffers.wrap((byte)0x00, (byte)0x01, (byte)0xac, (byte)0x16, (byte)0x12, (byte)0x78);
+        final var a = IpAddress.parse(buffer);
+        final var b = IpAddress.createIpv4Address("172.22.18.120");
+        ensureEquals(a, b);
+    }
+
+    private void ensureEquals(final String a, final String b)  {
+        final var ipA = IpAddress.createIpv4Address(a);
+        final var ipB = IpAddress.createIpv4Address(b);
+        ensureEquals(ipA, ipB);
+    }
+
+    private void ensureEquals(final IpAddress a, final IpAddress b) {
+        assertThat(a, is(b));
+        assertThat(b, is(a));
+        assertThat(a, is(a));
+        assertThat(b, is(b));
+    }
+
+    @Test
     public void testDecodeNotEnoughBytes() {
         // IPv4
         ensureNotEnoughBytes((byte)0x00, (byte)0x01);

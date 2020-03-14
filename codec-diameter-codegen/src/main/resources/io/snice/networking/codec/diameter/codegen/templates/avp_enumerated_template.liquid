@@ -13,7 +13,6 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
 
 /**
  * {{ javadoc.class }}
- nisse
  */
 public interface {{java.class.name}} extends Avp<{{avp.type.interface}}<{{java.class.name}}.Code>> {
 
@@ -24,6 +23,14 @@ public interface {{java.class.name}} extends Avp<{{avp.type.interface}}<{{java.c
     @Override
     default long getCode() {
         return CODE;
+    }
+
+    default {{java.class.name}} to{{java.class.name}}() {
+        return this;
+    }
+
+    default boolean is{{java.class.name}}() {
+        return true;
     }
 
     @Override

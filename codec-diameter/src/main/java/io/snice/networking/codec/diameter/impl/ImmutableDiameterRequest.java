@@ -6,6 +6,7 @@ import io.snice.networking.codec.diameter.DiameterHeader;
 import io.snice.networking.codec.diameter.DiameterParseException;
 import io.snice.networking.codec.diameter.DiameterRequest;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
+import io.snice.networking.codec.diameter.avp.api.ExperimentalResultCode;
 import io.snice.networking.codec.diameter.avp.api.ResultCode;
 import io.snice.networking.codec.diameter.avp.api.SessionId;
 
@@ -19,8 +20,10 @@ public class ImmutableDiameterRequest extends ImmutableDiameterMessage implement
                                     final short indexOriginHost,
                                     final short indexOriginRealm,
                                     final short indexOfDestinationHost,
-                                    final short indexOfDestinationRealm) {
-        super(raw, header, avps, indexOriginHost, indexOriginRealm, indexOfDestinationHost, indexOfDestinationRealm);
+                                    final short indexOfDestinationRealm,
+                                    final short indexResultCode,
+                                    final short indexExperimentalResultCode) {
+        super(raw, header, avps, indexOriginHost, indexOriginRealm, indexOfDestinationHost, indexOfDestinationRealm, indexResultCode, indexExperimentalResultCode);
     }
 
     @Override
@@ -38,7 +41,19 @@ public class ImmutableDiameterRequest extends ImmutableDiameterMessage implement
         final var builder = ImmutableDiameterAnswer.withResultCode(resultCode);
         final var header = super.header.copy().isAnswer();
         builder.withDiameterHeader(header);
-        builder.withAvp(resultCode);
+        builder.withOriginHost(getOriginHost());
+        builder.withOriginRealm(getOriginRealm());
+
+        getAvp(SessionId.CODE).ifPresent(sessionId -> builder.withAvp(sessionId.ensure()));
+
+        return builder;
+    }
+
+    @Override
+    public DiameterAnswer.Builder createAnswer(final ExperimentalResultCode resultCode) throws DiameterParseException, ClassCastException {
+        final var builder = ImmutableDiameterAnswer.withResultCode(resultCode);
+        final var header = super.header.copy().isAnswer();
+        builder.withDiameterHeader(header);
         builder.withOriginHost(getOriginHost());
         builder.withOriginRealm(getOriginRealm());
 

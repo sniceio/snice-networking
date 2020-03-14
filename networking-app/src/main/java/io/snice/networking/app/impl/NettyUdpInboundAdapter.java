@@ -101,7 +101,6 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
     @Override
     public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
         try {
-            System.err.println("Rading something");
             final var pkt = (DatagramPacket) msg;
             final var remote = pkt.sender();
             final var id = ConnectionId.create(Transport.udp, remote, remote);

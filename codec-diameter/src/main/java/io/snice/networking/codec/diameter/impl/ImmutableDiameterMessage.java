@@ -1,13 +1,16 @@
 package io.snice.networking.codec.diameter.impl;
 
 import io.snice.buffer.Buffer;
+import io.snice.functional.Either;
 import io.snice.networking.codec.diameter.DiameterHeader;
 import io.snice.networking.codec.diameter.DiameterMessage;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.api.DestinationHost;
 import io.snice.networking.codec.diameter.avp.api.DestinationRealm;
+import io.snice.networking.codec.diameter.avp.api.ExperimentalResultCode;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.codec.diameter.avp.api.OriginRealm;
+import io.snice.networking.codec.diameter.avp.api.ResultCode;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +26,9 @@ public abstract class ImmutableDiameterMessage implements DiameterMessage {
     protected final DiameterHeader header;
     private final List<FramedAvp> avps;
 
+    private final short indexResultCode;
+    private final short indexExperimentalResultCode;
+
     private final short indexOrigHost;
     private final short indexOrigRealm;
 
@@ -35,7 +41,9 @@ public abstract class ImmutableDiameterMessage implements DiameterMessage {
                                     final short indexOrigHost,
                                     final short indexOrigRealm,
                                     final short indexDestHost,
-                                    final short indexDestRealm) {
+                                    final short indexDestRealm,
+                                    final short indexResultCode,
+                                    final short indexExperimentalResultCode) {
         this.raw = raw;
         this.header = header;
         this.avps = Collections.unmodifiableList(avps);
@@ -43,6 +51,8 @@ public abstract class ImmutableDiameterMessage implements DiameterMessage {
         this.indexOrigRealm = indexOrigRealm;
         this.indexDestHost = indexDestHost;
         this.indexDestRealm = indexDestRealm;
+        this.indexResultCode = indexResultCode;
+        this.indexExperimentalResultCode = indexExperimentalResultCode;
     }
 
     @Override
@@ -99,6 +109,14 @@ public abstract class ImmutableDiameterMessage implements DiameterMessage {
         }
 
         return Optional.of(avps.get(indexDestHost).ensure().toDestinationHost());
+    }
+
+    protected Either<ExperimentalResultCode, ResultCode> getInternalResultCode() {
+        if (indexResultCode != -1) {
+            return Either.right(avps.get(indexResultCode).ensure().toResultCode());
+        }
+
+        return Either.left(avps.get(indexExperimentalResultCode).ensure().toExperimentalResultCode());
     }
 
     @Override

@@ -1,9 +1,8 @@
 package io.snice.networking.codec.diameter.impl;
 
 import io.snice.networking.codec.diameter.DiameterMessage;
-import io.snice.networking.codec.diameter.avp.Avp;
-import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
+import io.snice.networking.codec.diameter.avp.api.ProductName;
 
 /**
  *
@@ -27,9 +26,15 @@ public class DiameterEquality {
             return false;
         }
 
+        // if two answers, make sure the result codees are the same
+        if (a.isAnswer() && !a.toAnswer().getResultCode().equals(b.toAnswer().getResultCode())) {
+            return false;
+        }
+
         if (!generalEquals(a, b)) {
             return false;
         }
+
 
         switch (a.getHeader().getCommandCode()) {
             case 257:
@@ -60,9 +65,12 @@ public class DiameterEquality {
      *
      */
     private static boolean assertCerCea(final DiameterMessage a, final DiameterMessage b) {
-        a.getAvp(HostIpAddress.CODE).map(FramedAvp::ensure).map(Avp::toHostIpAddress);
-        b.getAvp(HostIpAddress.CODE).map(FramedAvp::ensure).map(Avp::toHostIpAddress);
-        return true;
+        final var ipA = a.getAvp(HostIpAddress.CODE);
+        final var ipB = b.getAvp(HostIpAddress.CODE);
+
+        final var productNameA = a.getAvp(ProductName.CODE);
+        final var productNameB = b.getAvp(ProductName.CODE);
+        return ipA.equals(ipB) && productNameA.equals(productNameB);
     }
 
 }

@@ -9,6 +9,8 @@ import io.snice.networking.codec.diameter.avp.AvpProtected;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.Vendor;
 
+import static io.snice.preconditions.PreConditions.assertNotNull;
+
 import io.snice.networking.codec.diameter.avp.impl.DiameterOctetStringAvp;
 import io.snice.networking.codec.diameter.avp.type.OctetString;
 
@@ -23,9 +25,18 @@ public interface Msisdn extends Avp<OctetString> {
     
     static Msisdn of(final Buffer value) {
         final OctetString v = OctetString.parse(value, true);
+        return of(v);
+    }
+
+    static Msisdn of(final String value) {
+        return of(Buffers.wrap(value));
+    }
+
+    static Msisdn of(final OctetString value) {
+        assertNotNull(value);
         final Builder<OctetString> builder =
                 Avp.ofType(OctetString.class)
-                        .withValue(v)
+                        .withValue(value)
                         .withAvpCode(CODE)
                         .isMandatory(AvpMandatory.MUST.isMandatory())
                         .isProtected(AvpProtected.MAY.isProtected())
@@ -34,9 +45,6 @@ public interface Msisdn extends Avp<OctetString> {
         return new DefaultMsisdn(builder.build());
     }
 
-    static Msisdn of(final String value) {
-        return of(Buffers.wrap(value));
-    }
     
 
     @Override
@@ -62,6 +70,30 @@ public interface Msisdn extends Avp<OctetString> {
     class DefaultMsisdn extends DiameterOctetStringAvp implements Msisdn {
         private DefaultMsisdn(final FramedAvp raw) {
             super(raw, true);
+        }
+
+        @Override
+        public Msisdn ensure() {
+            return this;
+        }
+
+        @Override
+        public boolean equals(final Object other) {
+            if (this == other) {
+                return true;
+            }
+
+            if (other == null) {
+                return false;
+            }
+
+            try {
+                final Msisdn o = (Msisdn)other;
+                final OctetString v = getValue();
+                return v.equals(o.getValue());
+            } catch (final ClassCastException e) {
+                return false;
+            }
         }
     }
 }

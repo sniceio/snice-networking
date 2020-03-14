@@ -1,6 +1,7 @@
 package io.snice.networking.codec.diameter.avp.type;
 
 import io.snice.buffer.ReadableBuffer;
+import io.snice.buffer.WritableBuffer;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.impl.DiameterParser;
@@ -8,6 +9,8 @@ import io.snice.networking.codec.diameter.impl.DiameterParser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static io.snice.preconditions.PreConditions.assertCollectionNotEmpty;
 
 public interface Grouped extends DiameterType {
 
@@ -38,6 +41,17 @@ public interface Grouped extends DiameterType {
         return new DefaultGrouped(length, avps);
     }
 
+    static Grouped of(final List<Avp> avps) {
+        assertCollectionNotEmpty(avps, "A grouped AVP must have at least one AVP");
+        int length = 0;
+        for (final Avp avp : avps) {
+            // remember that the padding is NOT included in the AVP.length
+            length += avp.getLength() + avp.getPadding();
+        }
+
+        return new DefaultGrouped(length, avps);
+    }
+
     /**
      * <p>
      * Get the {@link FramedAvp} based on its AVP code. Note that this is the "raw" un-parsed
@@ -53,27 +67,27 @@ public interface Grouped extends DiameterType {
      * @return the first AVP found that has the
      * specified AVP code, or an empty optional if none is found.
      */
-    Optional<FramedAvp> getFramedAvp(long code);
+    Optional<? extends FramedAvp> getFramedAvp(long code);
 
-    default Optional<FramedAvp> getFramedAvp(final int code) {
+    default Optional<? extends FramedAvp> getFramedAvp(final int code) {
         return getFramedAvp((long) code);
     }
 
     class DefaultGrouped implements Grouped {
-        final List<FramedAvp> avps;
+        final List<? extends FramedAvp> avps;
 
         /**
          * The total length of all the AVPs. Needed when calculating the length of this AVP
          */
         private final int length;
 
-        private DefaultGrouped(final int length, final List<FramedAvp> avps) {
+        private DefaultGrouped(final int length, final List<? extends FramedAvp> avps) {
             this.length = length;
             this.avps = avps;
         }
 
         @Override
-        public Optional<FramedAvp> getFramedAvp(final long code) {
+        public Optional<? extends FramedAvp> getFramedAvp(final long code) {
             return avps.stream().filter(avp -> avp.getCode() == code).findFirst();
         }
 
@@ -81,5 +95,11 @@ public interface Grouped extends DiameterType {
         public int size() {
             return length;
         }
+
+        @Override
+        public void writeValue(final WritableBuffer buffer) {
+            avps.forEach(avp -> avp.writeTo(buffer));
+        }
+
     }
 }

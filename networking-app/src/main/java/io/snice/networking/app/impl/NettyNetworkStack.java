@@ -1,6 +1,9 @@
 package io.snice.networking.app.impl;
 
+import com.fasterxml.jackson.databind.Module;
+import io.hektor.fsm.Data;
 import io.netty.channel.ChannelHandler;
+import io.snice.networking.app.AppBundle;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.app.NetworkApplication;
@@ -9,8 +12,10 @@ import io.snice.networking.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
-import io.snice.networking.diameter.peer.PeerFactory;
+import io.snice.networking.common.fsm.FsmFactory;
+import io.snice.networking.common.fsm.NetworkContext;
 import io.snice.networking.netty.NettyNetworkLayer;
+import io.snice.networking.netty.ProtocolHandler;
 import io.snice.time.Clock;
 import io.snice.time.SystemClock;
 
@@ -33,12 +38,19 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
     private final List<ConnectionContext> ctxs;
     private NettyNetworkLayer network;
     private final Clock clock = new SystemClock();
+    private final AppBundle<T> appBundle;
 
-    private NettyNetworkStack(final Class<T> type, final C config, final SerializationFactory<T> framerFactory, final NetworkApplication<T, C> app, final List<ConnectionContext> ctxs) {
+    private NettyNetworkStack(final Class<T> type,
+                              final C config,
+                              final SerializationFactory<T> framerFactory,
+                              final NetworkApplication<T, C> app,
+                              final AppBundle<T> appBundle,
+                              final List<ConnectionContext> ctxs) {
         this.type = type;
         this.serializationFactory = framerFactory;
         this.config = config;
         this.app = app;
+        this.appBundle = appBundle;
         this.ctxs = ctxs;
     }
 
@@ -63,13 +75,17 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
 
 
         final var appLayer = new NettyApplicationLayer();
-        final var fsmFactory = PeerFactory.createDefault();
+        // final var diameterConf = new DiameterConfig();
+        // final var fsmFactory = PeerFactory.createDefault(diameterConf);
 
         network = NettyNetworkLayer.with(config.getNetworkInterfaces())
                 // TODO: the encoder/decoder will be injected by the application but for now, while working out the details,
                 // i'm doing it manually here...
-                .withHandler("diameter-codec-encoder", () -> new DiameterStreamEncoder(), Transport.tcp)
-                .withHandler("diameter-code-decoder", () -> new DiameterMessageStreamDecoder2(), Transport.tcp)
+
+                .withHandler(appBundle.getProtocolEncoders())
+                .withHandler(appBundle.getProtocolDecoders())
+                // .withHandler("diameter-codec-encoder", () -> new DiameterStreamEncoder(), Transport.tcp)
+                // .withHandler("diameter-code-decoder", () -> new DiameterMessageStreamDecoder2(), Transport.tcp)
 
                 .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, serializationFactory, Optional.empty(), ctxs), Transport.udp)
                 .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, serializationFactory, Optional.empty(), ctxs), Transport.tcp)
@@ -78,7 +94,9 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
                 // the user actually wants an FSM layer or not.
                 // Also, whether there is a separate FSM layer per connection or a shared
                 // one for the entire stack will be dependent on the actual need of the implementation.
-                .withHandler("fsm-layer", () -> new NettyFsmLayer(fsmFactory), Transport.tcp)
+
+                // TODO: need to handle when it is not configured.
+                .withHandler("fsm-layer", () -> new NettyFsmLayer(appBundle.getFsmFactory().get()), Transport.tcp)
 
                 // App layer is not optional so it will always be injected but it will need to be configured by
                 // the NetworkApplication etc in order to inject the message pipelines and whatnot.
@@ -110,6 +128,7 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
         private final C config;
         private NetworkApplication application;
         private List<ConnectionContext> ctxs;
+        private AppBundle<T> appBundle;
 
         private Builder(final Class<T> type, final SerializationFactory<T> serializationFactory, final C config) {
             this.type = type;
@@ -124,6 +143,13 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
             return this;
         }
 
+        @Override
+        public NetworkStack.Builder<T, C> withAppBundle(final AppBundle<T> bundle) {
+            assertNotNull(bundle, "The application bundle cannot be null");
+            this.appBundle = bundle;
+            return this;
+        }
+
 
         @Override
         public NetworkStack.Builder<T, C> withConnectionContexts(final List<ConnectionContext> ctxs) {
@@ -135,7 +161,42 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
         @Override
         public NetworkStack<T, C> build() {
             ensureNotNull(application, "You must specify the Sip Application");
-            return new NettyNetworkStack(type, config, serializationFactory, application, ctxs);
+            final var bundle = appBundle != null ? appBundle : new EmptyAppBundle<T>(type);
+            return new NettyNetworkStack(type, config, serializationFactory, application, bundle, ctxs);
+        }
+    }
+
+    private static class EmptyAppBundle<T> implements AppBundle<T> {
+        private final Class<T> type;
+
+        private EmptyAppBundle(final Class<T> type) {
+            this.type = type;
+        }
+
+
+        @Override
+        public Class<T> getType() {
+            return type;
+        }
+
+        @Override
+        public Optional<Module> getObjectMapModule() {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<ProtocolHandler> getProtocolEncoders() {
+            return List.of();
+        }
+
+        @Override
+        public List<ProtocolHandler> getProtocolDecoders() {
+            return List.of();
+        }
+
+        @Override
+        public <S extends Enum<S>, C extends NetworkContext<T>, D extends Data> Optional<FsmFactory<T, S, C, D>> getFsmFactory() {
+            return Optional.empty();
         }
     }
 }

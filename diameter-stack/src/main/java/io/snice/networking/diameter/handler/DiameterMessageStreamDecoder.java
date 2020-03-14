@@ -1,4 +1,4 @@
-package io.snice.networking.app.impl;
+package io.snice.networking.diameter.handler;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

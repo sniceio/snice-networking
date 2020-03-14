@@ -58,6 +58,12 @@
             <artifactId>codec-diameter</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.snice.networking</groupId>
+            <artifactId>diameter-stack</artifactId>
+            <type>jar</type>
+        </dependency>
+
         <!-- For reading yaml files, which we'll use to load configuration
          from our yml files for the various examples
          -->

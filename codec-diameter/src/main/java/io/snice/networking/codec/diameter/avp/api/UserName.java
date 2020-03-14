@@ -9,6 +9,8 @@ import io.snice.networking.codec.diameter.avp.AvpProtected;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.Vendor;
 
+import static io.snice.preconditions.PreConditions.assertNotNull;
+
 import io.snice.networking.codec.diameter.avp.impl.DiameterUtf8StringAvp;
 import io.snice.networking.codec.diameter.avp.type.UTF8String;
 
@@ -23,9 +25,18 @@ public interface UserName extends Avp<UTF8String> {
     
     static UserName of(final Buffer value) {
         final UTF8String v = UTF8String.parse(value);
+        return of(v);
+    }
+
+    static UserName of(final String value) {
+        return of(Buffers.wrap(value));
+    }
+
+    static UserName of(final UTF8String value) {
+        assertNotNull(value);
         final Builder<UTF8String> builder =
                 Avp.ofType(UTF8String.class)
-                        .withValue(v)
+                        .withValue(value)
                         .withAvpCode(CODE)
                         .isMandatory(AvpMandatory.MUST.isMandatory())
                         .isProtected(AvpProtected.MAY.isProtected())
@@ -34,9 +45,6 @@ public interface UserName extends Avp<UTF8String> {
         return new DefaultUserName(builder.build());
     }
 
-    static UserName of(final String value) {
-        return of(Buffers.wrap(value));
-    }
     
 
     @Override
@@ -62,6 +70,30 @@ public interface UserName extends Avp<UTF8String> {
     class DefaultUserName extends DiameterUtf8StringAvp implements UserName {
         private DefaultUserName(final FramedAvp raw) {
             super(raw);
+        }
+
+        @Override
+        public UserName ensure() {
+            return this;
+        }
+
+        @Override
+        public boolean equals(final Object other) {
+            if (this == other) {
+                return true;
+            }
+
+            if (other == null) {
+                return false;
+            }
+
+            try {
+                final UserName o = (UserName)other;
+                final UTF8String v = getValue();
+                return v.equals(o.getValue());
+            } catch (final ClassCastException e) {
+                return false;
+            }
         }
     }
 }

@@ -11,10 +11,13 @@ import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.api.AuthApplicationId;
 import io.snice.networking.codec.diameter.avp.api.DestinationHost;
 import io.snice.networking.codec.diameter.avp.api.DestinationRealm;
+import io.snice.networking.codec.diameter.avp.api.ExperimentalResult;
+import io.snice.networking.codec.diameter.avp.api.ExperimentalResultCode;
 import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
 import io.snice.networking.codec.diameter.avp.api.Msisdn;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.codec.diameter.avp.api.OriginRealm;
+import io.snice.networking.codec.diameter.avp.api.ProductName;
 import io.snice.networking.codec.diameter.avp.api.ResultCode;
 import io.snice.networking.codec.diameter.avp.api.SessionId;
 import io.snice.networking.codec.diameter.avp.api.SubscriberStatus;
@@ -46,6 +49,8 @@ public class DiameterParser {
 
         // certain AVPs that are used in almost all messages we want to keep
         // track of since most applications will absolutely need them.
+        short indexOfResultCode = -1;
+        short indexOfExperimentalCode = -1;
         short indexOfOrigHost = -1;
         short indexOfOrigRealm = -1;
         short indexOfDestHost = -1;
@@ -63,6 +68,13 @@ public class DiameterParser {
                 avp = avp.ensure();
             } else if (DestinationRealm.CODE == avp.getCode()) {
                 indexOfDestRealm = (short) list.size();
+                avp = avp.ensure();
+            } else if (ResultCode.CODE == avp.getCode()) {
+                indexOfResultCode = (short) list.size();
+                avp = avp.ensure();
+            } else if (ExperimentalResultCode.CODE == avp.getCode()) {
+                // TODO: this is actually not correct...
+                indexOfExperimentalCode = (short) list.size();
                 avp = avp.ensure();
             } else if (DestinationHost.CODE == avp.getCode()) {
                 indexOfDestHost = (short) list.size();
@@ -82,11 +94,11 @@ public class DiameterParser {
 
         final Buffer entireMsg = buffer.slice(header.getLength());
         if (header.isRequest()) {
-            return new ImmutableDiameterRequest(entireMsg, header, list, indexOfOrigHost, indexOfOrigRealm, indexOfDestHost, indexOfDestRealm);
+            return new ImmutableDiameterRequest(entireMsg, header, list, indexOfOrigHost, indexOfOrigRealm,
+                    indexOfDestHost, indexOfDestRealm, indexOfResultCode, indexOfExperimentalCode);
         }
-        return new ImmutableDiameterAnswer(entireMsg, header, list, indexOfOrigHost, indexOfOrigRealm, indexOfDestHost, indexOfDestRealm);
-
-
+        return new ImmutableDiameterAnswer(entireMsg, header, list, indexOfOrigHost, indexOfOrigRealm,
+                indexOfDestHost, indexOfDestRealm, indexOfResultCode, indexOfExperimentalCode);
     }
 
     /**
@@ -181,6 +193,10 @@ public class DiameterParser {
                 return HostIpAddress.parse(raw);
             case DestinationRealm.CODE:
                 return DestinationRealm.parse(raw);
+            case ExperimentalResult.CODE:
+                return ExperimentalResult.parse(raw);
+            case ProductName.CODE:
+                return ProductName.parse(raw);
             default:
                 throw new RuntimeException("AVP " + raw.getCode() + " has not yet been implemented");
         }

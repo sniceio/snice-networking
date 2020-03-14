@@ -31,6 +31,7 @@ avp:
         - Session-Id
         - Host-IP-Address
         - Experimental-Result-Code
+        - Experimental-Result
         - Subscription-Data
         - Subscriber-Status
         - Result-Code
@@ -43,3 +44,4 @@ avp:
         - Auth-Application-Id
         - Vendor-Specific-Application-Id
         - Redirect-Host-Usage
+        - Product-Name

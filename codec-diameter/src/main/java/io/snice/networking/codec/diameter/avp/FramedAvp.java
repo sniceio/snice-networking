@@ -4,6 +4,16 @@ import io.snice.buffer.Buffer;
 import io.snice.buffer.ReadableBuffer;
 import io.snice.buffer.WritableBuffer;
 import io.snice.networking.codec.diameter.DiameterParseException;
+import io.snice.networking.codec.diameter.avp.api.DestinationHost;
+import io.snice.networking.codec.diameter.avp.api.DestinationRealm;
+import io.snice.networking.codec.diameter.avp.api.ExperimentalResult;
+import io.snice.networking.codec.diameter.avp.api.ExperimentalResultCode;
+import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
+import io.snice.networking.codec.diameter.avp.api.OriginHost;
+import io.snice.networking.codec.diameter.avp.api.OriginRealm;
+import io.snice.networking.codec.diameter.avp.api.ProductName;
+import io.snice.networking.codec.diameter.avp.api.ResultCode;
+import io.snice.networking.codec.diameter.avp.type.Enumerated;
 import io.snice.networking.codec.diameter.impl.DiameterParser;
 
 /**
@@ -12,6 +22,8 @@ import io.snice.networking.codec.diameter.impl.DiameterParser;
  * method to actually ensure the structure into, hopefully, a known AVP.
  */
 public interface FramedAvp {
+
+    String CANNOT_CAST_AVP_OF_TYPE = "Cannot cast AVP of type ";
 
     static FramedAvp frame(final ReadableBuffer buffer) throws DiameterParseException {
         return DiameterParser.frameRawAvp(buffer);
@@ -64,4 +76,88 @@ public interface FramedAvp {
      * @return
      */
     Avp ensure();
+
+    /**
+     * Check if this AVP is an enumerated AVP.
+     *
+     * @return
+     */
+    default boolean isEnumerated() {
+        return false;
+    }
+
+    default <E extends Enum<E>> Avp<Enumerated<E>> toEnumerated() throws ClassCastException {
+        throw new ClassCastException("Unable to cast a " + this.getClass().getName() + " into a " + Enumerated.class.getName());
+    }
+
+    default boolean isOriginHost() {
+        return false;
+    }
+
+    default OriginHost toOriginHost() {
+        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
+                + " to type " + OriginHost.class.getName());
+    }
+
+    default boolean isOriginRealm() {
+        return false;
+    }
+
+    default OriginRealm toOriginRealm() {
+        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
+                + " to type " + OriginRealm.class.getName());
+    }
+
+    default DestinationRealm toDestinationRealm() {
+        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
+                + " to type " + DestinationRealm.class.getName());
+    }
+
+
+    default DestinationHost toDestinationHost() {
+        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
+                + " to type " + DestinationHost.class.getName());
+    }
+
+    default HostIpAddress toHostIpAddress() {
+        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
+                + " to type " + HostIpAddress.class.getName());
+    }
+
+    default ResultCode toResultCode() {
+        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
+                + " to type " + ResultCode.class.getName());
+    }
+
+    default boolean isResultCode() {
+        return false;
+    }
+
+    default ExperimentalResultCode toExperimentalResultCode() {
+        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
+                + " to type " + ExperimentalResultCode.class.getName());
+    }
+
+    default boolean isExperimentalResultCode() {
+        return false;
+    }
+
+    default ExperimentalResult toExperimentalResult() {
+        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
+                + " to type " + ExperimentalResult.class.getName());
+    }
+
+    default boolean isExperimentalResult() {
+        return false;
+    }
+
+    default ProductName toProductName() {
+        throw new ClassCastException(CANNOT_CAST_AVP_OF_TYPE + getClass().getName()
+                + " to type " + ProductName.class.getName());
+    }
+
+    default boolean isProductName() {
+        return false;
+    }
+
 }

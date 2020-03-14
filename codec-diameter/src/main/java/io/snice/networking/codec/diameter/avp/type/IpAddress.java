@@ -19,7 +19,11 @@ public interface IpAddress extends DiameterType {
         final var isIPv4 = data.getByte(1) == 0x01;
         final var isIPv6 = data.getByte(1) == 0x02;
 
+        // perhaps this is a "human readable" IP address so let's check for that too...
         if (!isIPv4 && !isIPv6) {
+            if (data.countOccurences('.') == 3) {
+                return IpAddress.createIpv4Address(data);
+            }
             throw new IllegalArgumentException("Unknown Address family. Only IPv4 and IPv6 are valid address families");
         }
 
@@ -41,10 +45,15 @@ public interface IpAddress extends DiameterType {
         assertNotEmpty(ip, "The IP address cannot be null or the empty string");
         // 2 for address family, 4 for the 32bit encoding of the ip and 2 for padding since
         // an AVP needs to have 8 bit boundaries.
-        final byte[] buffer = new byte[2 + 4 + 2];
+        final byte[] buffer = new byte[2 + 4];
         buffer[1] = (byte)0x01;
         IPv4.fromString(buffer, 2, ip);
         return new DefaultIPAddress(true, Buffers.wrap(buffer));
+    }
+
+    static IpAddress createIpv4Address(final Buffer ip) {
+        assertArgument(Buffers.isNotNullOrEmpty(ip), "The IP address cannot be null or the empty buffer");
+        return createIpv4Address(ip.toString());
     }
 
     String asString();

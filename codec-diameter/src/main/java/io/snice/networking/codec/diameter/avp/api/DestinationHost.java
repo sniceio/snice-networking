@@ -9,6 +9,8 @@ import io.snice.networking.codec.diameter.avp.AvpProtected;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.Vendor;
 
+import static io.snice.preconditions.PreConditions.assertNotNull;
+
 import io.snice.networking.codec.diameter.avp.impl.DiameterIdentityAvp;
 import io.snice.networking.codec.diameter.avp.type.DiameterIdentity;
 
@@ -23,9 +25,18 @@ public interface DestinationHost extends Avp<DiameterIdentity> {
     
     static DestinationHost of(final Buffer value) {
         final DiameterIdentity v = DiameterIdentity.parse(value);
+        return of(v);
+    }
+
+    static DestinationHost of(final String value) {
+        return of(Buffers.wrap(value));
+    }
+
+    static DestinationHost of(final DiameterIdentity value) {
+        assertNotNull(value);
         final Builder<DiameterIdentity> builder =
                 Avp.ofType(DiameterIdentity.class)
-                        .withValue(v)
+                        .withValue(value)
                         .withAvpCode(CODE)
                         .isMandatory(AvpMandatory.MUST.isMandatory())
                         .isProtected(AvpProtected.MUST_NOT.isProtected())
@@ -34,9 +45,6 @@ public interface DestinationHost extends Avp<DiameterIdentity> {
         return new DefaultDestinationHost(builder.build());
     }
 
-    static DestinationHost of(final String value) {
-        return of(Buffers.wrap(value));
-    }
     
 
     @Override
@@ -62,6 +70,30 @@ public interface DestinationHost extends Avp<DiameterIdentity> {
     class DefaultDestinationHost extends DiameterIdentityAvp implements DestinationHost {
         private DefaultDestinationHost(final FramedAvp raw) {
             super(raw);
+        }
+
+        @Override
+        public DestinationHost ensure() {
+            return this;
+        }
+
+        @Override
+        public boolean equals(final Object other) {
+            if (this == other) {
+                return true;
+            }
+
+            if (other == null) {
+                return false;
+            }
+
+            try {
+                final DestinationHost o = (DestinationHost)other;
+                final DiameterIdentity v = getValue();
+                return v.equals(o.getValue());
+            } catch (final ClassCastException e) {
+                return false;
+            }
         }
     }
 }

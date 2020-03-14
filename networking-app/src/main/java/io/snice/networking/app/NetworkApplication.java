@@ -22,10 +22,17 @@ public abstract class NetworkApplication<T, C extends NetworkAppConfig> {
 
     private final Class<T> type;
     private Environment<T, C> env;
+    private final Optional<AppBundle<T>> bundle;
 
     public NetworkApplication(Class<T> type) {
         assertNotNull(type, "The type cannot be null");
         this.type = type;
+        this.bundle = Optional.empty();
+    }
+
+    public NetworkApplication(AppBundle<T> bundle) {
+        this.bundle = Optional.of(bundle);
+        this.type = bundle.getType();
     }
 
     public void run(C configuration, Environment<T, C> environment) {
@@ -52,6 +59,9 @@ public abstract class NetworkApplication<T, C extends NetworkAppConfig> {
      * into your application.
      */
     public final void run(final String... args) throws Exception {
+        // TODO: actually call a bootstrap method here that allows the app
+        // to register the AppBundle (rename it to NetworkStackBundle or something)
+
         final C config = loadConfiguration(args[1]);
         final NettyBootstrap<T, C> bootstrap = new NettyBootstrap<>(config);
         initialize(bootstrap);
@@ -64,12 +74,14 @@ public abstract class NetworkApplication<T, C extends NetworkAppConfig> {
         // all of those etc etc. Then we can have a NettyCodecBundle
         // final SerializationFactory<T> serializationFactory = ensureSerializationFactory(bootstrap);
 
-        final var network = NetworkStack.ofType(type)
+        final var builder = NetworkStack.ofType(type)
                 .withSerializationFactory(null)
                 .withConfiguration(config)
                 .withConnectionContexts(connectionContexts)
-                .withApplication(this)
-                .build();
+                .withApplication(this);
+        bundle.ifPresent(builder::withAppBundle);
+
+        final var network = builder.build();
 
         env = buildEnvironment(network, bootstrap);
         network.start();
@@ -117,6 +129,9 @@ public abstract class NetworkApplication<T, C extends NetworkAppConfig> {
         final SimpleModule module = new SimpleModule();
         module.addDeserializer(NetworkInterfaceConfiguration.class, new NetworkInterfaceDeserializer());
         mapper.registerModule(module);
+
+
+        bundle.flatMap(AppBundle::getObjectMapModule).ifPresent(mapper::registerModule);
 
         return mapper.readValue(stream, getConfigurationClass());
     }

@@ -1,7 +1,6 @@
 package io.snice.networking.diameter.peer.impl;
 
 import io.hektor.fsm.FSM;
-import io.hektor.fsm.Scheduler;
 import io.snice.networking.codec.diameter.DiameterMessage;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.common.ChannelContext;
@@ -9,6 +8,7 @@ import io.snice.networking.common.ConnectionEndpointId;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.fsm.FsmKey;
 import io.snice.networking.common.fsm.FsmSupport;
+import io.snice.networking.diameter.DiameterConfig;
 import io.snice.networking.diameter.peer.PeerConfiguration;
 import io.snice.networking.diameter.peer.PeerContext;
 import io.snice.networking.diameter.peer.PeerData;
@@ -25,6 +25,11 @@ public class DefaultPeerFactory implements PeerFactory {
 
     private static final FsmSupport<PeerState> loggingSupport = new FsmSupport<>(PeerFsm.class);
     private final PeerConfiguration peerConfiguration = new PeerConfiguration();
+    private final DiameterConfig config;
+
+    public DefaultPeerFactory(final DiameterConfig config) {
+        this.config = config;
+    }
 
     @Override
     public FsmKey calculateKey(final ConnectionId connectionId, final Optional<DiameterMessage> msg) {
@@ -40,17 +45,9 @@ public class DefaultPeerFactory implements PeerFactory {
 
     @Override
     public PeerContext createNewContext(final FsmKey key, final ChannelContext<DiameterMessage> ctx) {
-        return new PeerContext() {
-            @Override
-            public ChannelContext<DiameterMessage> getChannelContext() {
-                return ctx;
-            }
-
-            @Override
-            public Scheduler getScheduler() {
-                return null;
-            }
-        };
+        final var peerCfg = peerConfiguration;
+        final var peerCtx = new DefaultPeerContext(peerCfg, ctx, null);
+        return peerCtx;
     }
 
     @Override

@@ -6,11 +6,16 @@ import io.snice.networking.codec.diameter.DiameterTestBase;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
-import io.snice.networking.codec.diameter.avp.api.ResultCode;
+import io.snice.networking.codec.diameter.avp.api.OriginHost;
+import io.snice.networking.codec.diameter.avp.api.OriginRealm;
+import io.snice.networking.codec.diameter.avp.api.ProductName;
 import io.snice.networking.codec.diameter.avp.api.VendorId;
+import io.snice.networking.codec.diameter.avp.type.IpAddress;
 import org.junit.Before;
 import org.junit.Test;
 
+import static io.snice.networking.codec.diameter.avp.api.ResultCode.DiameterErrorEapCodeUnknown5048;
+import static io.snice.networking.codec.diameter.avp.api.ResultCode.DiameterSuccess2001;
 import static java.util.Optional.empty;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -41,7 +46,6 @@ public class CapabilitiesExchangeTest extends DiameterTestBase {
 
         final var hostIp = cer.getAvp(HostIpAddress.CODE);
         assertThat(hostIp, not(empty()));
-        assertThat(hostIp.get(), is(HostIpAddress.of("127.0.0.1")));
     }
 
     @Test
@@ -49,14 +53,16 @@ public class CapabilitiesExchangeTest extends DiameterTestBase {
         final var cer = loadDiameterMessage("capabilities_exchange_request_002.raw").toRequest();
         final var hostIp = cer.getAvp(HostIpAddress.CODE).map(FramedAvp::ensure).map(Avp::toHostIpAddress);
         assertThat(hostIp, not(empty()));
-        assertThat(hostIp.get(), is(HostIpAddress.of("127.0.0.1")));
+        final var ip = hostIp.get().ensure().toHostIpAddress().getValue();
+        assertThat(ip.asString(), is("172.22.18.120"));
+        assertThat(hostIp.get(), is(HostIpAddress.of(IpAddress.createIpv4Address("172.22.18.120"))));
     }
 
     @Test
     public void testCreateCEA() {
-        final var cea = cer.createAnswer(ResultCode.DiameterSuccess2001).build();
+        final var cea = cer.createAnswer(DiameterSuccess2001).build();
         assertThat(cea.isCEA(), is(true));
-        assertThat(cea.getResultCode(), is(ResultCode.DiameterSuccess2001));
+        assertThat(cea.getResultCode().getRight(), is(DiameterSuccess2001));
         assertThat(cea.getOriginHost().getValue().asString(), is("seagull.node.epc.mnc001.mcc001.3gppnetwork.org"));
         assertThat(cea.getOriginRealm().getValue().asString(), is("epc.mnc001.mcc001.3gppnetwork.org"));
 
@@ -68,5 +74,52 @@ public class CapabilitiesExchangeTest extends DiameterTestBase {
         assertThat(ceaClone.isAnswer(), is(true));
         assertThat(ceaClone.getOriginHost().getValue().asString(), is("seagull.node.epc.mnc001.mcc001.3gppnetwork.org"));
         assertThat(ceaClone.getOriginRealm().getValue().asString(), is("epc.mnc001.mcc001.3gppnetwork.org"));
+    }
+
+    /**
+     * Comparing diameter messages isn't necessarily "easy" and only basic equality is performed.
+     * In general, all mandatory parameters are compared and the rest are ignored.
+     *
+     */
+    @Test
+    public void testEqualityCea() {
+        ensureEquality(someCea(DiameterErrorEapCodeUnknown5048), someCea(DiameterErrorEapCodeUnknown5048));
+
+        final HostIpAddress ip1 = HostIpAddress.of(IpAddress.createIpv4Address("127.0.0.1"));
+        final HostIpAddress ip2 = HostIpAddress.of(IpAddress.createIpv4Address("127.0.0.1"));
+        final HostIpAddress ip3 = HostIpAddress.of(IpAddress.createIpv4Address("10.36.10.10"));
+        final ProductName pn1 = ProductName.of("Hello");
+        final ProductName pn2 = ProductName.of("Other Product");
+
+        ensureEquality(someCea(DiameterSuccess2001, ip1, pn1), someCea(DiameterSuccess2001, ip2, pn1));
+
+        // different product name so shouldn't be the same
+        ensureNotEquals(someCea(DiameterSuccess2001, ip1, pn1), someCea(DiameterSuccess2001, ip2, pn2));
+
+        // different HostIPAddress, so not equal
+        ensureNotEquals(someCea(DiameterSuccess2001, ip3, pn1), someCea(DiameterSuccess2001, ip2, pn1));
+
+        // different result code so not equal
+        ensureNotEquals(someCea(DiameterErrorEapCodeUnknown5048, ip1, pn1), someCea(DiameterSuccess2001, ip2, pn1));
+
+        // ensure a request and answer isn't considered the same
+        ensureNotEquals(someCer(), someCea(DiameterSuccess2001));
+    }
+
+    @Test
+    public void testEqualityCer() {
+        ensureEquality(someCer(), someCer());
+
+        // different host ip
+        final var hostIp = HostIpAddress.of(IpAddress.createIpv4Address("192.168.0.100"));
+        ensureNotEquals(someCer(hostIp, defaultOriginRealm, defaultOriginHost), someCer());
+
+        // different origin realm
+        final var originRealm = OriginRealm.of("epc.mnc123.mcc123.3gppnetwork.org");
+        ensureNotEquals(someCer(hostIp, originRealm, defaultOriginHost), someCer(hostIp, defaultOriginRealm, defaultOriginHost));
+
+        // different origin host realm
+        final var originHost = OriginHost.of("hello.node.epc.mnc123.mcc123.3gppnetwork.org");
+        ensureNotEquals(someCer(hostIp, defaultOriginRealm, originHost), someCer(hostIp, defaultOriginRealm, defaultOriginHost));
     }
 }

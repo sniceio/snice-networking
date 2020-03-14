@@ -4,6 +4,7 @@ package io.snice.networking.common;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 
+import static io.snice.net.IPv4.convertToStringIP;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
 
 /**
@@ -67,7 +68,7 @@ public interface ConnectionEndpointId {
     }
 
     static ConnectionEndpointId create(final Transport transport, final byte[] rawAddress, final int port) {
-        final InetSocketAddress address = new InetSocketAddress(ConnectionId.convertToStringIP(rawAddress), port);
+        final InetSocketAddress address = new InetSocketAddress(convertToStringIP(rawAddress), port);
         return new IPv4ConnectionEndpointId(transport, address, rawAddress, port);
     }
 
@@ -100,7 +101,7 @@ public interface ConnectionEndpointId {
             this.port = port;
             this.hashCode = calculateHashCode();
             final StringBuilder sb = new StringBuilder(protocol.toString());
-            sb.append(":").append(ConnectionId.convertToStringIP(ip));
+            sb.append(":").append(convertToStringIP(ip));
             sb.append(":").append(port);
             this.humanReadableString = sb.toString();
         }
@@ -162,7 +163,7 @@ public interface ConnectionEndpointId {
 
         @Override
         public String getIpAddress() {
-            return ConnectionId.convertToStringIP(ip);
+            return convertToStringIP(ip);
         }
 
         @Override

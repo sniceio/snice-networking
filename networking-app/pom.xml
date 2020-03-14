@@ -33,6 +33,8 @@
             <artifactId>codec-common</artifactId>
         </dependency>
 
+
+        <!--
         <dependency>
             <groupId>io.snice.networking</groupId>
             <artifactId>codec-diameter</artifactId>
@@ -41,13 +43,15 @@
 
         <dependency>
             <groupId>io.snice.networking</groupId>
-            <artifactId>networking-netty</artifactId>
+            <artifactId>diameter-stack</artifactId>
         </dependency>
+        -->
 
         <dependency>
             <groupId>io.snice.networking</groupId>
-            <artifactId>diameter-stack</artifactId>
+            <artifactId>networking-netty</artifactId>
         </dependency>
+
 
         <dependency>
             <groupId>io.hektor</groupId>

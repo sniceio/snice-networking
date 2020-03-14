@@ -8,6 +8,9 @@ import io.snice.networking.codec.diameter.avp.AvpParseException;
 import io.snice.networking.codec.diameter.avp.AvpProtected;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.Vendor;
+
+import static io.snice.preconditions.PreConditions.assertNotNull;
+
 import io.snice.networking.codec.diameter.avp.impl.DiameterIdentityAvp;
 import io.snice.networking.codec.diameter.avp.type.DiameterIdentity;
 
@@ -22,9 +25,18 @@ public interface DestinationRealm extends Avp<DiameterIdentity> {
     
     static DestinationRealm of(final Buffer value) {
         final DiameterIdentity v = DiameterIdentity.parse(value);
+        return of(v);
+    }
+
+    static DestinationRealm of(final String value) {
+        return of(Buffers.wrap(value));
+    }
+
+    static DestinationRealm of(final DiameterIdentity value) {
+        assertNotNull(value);
         final Builder<DiameterIdentity> builder =
                 Avp.ofType(DiameterIdentity.class)
-                        .withValue(v)
+                        .withValue(value)
                         .withAvpCode(CODE)
                         .isMandatory(AvpMandatory.MUST.isMandatory())
                         .isProtected(AvpProtected.MUST_NOT.isProtected())
@@ -33,9 +45,7 @@ public interface DestinationRealm extends Avp<DiameterIdentity> {
         return new DefaultDestinationRealm(builder.build());
     }
 
-    static DestinationRealm of(final String value) {
-        return of(Buffers.wrap(value));
-    }
+    
 
     @Override
     default long getCode() {
@@ -46,7 +56,6 @@ public interface DestinationRealm extends Avp<DiameterIdentity> {
         return true;
     }
 
-    @Override
     default DestinationRealm toDestinationRealm() {
         return this;
     }
@@ -61,6 +70,30 @@ public interface DestinationRealm extends Avp<DiameterIdentity> {
     class DefaultDestinationRealm extends DiameterIdentityAvp implements DestinationRealm {
         private DefaultDestinationRealm(final FramedAvp raw) {
             super(raw);
+        }
+
+        @Override
+        public DestinationRealm ensure() {
+            return this;
+        }
+
+        @Override
+        public boolean equals(final Object other) {
+            if (this == other) {
+                return true;
+            }
+
+            if (other == null) {
+                return false;
+            }
+
+            try {
+                final DestinationRealm o = (DestinationRealm)other;
+                final DiameterIdentity v = getValue();
+                return v.equals(o.getValue());
+            } catch (final ClassCastException e) {
+                return false;
+            }
         }
     }
 }

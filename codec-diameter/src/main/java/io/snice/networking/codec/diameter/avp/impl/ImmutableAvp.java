@@ -43,7 +43,7 @@ public class ImmutableAvp<T extends DiameterType> implements Avp<T> {
     }
 
     @Override
-    public Avp<T> ensure() {
+    public Avp ensure() {
         return raw.ensure();
     }
 

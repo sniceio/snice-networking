@@ -95,8 +95,13 @@ public class PeerFsm {
      * as part of just calling this method!)
      */
     private static final void processCER(final DiameterMessage cer, final PeerContext ctx, final PeerData data) {
-        final var cea = cer.createAnswer(ResultCode.DiameterSuccess2001).build();
-        ctx.getChannelContext().sendDownstream(cea);
+        // TODO: check if we want to accept traffic from the other peer.
+        // TODO: check if we should check the applications and find the intersection of what we support or just accept all.
+
+        final var builder = cer.createAnswer(ResultCode.DiameterSuccess2001);
+        ctx.getHostIpAddresses().forEach(builder::withAvp);
+        builder.withAvp(ctx.getConfig().getProductName());
+        ctx.getChannelContext().sendDownstream(builder.build());
     }
 
     // ----------------------------------------------------------------------

@@ -6,6 +6,7 @@ import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.api.DestinationHost;
 import io.snice.networking.codec.diameter.avp.api.DestinationRealm;
+import io.snice.networking.codec.diameter.avp.api.ExperimentalResultCode;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.codec.diameter.avp.api.OriginRealm;
 import io.snice.networking.codec.diameter.avp.api.ResultCode;
@@ -131,6 +132,11 @@ public interface DiameterMessage extends Cloneable {
      *                                {@link DiameterMessage}
      */
     default DiameterAnswer.Builder createAnswer(final ResultCode resultCode) throws DiameterParseException, ClassCastException {
+        throw new ClassCastException("Unable to cast this " + getClass().getName()
+                + " into a " + DiameterAnswer.class.getName());
+    }
+
+    default DiameterAnswer.Builder createAnswer(final ExperimentalResultCode resultCode) throws DiameterParseException, ClassCastException {
         throw new ClassCastException("Unable to cast this " + getClass().getName()
                 + " into a " + DiameterAnswer.class.getName());
     }

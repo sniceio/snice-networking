@@ -75,6 +75,7 @@ public interface NetworkStack<T, C extends NetworkAppConfig> {
 
     interface Builder<T, C extends NetworkAppConfig> {
         Builder<T, C> withApplication(NetworkApplication<T, C> application);
+        Builder<T, C> withAppBundle(AppBundle<T> bundle);
         Builder<T, C> withConnectionContexts(List<ConnectionContext> ctxs);
         NetworkStack<T, C> build();
     }

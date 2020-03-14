@@ -1,15 +1,10 @@
 package io.snice.networking.codec.diameter.impl;
 
-import io.snice.networking.codec.diameter.DiameterMessage;
 import io.snice.networking.codec.diameter.DiameterRequest;
 import io.snice.networking.codec.diameter.DiameterTestBase;
 import io.snice.networking.codec.diameter.avp.api.ResultCode;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertThat;
 
 public class DiameterEqualityTest extends DiameterTestBase {
 
@@ -44,18 +39,6 @@ public class DiameterEqualityTest extends DiameterTestBase {
         ensureNotEquals(aA, b);
         ensureNotEquals(bA, b);
         ensureNotEquals(bA, a);
-    }
-
-    private static void ensureEquality(final DiameterMessage a, final DiameterMessage b) {
-        assertThat(a, is(b));
-        assertThat(b, is(a));
-        assertThat(a, is(a));
-        assertThat(b, is(b));
-    }
-
-    private static void ensureNotEquals(final DiameterMessage a, final DiameterMessage b) {
-        assertThat(a, not(b));
-        assertThat(b, not(a));
     }
 
 

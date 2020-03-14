@@ -1,4 +1,15 @@
 networkInterfaces:
   - name: default
-    listen: diameter://127.0.0.1:3869
+    listen: aaa://127.0.0.1:3869
     transport: tcp
+
+diameter:
+  productName: "whatever"
+  # productVersion: 1.0
+  # vendorId: 12345
+  peers:
+    - name: local
+      hostIpAddresses:
+        - 10.11.12.13
+
+

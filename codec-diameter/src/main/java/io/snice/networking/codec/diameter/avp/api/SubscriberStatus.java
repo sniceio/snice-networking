@@ -14,7 +14,6 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
 
 /**
  * 
- nisse
  */
 public interface SubscriberStatus extends Avp<Enumerated<SubscriberStatus.Code>> {
 
@@ -26,6 +25,14 @@ public interface SubscriberStatus extends Avp<Enumerated<SubscriberStatus.Code>>
     @Override
     default long getCode() {
         return CODE;
+    }
+
+    default SubscriberStatus toSubscriberStatus() {
+        return this;
+    }
+
+    default boolean isSubscriberStatus() {
+        return true;
     }
 
     @Override

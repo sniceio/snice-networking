@@ -9,6 +9,8 @@ import io.snice.networking.codec.diameter.avp.AvpProtected;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.Vendor;
 
+import static io.snice.preconditions.PreConditions.assertNotNull;
+
 import io.snice.networking.codec.diameter.avp.impl.DiameterIpAddressAvp;
 import io.snice.networking.codec.diameter.avp.type.IpAddress;
 
@@ -23,9 +25,18 @@ public interface HostIpAddress extends Avp<IpAddress> {
     
     static HostIpAddress of(final Buffer value) {
         final IpAddress v = IpAddress.parse(value);
+        return of(v);
+    }
+
+    static HostIpAddress of(final String value) {
+        return of(Buffers.wrap(value));
+    }
+
+    static HostIpAddress of(final IpAddress value) {
+        assertNotNull(value);
         final Builder<IpAddress> builder =
                 Avp.ofType(IpAddress.class)
-                        .withValue(v)
+                        .withValue(value)
                         .withAvpCode(CODE)
                         .isMandatory(AvpMandatory.MUST.isMandatory())
                         .isProtected(AvpProtected.MAY.isProtected())
@@ -34,9 +45,6 @@ public interface HostIpAddress extends Avp<IpAddress> {
         return new DefaultHostIpAddress(builder.build());
     }
 
-    static HostIpAddress of(final String value) {
-        return of(Buffers.wrap(value));
-    }
     
 
     @Override
@@ -62,6 +70,30 @@ public interface HostIpAddress extends Avp<IpAddress> {
     class DefaultHostIpAddress extends DiameterIpAddressAvp implements HostIpAddress {
         private DefaultHostIpAddress(final FramedAvp raw) {
             super(raw);
+        }
+
+        @Override
+        public HostIpAddress ensure() {
+            return this;
+        }
+
+        @Override
+        public boolean equals(final Object other) {
+            if (this == other) {
+                return true;
+            }
+
+            if (other == null) {
+                return false;
+            }
+
+            try {
+                final HostIpAddress o = (HostIpAddress)other;
+                final IpAddress v = getValue();
+                return v.equals(o.getValue());
+            } catch (final ClassCastException e) {
+                return false;
+            }
         }
     }
 }

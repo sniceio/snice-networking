@@ -9,6 +9,8 @@ import io.snice.networking.codec.diameter.avp.AvpProtected;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.Vendor;
 
+import static io.snice.preconditions.PreConditions.assertNotNull;
+
 import io.snice.networking.codec.diameter.avp.impl.DiameterGroupedAvp;
 import io.snice.networking.codec.diameter.avp.type.Grouped;
 
@@ -47,6 +49,30 @@ public interface VendorSpecificApplicationId extends Avp<Grouped> {
     class DefaultVendorSpecificApplicationId extends DiameterGroupedAvp implements VendorSpecificApplicationId {
         private DefaultVendorSpecificApplicationId(final FramedAvp raw) {
             super(raw);
+        }
+
+        @Override
+        public VendorSpecificApplicationId ensure() {
+            return this;
+        }
+
+        @Override
+        public boolean equals(final Object other) {
+            if (this == other) {
+                return true;
+            }
+
+            if (other == null) {
+                return false;
+            }
+
+            try {
+                final VendorSpecificApplicationId o = (VendorSpecificApplicationId)other;
+                final Grouped v = getValue();
+                return v.equals(o.getValue());
+            } catch (final ClassCastException e) {
+                return false;
+            }
         }
     }
 }

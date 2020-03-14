@@ -8,6 +8,7 @@ import io.snice.networking.codec.diameter.avp.api.ExperimentalResultCode;
 import io.snice.networking.codec.diameter.avp.api.ResultCode;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
+import io.snice.networking.diameter.DiameterBundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +18,8 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
 
     private static final Logger logger = LoggerFactory.getLogger(Hss.class);
 
-    public Hss() {
-        super(DiameterMessage.class);
+    public Hss(final DiameterBundle bundle) {
+        super(bundle);
     }
 
     @Override
@@ -39,7 +40,7 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
     }
 
     private static final void processULR(final Connection<DiameterMessage> con, final DiameterMessage ulr) {
-        final var ula = ulr.createAnswer(ResultCode.DiameterSuccess2001)
+        final var ula = ulr.createAnswer(ResultCode.DiameterErrorUserUnknown5032)
                 .withAvp(ExperimentalResultCode.DiameterErrorUserUnknown5001)
                 .withAvp(null)
                 .build();
@@ -47,7 +48,8 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
     }
 
     public static void main(final String... args) throws Exception {
-        final var hss = new Hss();
+        final DiameterBundle bundle = new DiameterBundle();
+        final var hss = new Hss(bundle);
         hss.run("server", "networking-examples/src/main/resources/io/snice/networking/examples/Hss.yml");
     }
 }
