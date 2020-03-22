@@ -33,7 +33,7 @@ public class DefaultPeerFactory implements PeerFactory {
 
     @Override
     public FsmKey calculateKey(final ConnectionId connectionId, final Optional<DiameterMessage> msg) {
-        final var originHost = msg.get().getOriginHost();
+        final var originHost = msg.map(DiameterMessage::getOriginHost);
         final var connectionEndpointId = connectionId.getRemoteConnectionEndpointId();
         return new PeerFsmKey(originHost, connectionEndpointId);
     }
@@ -57,10 +57,10 @@ public class DefaultPeerFactory implements PeerFactory {
     }
 
     private static class PeerFsmKey implements FsmKey {
-        private final OriginHost originHost;
+        private final Optional<OriginHost> originHost;
         private final ConnectionEndpointId endpointId;
 
-        private PeerFsmKey(final OriginHost originHost, final ConnectionEndpointId endpointId) {
+        private PeerFsmKey(final Optional<OriginHost> originHost, final ConnectionEndpointId endpointId) {
             this.originHost = originHost;
             this.endpointId = endpointId;
         }

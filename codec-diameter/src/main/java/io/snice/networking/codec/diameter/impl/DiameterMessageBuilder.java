@@ -8,6 +8,7 @@ import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.api.DestinationHost;
 import io.snice.networking.codec.diameter.avp.api.DestinationRealm;
+import io.snice.networking.codec.diameter.avp.api.ExperimentalResult;
 import io.snice.networking.codec.diameter.avp.api.ExperimentalResultCode;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.codec.diameter.avp.api.OriginRealm;
@@ -36,7 +37,7 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
     private Function<Avp, Avp> onAvpFunction;
 
     private short indexOfResultCode = -1;
-    private short indexOfExperimentalResultCode = -1;
+    private short indexOfExperimentalResult = -1;
     private short indexOfOriginHost = -1;
     private short indexOfOriginRealm = -1;
     private short indexOfDestinationHost = -1;
@@ -51,16 +52,16 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
      *
      */
     protected DiameterMessageBuilder(final int avpSizeHint, final DiameterHeader.Builder header,
-                                     final ResultCode resultCode, final ExperimentalResultCode experimentalResultCode) {
+                                     final ResultCode resultCode, final ExperimentalResult experimentalResult) {
         avps = new ArrayList<>(avpSizeHint);
         if (resultCode != null) {
             indexOfResultCode = 0;
             avps.add(resultCode);
         }
 
-        if (experimentalResultCode != null) {
-            indexOfExperimentalResultCode = 0;
-            avps.add(experimentalResultCode);
+        if (experimentalResult != null) {
+            indexOfExperimentalResult = 0;
+            avps.add(experimentalResult);
         }
         this.header = header;
     }
@@ -74,7 +75,7 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
     }
 
     protected DiameterMessageBuilder(final ExperimentalResultCode resultCode) {
-        this(10, null, null, resultCode);
+        this(10, null, null, ExperimentalResultHelper.map(resultCode));
     }
 
     protected DiameterMessageBuilder() {
@@ -222,7 +223,7 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
         final Buffer buffer = writable.build();
 
         return internalBuild(buffer, finalHeader, finalAvps, indexOfOriginHost, indexOfOriginRealm,
-                indexOfDestinationHost, indexOfDestinationRealm, indexOfResultCode, indexOfExperimentalResultCode);
+                indexOfDestinationHost, indexOfDestinationRealm, indexOfResultCode, indexOfExperimentalResult);
     }
 
     /**

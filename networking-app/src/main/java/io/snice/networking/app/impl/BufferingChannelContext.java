@@ -3,6 +3,7 @@ package io.snice.networking.app.impl;
 import io.netty.channel.ChannelHandlerContext;
 import io.snice.networking.common.ChannelContext;
 import io.snice.networking.common.ConnectionId;
+import io.snice.networking.common.event.IOEvent;
 import io.snice.networking.common.event.MessageIOEvent;
 
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ public class BufferingChannelContext<T> implements ChannelContext<T> {
     private final ConnectionId connectionId;
     private T downstream;
     private T upstream;
+    private IOEvent<T> userEvent;
 
 
     /**
@@ -40,6 +42,7 @@ public class BufferingChannelContext<T> implements ChannelContext<T> {
      */
     private final List<T> downstreams = new ArrayList<>(4); // TODO: should be configurable
     private final List<T> upstreams = new ArrayList<>(4);
+    private final List<IOEvent<T>> userEvents = new ArrayList<>(4);
 
     public BufferingChannelContext(final ConnectionId connectionId) {
         this.connectionId = connectionId;
@@ -68,7 +71,16 @@ public class BufferingChannelContext<T> implements ChannelContext<T> {
         }
     }
 
-    public void processDownstream(final ChannelHandlerContext ctx, final MessageIOEvent<T> originalEvent) {
+    @Override
+    public void fireUserEvent(IOEvent<T> evt) {
+        if (userEvent == null) {
+            userEvent = evt;
+        } else {
+            userEvents.add(evt);
+        }
+    }
+
+    public void processDownstream(final ChannelHandlerContext ctx, final IOEvent<T> originalEvent) {
         if (downstream == null) {
             return;
         }
@@ -80,7 +92,7 @@ public class BufferingChannelContext<T> implements ChannelContext<T> {
         downstreams.clear();
     }
 
-    public void processUpstream(final ChannelHandlerContext ctx, final MessageIOEvent<T> originalEvent) {
+    public void processUpstream(final ChannelHandlerContext ctx, final IOEvent<T> originalEvent) {
         if (upstream == null) {
             return;
         }
@@ -90,6 +102,18 @@ public class BufferingChannelContext<T> implements ChannelContext<T> {
 
         upstreams.forEach(msg -> ctx.fireChannelRead(wrap(msg, originalEvent)));
         upstreams.clear();
+    }
+
+    public void processEvents(final ChannelHandlerContext ctx, final IOEvent<T> originalEvent) {
+        if (userEvent == null) {
+            return;
+        }
+
+        ctx.fireUserEventTriggered(userEvent);
+        userEvent = null;
+
+        userEvents.forEach(ctx::fireUserEventTriggered);
+        userEvents.clear();
     }
 
     /**
@@ -104,7 +128,7 @@ public class BufferingChannelContext<T> implements ChannelContext<T> {
      * @param originalEvent
      * @return
      */
-    private MessageIOEvent<T> wrap(final T msg, final MessageIOEvent<T> originalEvent) {
+    private MessageIOEvent<T> wrap(final T msg, final IOEvent<T> originalEvent) {
         return MessageIOEvent.create(originalEvent.channelContext(), originalEvent.arrivalTime(), msg);
     }
 

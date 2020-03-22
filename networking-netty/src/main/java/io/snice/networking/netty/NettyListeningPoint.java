@@ -6,12 +6,13 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.snice.networking.common.ChannelContext;
 import io.snice.networking.common.Connection;
+import io.snice.networking.common.ConnectionEndpointId;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
 import io.snice.networking.common.event.ConnectionActiveIOEvent;
 import io.snice.networking.core.ListeningPoint;
+import io.snice.networking.core.event.ConnectionAttempt;
 import io.snice.time.Clock;
 import io.snice.time.SystemClock;
 import org.slf4j.Logger;
@@ -28,7 +29,7 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
 /**
  * @author jonas@jonasborjesson.com
  */
-public abstract class NettyListeningPoint implements ListeningPoint {
+public abstract class NettyListeningPoint<T> implements ListeningPoint<T> {
 
     protected static final Logger logger = LoggerFactory.getLogger(NettyListeningPoint.class);
 
@@ -53,7 +54,7 @@ public abstract class NettyListeningPoint implements ListeningPoint {
         this.vipAddress = Optional.ofNullable(vipAddress);
         this.transport = transport;
         this.localPort = NettyNetworkInterface.getPort(listenAddress.getPort(), transport);
-        this.localAddress = new InetSocketAddress(listenAddress.getHost().toString(), this.localPort);
+        this.localAddress = new InetSocketAddress(listenAddress.getHost(), this.localPort);
         this.clock = clock;
     }
 
@@ -100,7 +101,7 @@ public abstract class NettyListeningPoint implements ListeningPoint {
     /**
      * Listening point for UDP
      */
-    private static class NettyUdpListeningPoint extends NettyListeningPoint {
+    private static class NettyUdpListeningPoint<T> extends NettyListeningPoint<T> {
 
         private final Bootstrap bootstrap;
 
@@ -150,7 +151,7 @@ public abstract class NettyListeningPoint implements ListeningPoint {
         }
 
         @Override
-        public CompletableFuture<Connection> connect(final InetSocketAddress remoteAddress) {
+        public CompletableFuture<Connection<T>> connect(final InetSocketAddress remoteAddress) {
             // Since we don't actually connect when using UDP we will be firing off
             // a user event stating that a new connection just became active.
             // Note: since we don't know when the connection goes away, this can
@@ -164,7 +165,7 @@ public abstract class NettyListeningPoint implements ListeningPoint {
             // TODO: not sure how to get this working nicely since we will also
             // need to insert the user pipeline stuff, which we haven't really
             // thought of for the outbound case just yet.
-            ctx.fireUserEventTriggered(ConnectionActiveIOEvent.create(null, arrivalTime));
+            ctx.fireUserEventTriggered(ConnectionActiveIOEvent.create(null, false, arrivalTime));
             return CompletableFuture.completedFuture(connection);
         }
     }
@@ -172,7 +173,7 @@ public abstract class NettyListeningPoint implements ListeningPoint {
     /**
      * Listening point for TCP
      */
-    private static class NettyTcpListeningPoint extends NettyListeningPoint {
+    private static class NettyTcpListeningPoint<T> extends NettyListeningPoint<T> {
 
         private final Bootstrap bootstrap;
         private final ServerBootstrap serverBootstrap;
@@ -199,17 +200,13 @@ public abstract class NettyListeningPoint implements ListeningPoint {
             final CompletableFuture<Void> future = new CompletableFuture<>();
 
             final ChannelFuture channelFuture = this.serverBootstrap.bind(getLocalAddress());
-            channelFuture.addListener(new ChannelFutureListener() {
-
-                @Override
-                public void operationComplete(final ChannelFuture channelFuture) throws Exception {
-                    if (channelFuture.isDone() && channelFuture.isSuccess()) {
-                        NettyListeningPoint.logger.info("Successfully bound to listening point: " + getListenAddress());
-                        future.complete(null);
-                    } else if (channelFuture.isDone() && !channelFuture.isSuccess()) {
-                        NettyListeningPoint.logger.info("Unable to bind to listening point: " + getListenAddress());
-                        future.completeExceptionally(channelFuture.cause());
-                    }
+            channelFuture.addListener((ChannelFutureListener) channelFuture1 -> {
+                if (channelFuture1.isDone() && channelFuture1.isSuccess()) {
+                    NettyListeningPoint.logger.info("Successfully bound to listening point: " + getListenAddress());
+                    future.complete(null);
+                } else if (channelFuture1.isDone() && !channelFuture1.isSuccess()) {
+                    NettyListeningPoint.logger.info("Unable to bind to listening point: " + getListenAddress());
+                    future.completeExceptionally(channelFuture1.cause());
                 }
             });
             return future;
@@ -221,19 +218,27 @@ public abstract class NettyListeningPoint implements ListeningPoint {
         }
 
         @Override
-        public CompletableFuture<Connection> connect(final InetSocketAddress remoteAddress) {
-            final CompletableFuture<Connection> f = new CompletableFuture<>();
+        public CompletableFuture<Connection<T>> connect(final InetSocketAddress remoteAddress) {
+            final CompletableFuture<Connection<T>> f = new CompletableFuture<>();
             final ChannelFuture channelFuture = bootstrap.connect(remoteAddress);
-            channelFuture.addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(final ChannelFuture future) throws Exception {
-                    if (future.isSuccess()) {
-                        final Channel channel = channelFuture.channel();
-                        final Connection c = new TcpConnection(channel, remoteAddress);
-                        f.complete(c);
-                    } else {
-                        f.completeExceptionally(future.cause());
-                    }
+
+            // TODO: I believe will end up being all executed in the IO thread, including the f.complete(c) which
+            // TODO: then is all the way up into the application. Will have to re-work that...
+            // TODO: yep, verified! The application will now be executing code on this IO thread, which is
+            // TODO: NOT NOT NOT good. Need to change this... Should probably try and get this
+            // TODO: connect future to be completed once an event has been triggered instead.
+            channelFuture.addListener((ChannelFutureListener) future -> {
+                if (future.isSuccess()) {
+                    final Channel channel = channelFuture.channel();
+                    final Connection<T> c = new TcpConnection(channel, remoteAddress);
+                    final var evt = ConnectionAttempt.success(f, c, clock.getCurrentTimeMillis());
+                    channel.pipeline().firstContext().fireUserEventTriggered(evt);
+                } else {
+                    // TODO: since the channel wasn't established, we need to complete
+                    // this future elseewhere... Needs to be posted to some other thread pool
+                    final var remote = ConnectionEndpointId.create(Transport.tcp, remoteAddress);
+                    final var evt = ConnectionAttempt.failure(f, remote, future.cause(), clock.getCurrentTimeMillis());
+                    // f.completeExceptionally(future.cause());
                 }
             });
             return f;

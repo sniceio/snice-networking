@@ -12,6 +12,10 @@ public interface Unsigned32 extends DiameterType {
         return new DefaultUnsigned32(data.getUnsignedInt(0));
     }
 
+    static Unsigned32 of(final long value) {
+        return new DefaultUnsigned32(value);
+    }
+
     long getValue();
 
     @Override

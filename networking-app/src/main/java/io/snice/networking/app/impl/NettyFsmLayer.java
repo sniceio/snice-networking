@@ -70,27 +70,35 @@ public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D 
     @Override
     public void userEventTriggered(final ChannelHandlerContext ctx, final Object evt) throws Exception {
         final var ioEvent = (IOEvent<T>) evt;
-        ctx.fireUserEventTriggered(evt);
+        ensureExecutionContext(ioEvent, ctx).onUpstreamMessage(ioEvent);
+
+        // Note: keeping this one as a comment to point out the following.
+        // It should not be called because the actual state machine needs to
+        // decide if this is an event that should be propagated. As such, you
+        // cannot just blindly call this one below. If you did, you would propagate
+        // events around/outside the state machine, which may or may not wanted this
+        // event to be propagated up the chain.
+        // ctx.fireUserEventTriggered(evt);
     }
 
 
-    private FsmExecutionContext<T, S, C, D> ensureExecutionContext(final MessageIOEvent<T> msgEvent,
+    private FsmExecutionContext<T, S, C, D> ensureExecutionContext(final IOEvent<T> event,
                                                                    final ChannelHandlerContext nettyCtx) {
         if (fsmExecutionContext != null) {
             return fsmExecutionContext;
         }
 
-        final var msg = msgEvent.getMessage();
-        final var channelCtx = msgEvent.channelContext();
+        final var channelCtx = event.channelContext();
         final var connectionId = channelCtx.getConnectionId();
         final var bufferingCtx = new BufferingChannelContext<T>(connectionId);
 
-        final var fsmKey = fsmFactory.calculateKey(connectionId, Optional.of(msg));
+        final Optional<T> optionalMsg = event.isMessageIOEvent() ? Optional.of(event.toMessageIOEvent().getMessage()) : Optional.empty();
+        final var fsmKey = fsmFactory.calculateKey(connectionId, optionalMsg);
         final var ctx = fsmFactory.createNewContext(fsmKey, bufferingCtx);
         final var data = fsmFactory.createNewDataBag(fsmKey);
         final var fsm = fsmFactory.createNewFsm(fsmKey, ctx, data);
 
-        fsmExecutionContext = new FsmExecutionContext<>(msg, bufferingCtx, nettyCtx, fsm);
+        fsmExecutionContext = new FsmExecutionContext<>(event, bufferingCtx, nettyCtx, fsm);
         fsmExecutionContext.start();
         return fsmExecutionContext;
     }

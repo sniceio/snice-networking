@@ -1,7 +1,6 @@
 package io.snice.networking.common.event;
 
 import io.snice.networking.common.ChannelContext;
-import io.snice.networking.common.Connection;
 import io.snice.networking.common.event.impl.IOEventImpl;
 
 /**
@@ -12,6 +11,11 @@ public interface ConnectionClosedIOEvent<T> extends ConnectionIOEvent<T> {
     @Override
     default boolean isConnectionClosedIOEvent() {
         return true;
+    }
+
+    @Override
+    default ConnectionClosedIOEvent<T> toConnectionClosedIOEvent() {
+        return this;
     }
 
     static <T> ConnectionClosedIOEvent<T> create(final ChannelContext<T> ctx, final long arrivalTime) {

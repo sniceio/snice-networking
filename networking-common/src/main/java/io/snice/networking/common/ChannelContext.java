@@ -1,5 +1,7 @@
 package io.snice.networking.common;
 
+import io.snice.networking.common.event.IOEvent;
+
 public interface ChannelContext<T> {
 
     ConnectionId getConnectionId();
@@ -21,6 +23,11 @@ public interface ChannelContext<T> {
      * @param msg
      */
     void sendUpstream(T msg);
+
+    /**
+     * Fire a user event, which will propagate the event up the handler chain.
+     */
+    void fireUserEvent(IOEvent<T> evt);
 
 
 }

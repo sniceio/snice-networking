@@ -24,9 +24,15 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
 
     @Override
     public void run(final HssConfig configuration, final Environment<DiameterMessage, HssConfig> environment) {
+        if (false) return;
         final var future = environment.connect(Transport.tcp, "127.0.0.1", 3868);
         future.whenComplete((c, t) -> {
-            logger.info("got it");
+            System.err.println("HSS got the connection back in thread: " + Thread.currentThread());
+            if (c != null) {
+                logger.info("yay, we connected successfully");
+            } else {
+                logger.info("nay, we didn't connect successfully due to exception ", t);
+            }
         });
     }
 

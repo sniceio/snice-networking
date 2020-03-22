@@ -19,7 +19,17 @@ public enum PeerState {
      *
      * This is one of two stable states for the Peer FSM, the other beeing {@link PeerState#CLOSED}
      */
-    OPEN, CLOSING, WAIT_CONNECT_ACK, WAIT_CONNECT_ACL_ELECT, WAIT_CEA, WAIT_RETURNS,
+    OPEN,
+
+    /**
+     * This is not a state that is part of the RFC. However, when we receive an incoming connection
+     * we know that we must receive a CER soon and it not, we should just close down the
+     * connection since it could be a sign of an attack. So, this is an extra intermediary step
+     * to the FSM that makes this FSM a bit more resilient.
+     */
+    WAIT_CER,
+
+    CLOSING, WAIT_CONNECT_ACK, WAIT_CONNECT_ACL_ELECT, WAIT_CEA, WAIT_RETURNS,
 
     /**
      * Note that the TERMINATED state isn't part of the RFC as a valid state. However,

@@ -197,6 +197,8 @@ public class DiameterParser {
                 return ExperimentalResult.parse(raw);
             case ProductName.CODE:
                 return ProductName.parse(raw);
+            case ExperimentalResultCode.CODE:
+                return ExperimentalResultCode.parse(raw);
             default:
                 throw new RuntimeException("AVP " + raw.getCode() + " has not yet been implemented");
         }

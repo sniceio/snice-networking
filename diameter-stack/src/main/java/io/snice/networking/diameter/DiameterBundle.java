@@ -18,11 +18,15 @@ import io.snice.networking.diameter.peer.PeerState;
 import io.snice.networking.diameter.peer.impl.DefaultPeerFactory;
 import io.snice.networking.diameter.yaml.StandardAvpDeserializer;
 import io.snice.networking.netty.ProtocolHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
 
 public class DiameterBundle implements AppBundle<DiameterMessage> {
+
+    private static final Logger logger = LoggerFactory.getLogger(DiameterBundle.class);
 
     private final ProtocolHandler encoder;
     private final ProtocolHandler decoder;
@@ -46,6 +50,11 @@ public class DiameterBundle implements AppBundle<DiameterMessage> {
     @Override
     public Class<DiameterMessage> getType() {
         return DiameterMessage.class;
+    }
+
+    @Override
+    public void start() {
+        logger.info("Starting diameter stack");
     }
 
     @Override

@@ -47,6 +47,8 @@ public interface NetworkBootstrap<T, C extends NetworkAppConfig> {
      * with the incoming connection, such as drop it, drop and send some data back to
      * the remote end etc etc.
      *
+     * TODO: should there be a separation on inbound/outbound?
+     *
      * @param condition
      * @return
      */

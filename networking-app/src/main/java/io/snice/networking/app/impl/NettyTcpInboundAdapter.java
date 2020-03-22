@@ -2,24 +2,30 @@ package io.snice.networking.app.impl;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
+import io.netty.channel.ChannelOutboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
 import io.snice.networking.common.event.ConnectionActiveIOEvent;
+import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
 import io.snice.networking.common.event.MessageIOEvent;
+import io.snice.networking.core.event.ConnectionAttempt;
+import io.snice.networking.core.event.ConnectionAttemptFailed;
+import io.snice.networking.core.event.NetworkEvent;
 import io.snice.networking.netty.TcpConnection;
 import io.snice.time.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static io.snice.preconditions.PreConditions.assertNull;
 
@@ -30,7 +36,7 @@ import static io.snice.preconditions.PreConditions.assertNull;
  * to only that channel and as such, it cannot be shared...
  *
  */
-public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
+public class NettyTcpInboundAdapter<T> extends ChannelOutboundHandlerAdapter implements ChannelInboundHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyTcpInboundAdapter.class);
 
@@ -44,8 +50,11 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
     private final SerializationFactory<T> factory;
     private final int exceptionCounter = 0;
 
-    private final ReentrantLock lock = new ReentrantLock();
-
+    /**
+     * Flag to indicate if this channel was initiated by an incoming connection
+     * or whether we were the one initiating it, i.e. we tried to establish an outgoing TCP connection.
+     */
+    private boolean isInbound = true;
 
     /**
      * If the incoming connection doesn't match anything, then we'll use this
@@ -53,9 +62,16 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
      */
     private final ConnectionContext defaultCtx;
 
-
     private TcpConnection<T> connection;
     private DefaultChannelContext<T> channelContext;
+
+    /**
+     * We'll hold on to the connection attempt event until we've seen the
+     * {@link ConnectionActiveIOEvent} event.
+     */
+    private ConnectionAttempt<T> connectionAttempt;
+
+    private boolean hasProcessedConnectionActiveIOEvent = false;
 
     public NettyTcpInboundAdapter(final Clock clock, final SerializationFactory<T> factory, final Optional<URI> vipAddress, final List<ConnectionContext> ctxs) {
         this.clock = clock;
@@ -68,7 +84,7 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
     }
 
     private void log(final String msg) {
-        System.out.println("[ " + uuid + " TCP ]: " + msg);
+        logger.info("[ " + uuid + " TCP ]: " + msg);
     }
 
     private void logError(final String msg) {
@@ -77,6 +93,7 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
 
     @Override
     public void channelRegistered(final ChannelHandlerContext ctx) throws Exception {
+        log("Channel registered for inbound");
         /*
         log("channel registered");
         if (ctx.channel().localAddress() != null) {
@@ -104,12 +121,15 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
     @Override
     public void channelActive(final ChannelHandlerContext ctx) throws Exception {
         assertNull(connection, "There was already an active connection for this TCP Context, should be imposssible.");
+        log("Channel is now active. IsInbound: " + isInbound);
 
         final var channel = ctx.channel();
         final var localAddress = (InetSocketAddress)channel.localAddress();
         final var remoteAddress = (InetSocketAddress)channel.remoteAddress();
         final var id = ConnectionId.create(Transport.tcp, localAddress, remoteAddress);
         final var connCtx = findContext(id);
+
+        hasProcessedConnectionActiveIOEvent = true;
 
         if (connCtx.isDrop()) {
             ctx.close();
@@ -135,8 +155,14 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
         // Way better!
         connection = new TcpConnection<T>(channel, id, vipAddress);
         channelContext = new DefaultChannelContext<T>(connection, connCtx);
-        final var evt = ConnectionActiveIOEvent.create(channelContext, clock.getCurrentTimeMillis());
+        final var evt = ConnectionActiveIOEvent.create(channelContext, isInbound, clock.getCurrentTimeMillis());
         ctx.fireUserEventTriggered(evt);
+
+        // we have to flush "manually" here because we "made" the connection active event up and is
+        // not something that has some kind of corresponding readComplete, where we normally are flushing.
+        ctx.flush();
+
+        processConnectionAttemptCompleted(false, ctx, connectionAttempt);
     }
 
     private ConnectionContext<Connection<T>, T> findContext(final ConnectionId id) {
@@ -199,7 +225,57 @@ public class NettyTcpInboundAdapter<T> implements ChannelInboundHandler {
 
     @Override
     public void userEventTriggered(final ChannelHandlerContext ctx, final Object evt) throws Exception {
-        log("user event");
+        try {
+            final NetworkEvent<T> event = (NetworkEvent<T>) evt;
+            if (event.isConnectionAttemptEvent()) {
+                processConnectionAttemptCompleted(false, ctx, event.toConnectionAttempt());
+            }
+
+        } catch (final ClassCastException e) {
+            // TODO: need to introduce proper logging and this should
+            // be a WARN with an AlertCode.
+            logError("Unknown user event triggered. Dropping event " + evt.getClass().getName() + " toString: " + evt);
+        }
+    }
+
+    /**
+     * When the user tries to establish a new connection they will be given a future that will eventually
+     * complete. Our implementation wants to ensure that the {@link ConnectionActiveIOEvent} is propagated before
+     * this event, which may or may not be the case, and as such, we will ensure to potentially hold onto the
+     * low-level {@link ConnectionAttempt} event and only process and propagate it up the chain once the
+     * {@link ConnectionActiveIOEvent} has been processed and propagated.
+     *
+     * @param isDropped whether the connection was dropped or not. Will ONLY happen if the filter that
+     *                  the user application installed decides to drop the connection. If the connection
+     *                  fails to connect (remote host doesn't exist, remote port unreachable etc) then Netty
+     *                  will not even create a {@link ChannelHandlerContext} so the {@link ConnectionAttemptFailed}
+     *                  is processed differently.
+     * @param ctx the netty context.
+     * @param evt the low-level connection attempt event. It contains the user's future that
+     *            will be completed at some point.
+     */
+    private void processConnectionAttemptCompleted(final boolean isDropped, final ChannelHandlerContext ctx, final ConnectionAttempt<T> evt) {
+        if (evt == null) {
+            return;
+        }
+
+        if (!hasProcessedConnectionActiveIOEvent) {
+            connectionAttempt = evt;
+        } else {
+            final var e = ConnectionAttemptCompletedIOEvent.create(channelContext, evt.getUserConnectionFuture(), connection, evt.getArrivalTime());
+            ctx.fireUserEventTriggered(e);
+            connectionAttempt = null;
+        }
+    }
+
+    /**
+     * From ChannelInboundHandler
+     */
+    @Override
+    public void connect(final ChannelHandlerContext ctx, final SocketAddress remoteAddress,
+                        final SocketAddress localAddress, final ChannelPromise promise) throws Exception {
+        isInbound = false;
+        ctx.connect(remoteAddress, localAddress, promise);
     }
 
 }

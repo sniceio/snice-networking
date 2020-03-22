@@ -4,6 +4,7 @@ import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.common.ChannelContext;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
+import io.snice.networking.common.event.IOEvent;
 
 public class DefaultChannelContext<T> implements ChannelContext<T> {
 
@@ -31,6 +32,11 @@ public class DefaultChannelContext<T> implements ChannelContext<T> {
 
     @Override
     public void sendUpstream(final T msg) {
-        System.err.println("Yay, sending the crap upstream");
+        throw new RuntimeException("Sorry, not implemented yet but I really wanted to send this usptream " + msg);
+    }
+
+    @Override
+    public void fireUserEvent(final IOEvent<T> evt) {
+        throw new RuntimeException("Sorry, not implemented yet but I really wanted to send fire this event" + evt);
     }
 }

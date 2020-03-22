@@ -78,9 +78,17 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
         // final var diameterConf = new DiameterConfig();
         // final var fsmFactory = PeerFactory.createDefault(diameterConf);
 
+        // TODO: the network bundle should probably be loaded by looking at the
+        // TODO: schema of the listening addresses.
+        // TODO: so perhaps something like:
+        // TODO: var ifConfig = config.getNetworkInterfaces().get(xxx);
+        // TODO: var protocolStackBundle = ProtocolManager.find(ifConfig.getListeningAddress().getSchema()).orElseThrow("No protocol stack configured for schema xxxx");
+        // TODO: as opposed to now where the appBundle is passed into the constructor. We want to be able
+        // TODO: to have multiple stacks... hence, there whould be many 'network'
+        // TODO: so perhaps
+        // TODO: config.getNetworkInterfaces().stream().groupBy(schema).collect();
+        // TODO: and then
         network = NettyNetworkLayer.with(config.getNetworkInterfaces())
-                // TODO: the encoder/decoder will be injected by the application but for now, while working out the details,
-                // i'm doing it manually here...
 
                 .withHandler(appBundle.getProtocolEncoders())
                 .withHandler(appBundle.getProtocolDecoders())
@@ -89,6 +97,7 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
 
                 .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, serializationFactory, Optional.empty(), ctxs), Transport.udp)
                 .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, serializationFactory, Optional.empty(), ctxs), Transport.tcp)
+                // .withHandler("tcp-adapter-outbound", () -> new NettyTcpOutboundAdapter<>(clock, serializationFactory, Optional.empty(), ctxs), Transport.tcp)
 
                 // the optional fsm layer - will also be injected dynamically depending on whether
                 // the user actually wants an FSM layer or not.
@@ -104,6 +113,7 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
                 .withHandler("app-layer", () -> appLayer, Transport.udp)
                 .build();
         network.start();
+        appBundle.start();
     }
 
     @Override
