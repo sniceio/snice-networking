@@ -10,6 +10,8 @@ import io.snice.networking.codec.diameter.avp.api.ExperimentalResultCode;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.codec.diameter.avp.api.OriginRealm;
 import io.snice.networking.codec.diameter.avp.api.ResultCode;
+import io.snice.networking.codec.diameter.avp.api.SessionId;
+import io.snice.networking.codec.diameter.avp.api.UserName;
 import io.snice.networking.codec.diameter.impl.DiameterParser;
 
 import java.util.List;
@@ -45,7 +47,7 @@ public interface DiameterMessage extends Cloneable {
      * @param code
      * @return a list of AVPs, or an empty list of none were found.
      */
-    default List<FramedAvp> getAvps(long code) {
+    default List<FramedAvp> getAvps(final long code) {
         return getAllAvps().stream().filter(avp -> avp.getCode() == code).collect(Collectors.toList());
     }
 
@@ -77,6 +79,26 @@ public interface DiameterMessage extends Cloneable {
     default boolean isULA() {
         final var header = getHeader();
         return header.isAnswer() && header.getCommandCode() == 316;
+    }
+
+    default boolean isDWR() {
+        final var header = getHeader();
+        return header.isRequest() && header.getCommandCode() == 280;
+    }
+
+    default boolean isDWA() {
+        final var header = getHeader();
+        return header.isAnswer() && header.getCommandCode() == 280;
+    }
+
+    default boolean isDPR() {
+        final var header = getHeader();
+        return header.isRequest() && header.getCommandCode() == 282;
+    }
+
+    default boolean isDPA() {
+        final var header = getHeader();
+        return header.isAnswer() && header.getCommandCode() == 282;
     }
 
     default boolean isCER() {
@@ -196,10 +218,20 @@ public interface DiameterMessage extends Cloneable {
         Builder<T> withOriginRealm(OriginRealm originHost);
 
         Builder<T> withDestinationHost(DestinationHost destHost);
+        Builder<T> withDestinationHost(Buffer destHost);
+        Builder<T> withDestinationHost(String destHost);
 
         Builder<T> withDestinationRealm(Buffer destRealm);
         Builder<T> withDestinationRealm(String destRealm);
         Builder<T> withDestinationRealm(DestinationRealm destRealm);
+
+        Builder<T> withUserName(Buffer userName);
+        Builder<T> withUserName(String userName);
+        Builder<T> withUserName(UserName userName);
+
+        Builder<T> withSessionId(Buffer sessionId);
+        Builder<T> withSessionId(String sessionId);
+        Builder<T> withSessionId(SessionId sessionId);
 
         /**
          * The length of the entire message must be encoded into the {@link DiameterHeader}

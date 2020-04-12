@@ -34,6 +34,20 @@ public interface ConnectionAttemptCompletedIOEvent<T> extends ConnectionIOEvent<
     }
 
     /**
+     * Depending on the implementing protocol, it may be that after e.g. a TCP connection
+     * had sucessfully been established and the underlying Snice Newtworking layer produced
+     * a successful {@link ConnectionAttemptCompletedIOEvent}, it could be that it should
+     * fail because of other business logic.
+     *
+     * E.g., in Diameter, after you establish a "connection" the two sides exchange messages to
+     * establish a common "ground". If this fails, then the "conneciton" (called Peer in Diameter)
+     * should also fail and as such, the original success attempt will be turned into a failed on.
+     *
+     * @return a failed {@link ConnectionAttemptCompletedIOEvent}
+     */
+    ConnectionAttemptCompletedIOEvent<T> fail(Throwable cause);
+
+    /**
      * If successful, the {@link Connection} that was established.
      */
     Optional<Connection<T>> getConnection();
@@ -73,11 +87,16 @@ public interface ConnectionAttemptCompletedIOEvent<T> extends ConnectionIOEvent<
             cause = Optional.empty();
         }
 
-        private ConnectionAttemptCompletedIOEventImpl(final ChannelContext<T> ctx, final CompletableFuture<Connection<T>> userFuture, final InetSocketAddress resmoteAddress, final Throwable cause, final long arrivalTime) {
+        private ConnectionAttemptCompletedIOEventImpl(final ChannelContext<T> ctx, final CompletableFuture<Connection<T>> userFuture, final InetSocketAddress remoteAddress, final Throwable cause, final long arrivalTime) {
             super(ctx, arrivalTime);
             this.userFuture = userFuture;
             connection = Optional.empty();
             this.cause = Optional.of(cause);
+        }
+
+        @Override
+        public ConnectionAttemptCompletedIOEvent<T> fail(final Throwable cause) {
+            return new ConnectionAttemptCompletedIOEventImpl<>(channelContext(), userFuture, null, cause, arrivalTime());
         }
 
         @Override

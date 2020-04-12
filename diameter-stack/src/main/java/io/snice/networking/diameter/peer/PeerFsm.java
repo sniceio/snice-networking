@@ -4,7 +4,12 @@ import io.hektor.fsm.Definition;
 import io.hektor.fsm.FSM;
 import io.snice.networking.codec.diameter.DiameterMessage;
 import io.snice.networking.codec.diameter.DiameterRequest;
+import io.snice.networking.codec.diameter.avp.api.AcctApplicationId;
+import io.snice.networking.codec.diameter.avp.api.AuthApplicationId;
+import io.snice.networking.codec.diameter.avp.api.DisconnectCause;
 import io.snice.networking.codec.diameter.avp.api.ResultCode;
+import io.snice.networking.codec.diameter.avp.api.VendorId;
+import io.snice.networking.codec.diameter.avp.api.VendorSpecificApplicationId;
 import io.snice.networking.common.event.ConnectionActiveIOEvent;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
 import io.snice.networking.common.event.ConnectionConnectAttemptIOEvent;
@@ -12,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.snice.networking.diameter.peer.PeerState.CLOSED;
+import static io.snice.networking.diameter.peer.PeerState.CLOSING;
 import static io.snice.networking.diameter.peer.PeerState.OPEN;
 import static io.snice.networking.diameter.peer.PeerState.TERMINATED;
 import static io.snice.networking.diameter.peer.PeerState.WAIT_CEA;
@@ -28,6 +34,7 @@ public class PeerFsm {
         final var builder = FSM.of(PeerState.class).ofContextType(PeerContext.class).withDataType(PeerData.class);
         final var closed = builder.withInitialState(CLOSED);
         final var open = builder.withState(OPEN);
+        final var closing = builder.withState(CLOSING);
         final var waitCer = builder.withState(WAIT_CER);
         final var waitCea = builder.withState(WAIT_CEA);
         final var waitConnAck = builder.withState(WAIT_CONNECT_ACK);
@@ -55,7 +62,7 @@ public class PeerFsm {
          * we create an underlying channel, which tne will get a "conn-active" event
          * if all goes well.
          *
-         * state      event                 action            next state
+         * state            event              action         next state   implemented
          * ---------------------------------------------------------------
          * Closed    Conn-Active(inbound)   Start-CER-Timer   Wait-CER
          *           Conn-Active(outbound)  Send-CER          Wait-CEA
@@ -79,29 +86,35 @@ public class PeerFsm {
          */
         closed.transitionTo(WAIT_CER).onEvent(ConnectionActiveIOEvent.class);
 
+        /**
+         * Temp - hektor.io will evaluate the FSM to ensure you can reach the final state in some
+         * way and if not, it'll complain.
+         */
         closed.transitionTo(TERMINATED).onEvent(String.class).withGuard("die"::equals);
 
 
         /**
-         * state            event              action         next state
-         * -----------------------------------------------------------------
+         * state            event              action         next state   implemented
+         * ------------------------------------------------------------------------------
          * R-Open           Send-Message     R-Snd-Message    R-Open
-         *                  R-Rcv-Message    Process          R-Open
-         *                  R-Rcv-DWR        Process-DWR,     R-Open
+         *                  R-Rcv-Message    Process          R-Open           x
+         *                  R-Rcv-DWR        Process-DWR,     R-Open           x
          *                                   R-Snd-DWA
          *                  R-Rcv-DWA        Process-DWA      R-Open
          *                  R-Conn-CER       R-Reject         R-Open
          *                  Stop             R-Snd-DPR        Closing
-         *                  R-Rcv-DPR        R-Snd-DPA        Closing
+         *                  R-Rcv-DPR        R-Snd-DPA        Closing           x
          *                  R-Peer-Disc      R-Disc           Closed
          */
         open.transitionTo(OPEN).onEvent(DiameterMessage.class).withGuard(PeerFsm::isRetransmission).withAction(PeerFsm::handleRetransmission);
+        open.transitionTo(OPEN).onEvent(DiameterMessage.class).withGuard(DiameterMessage::isDWR).withAction(PeerFsm::processDWR);
+        open.transitionTo(CLOSING).onEvent(DiameterMessage.class).withGuard(DiameterMessage::isDPR).withAction(PeerFsm::processDPR);
         open.transitionTo(OPEN).onEvent(DiameterMessage.class).withAction(PeerFsm::acceptAction);
         open.transitionTo(CLOSED).onEvent(String.class).withGuard("Disconnect"::equals);
 
         /**
-         * state            event              action         next state
-         * -----------------------------------------------------------------
+         * state            event              action         next state    implemented
+         * ----------------------------------------------------------------------------
          * Wait-Conn-Ack    I-Rcv-Conn-Ack   I-Snd-CER        Wait-I-CEA
          *                  I-Rcv-Conn-Nack  Cleanup          Closed
          *                  R-Conn-CER       R-Accept,        Wait-Conn-Ack/
@@ -111,8 +124,8 @@ public class PeerFsm {
         waitConnAck.transitionTo(OPEN).onEvent(ConnectionActiveIOEvent.class).withAction(PeerFsm::processRcvConnAck);
 
         /**
-         * state            event              action         next state
-         * -----------------------------------------------------------------
+         * state            event              action         next state    implemented
+         * ----------------------------------------------------------------------------
          * Wait-Cer         R-Conn-CER       R-Accept,        R-Open
          *                                   Process-CER,
          *                                   R-Snd-CEA
@@ -122,8 +135,8 @@ public class PeerFsm {
         // TODO: setup the timeout
 
         /**
-         * state            event              action         next state
-         * -----------------------------------------------------------------
+         * state            event              action         next state    implemented
+         * ----------------------------------------------------------------------------
          * Wait-I-CEA       I-Rcv-CEA        Process-CEA      I-Open
          *                  R-Conn-CER       R-Accept,        Wait-Returns
          *                                   Process-CER,
@@ -134,6 +147,17 @@ public class PeerFsm {
          */
         waitCea.transitionTo(OPEN).onEvent(DiameterMessage.class).withGuard(DiameterMessage::isCEA).withAction(PeerFsm::processCEA);
         waitCea.transitionTo(WAIT_CEA).onEvent(ConnectionAttemptCompletedIOEvent.class).withAction((evt, ctx, data) -> data.storeConnectionAttemptEvent(evt));
+
+        /**
+         * state            event              action         next state    implemented
+         * ----------------------------------------------------------------------------
+         * Closing          I-Rcv-DPA        I-Disc           Closed
+         *                  R-Rcv-DPA        R-Disc           Closed
+         *                  Timeout          Error            Closed
+         *                  I-Peer-Disc      I-Disc           Closed
+         *                  R-Peer-Disc      R-Disc           Closed
+         */
+        closing.transitionTo(CLOSED).onEvent(String.class).withGuard("TODO"::equals);
 
         definition = builder.build();
     }
@@ -184,7 +208,16 @@ public class PeerFsm {
                 .withOriginRealm(ctx.getOriginRealm())
                 .withOriginHost(ctx.getOriginHost());
         ctx.getHostIpAddresses().forEach(ip -> cer.withAvp(ip));
-        ctx.getChannelContext().sendDownstream(cer.build());
+
+        final var vendorId = VendorId.of(10415L);
+        final var authId = AuthApplicationId.of(16777251L);
+        final var acctId = AcctApplicationId.of(0L);
+        final var app = VendorSpecificApplicationId.of(vendorId, authId, acctId);
+        cer.withAvp(app);
+
+        // get the support apps from the peer context
+        final var c = cer.build();
+        ctx.getChannelContext().sendDownstream(c);
     }
 
     // ----------------------------------------------------------------------
@@ -192,6 +225,55 @@ public class PeerFsm {
     // ---------------------------- OPEN STATE ------------------------------
     // ----------------------------------------------------------------------
     // ----------------------------------------------------------------------
+
+    /**
+     * On a watch-dog message, simply create an answer.
+     */
+    private static final void processDWR(final DiameterMessage msg, final PeerContext ctx, final PeerData data) {
+        final var dwr = msg.toRequest();
+        final var dwa = dwr.createAnswer(ResultCode.DiameterSuccess2001)
+                .withOriginRealm(ctx.getOriginRealm())
+                .withOriginHost(ctx.getOriginHost())
+                .build();
+
+        ctx.getChannelContext().sendDownstream(dwa);
+    }
+
+    /**
+     * On a disconnect request, reply back and let the app know (TODO: not done yet)
+     *
+     * TODO: if the result is REBOOTING we should/could try and re-establish the connection.
+     * TODO: we should add that to the state machine on the CLOSED state.
+     *
+     * Also, we need to, after sending the DPA, wait for the remote  party to either disconnect
+     * or if they don't, we need to do so after we are ensure the DPA has been sent.
+     *
+     * Note that we are missing the "connection disconnected" event from the NettyTcpInboundAdapter
+     * so that needs to get done...
+     */
+    private static final void processDPR(final DiameterMessage msg, final PeerContext ctx, final PeerData data) {
+        final var dpr = msg.toRequest();
+        final var dpa = dpr.createAnswer(ResultCode.DiameterSuccess2001)
+                .withOriginRealm(ctx.getOriginRealm())
+                .withOriginHost(ctx.getOriginHost())
+                .build();
+
+        final var cause = dpr.getAvp(DisconnectCause.CODE)
+                .map(c -> ((DisconnectCause)c.ensure()))
+                .orElse(DisconnectCause.DoNotWantToTalkToYou2) // if not present, should we complain?
+                .getAsEnum().get();
+
+        switch (cause) {
+            case REBOOTING_0:
+                break;
+            case BUSY_1:
+                break;
+            case DO_NOT_WANT_TO_TALK_TO_YOU_2:
+                break;
+        }
+
+        ctx.getChannelContext().sendDownstream(dpa);
+    }
 
     // ----------------------------------------------------------------------
     // ----------------------------------------------------------------------
@@ -214,13 +296,23 @@ public class PeerFsm {
     // ----------------------------------------------------------------------
 
     private static final void processCEA(final DiameterMessage cea, final PeerContext ctx, final PeerData data) {
-        logger.info("Received the CEA " + cea);
+        // TODO: ensure that the CEA is success.
+        // TODO: handle e.g. 5010 - Diameter no common application etc.
+        final var result = cea.toAnswer().getResultCode().getRight().toResultCode();
+        final var code = result.getAsEnum().get();
 
         // if this was a peer that was established by the user, then there may be
         // a waiting event stating that the underlying connection was successfully established
         // and now the peer is also happy so finally, let's tell the user that all things
         // are well and the peer is ready for use.
-        data.consumeConnectionAttemptEvent().ifPresent(evt -> ctx.getChannelContext().fireUserEvent(evt));
+        final var connectionAttemptEvt = data.consumeConnectionAttemptEvent().map(evt -> {
+            if (code == ResultCode.Code.DIAMETER_NO_COMMON_APPLICATION_5010) {
+                return evt.fail(new RuntimeException("No Common Diameter Application with remote peer"));
+            }
+            return evt;
+        });
+
+        connectionAttemptEvt.ifPresent(evt -> ctx.getChannelContext().fireUserEvent(evt));
     }
 
     // ----------------------------------------------------------------------

@@ -5,9 +5,12 @@ import io.snice.buffer.WritableBuffer;
 
 import java.util.Objects;
 
+import static io.snice.preconditions.PreConditions.assertArgument;
+
 public interface DiameterIdentity extends DiameterType {
 
     static DiameterIdentity parse(final Buffer data) {
+        assertArgument(data != null && !data.isEmpty());
         return new DefaultDiameterIdentity(data);
     }
 
@@ -41,7 +44,7 @@ public interface DiameterIdentity extends DiameterType {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(final Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             final DefaultDiameterIdentity that = (DefaultDiameterIdentity) o;

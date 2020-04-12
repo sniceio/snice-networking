@@ -8,9 +8,11 @@ import io.snice.networking.codec.diameter.DiameterParseException;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpHeader;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
+import io.snice.networking.codec.diameter.avp.api.AcctApplicationId;
 import io.snice.networking.codec.diameter.avp.api.AuthApplicationId;
 import io.snice.networking.codec.diameter.avp.api.DestinationHost;
 import io.snice.networking.codec.diameter.avp.api.DestinationRealm;
+import io.snice.networking.codec.diameter.avp.api.DisconnectCause;
 import io.snice.networking.codec.diameter.avp.api.ExperimentalResult;
 import io.snice.networking.codec.diameter.avp.api.ExperimentalResultCode;
 import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
@@ -181,6 +183,8 @@ public class DiameterParser {
                 return ResultCode.parse(raw);
             case VendorSpecificApplicationId.CODE:
                 return VendorSpecificApplicationId.parse(raw);
+            case DisconnectCause.CODE:
+                return DisconnectCause.parse(raw);
             case SessionId.CODE:
                 return SessionId.parse(raw);
             case Msisdn.CODE:
@@ -197,6 +201,8 @@ public class DiameterParser {
                 return ExperimentalResult.parse(raw);
             case ProductName.CODE:
                 return ProductName.parse(raw);
+            case AcctApplicationId.CODE:
+                return AcctApplicationId.parse(raw);
             case ExperimentalResultCode.CODE:
                 return ExperimentalResultCode.parse(raw);
             default:

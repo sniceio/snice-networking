@@ -32,6 +32,14 @@ public interface VendorId extends Avp<Unsigned32> {
         return of(Buffers.wrap(value));
     }
 
+    
+    static VendorId of(final long value) {
+        final Unsigned32 v = Unsigned32.of(value);
+        return of(v);
+    }
+    
+    
+
     static VendorId of(final Unsigned32 value) {
         assertNotNull(value);
         final Builder<Unsigned32> builder =
@@ -44,8 +52,6 @@ public interface VendorId extends Avp<Unsigned32> {
 
         return new DefaultVendorId(builder.build());
     }
-
-    
 
     @Override
     default long getCode() {
@@ -88,7 +94,7 @@ public interface VendorId extends Avp<Unsigned32> {
             }
 
             try {
-                final VendorId o = (VendorId)other;
+                final VendorId o = (VendorId)((FramedAvp)other).ensure();
                 final Unsigned32 v = getValue();
                 return v.equals(o.getValue());
             } catch (final ClassCastException e) {

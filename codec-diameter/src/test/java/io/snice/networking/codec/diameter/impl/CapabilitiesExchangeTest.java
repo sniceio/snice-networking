@@ -5,11 +5,15 @@ import io.snice.networking.codec.diameter.DiameterRequest;
 import io.snice.networking.codec.diameter.DiameterTestBase;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
+import io.snice.networking.codec.diameter.avp.api.AcctApplicationId;
+import io.snice.networking.codec.diameter.avp.api.AuthApplicationId;
+import io.snice.networking.codec.diameter.avp.api.DestinationRealm;
 import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.codec.diameter.avp.api.OriginRealm;
 import io.snice.networking.codec.diameter.avp.api.ProductName;
 import io.snice.networking.codec.diameter.avp.api.VendorId;
+import io.snice.networking.codec.diameter.avp.api.VendorSpecificApplicationId;
 import io.snice.networking.codec.diameter.avp.type.IpAddress;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,6 +60,37 @@ public class CapabilitiesExchangeTest extends DiameterTestBase {
         final var ip = hostIp.get().ensure().toHostIpAddress().getValue();
         assertThat(ip.asString(), is("172.22.18.120"));
         assertThat(hostIp.get(), is(HostIpAddress.of(IpAddress.createIpv4Address("172.22.18.120"))));
+    }
+
+    @Test
+    public void testCreateCER() {
+        final var b = DiameterRequest.createCER();
+        b.withOriginRealm(OriginRealm.of("whatever.epc.blah.3gppnetwork.org"));
+        b.withDestinationRealm(DestinationRealm.of("hello.world.something.rather"));
+        b.withAvp(HostIpAddress.of("10.11.12.13"));
+        b.withAvp(HostIpAddress.of("20.21.22.23"));
+
+        final var vendorId = VendorId.of(10415L);
+        final var authId = AuthApplicationId.of(16777251L);
+        final var acctId = AcctApplicationId.of(0L);
+        final var app = VendorSpecificApplicationId.of(vendorId, authId, acctId);
+        b.withAvp(app);
+
+        final var cer = b.build();
+
+        final var other = serializeDeserialize(cer).toRequest();
+        assertThat(other.getOriginRealm(), is(OriginRealm.of("whatever.epc.blah.3gppnetwork.org")));
+        assertThat(other.getDestinationRealm().get(), is(DestinationRealm.of("hello.world.something.rather")));
+
+        final var ips = other.getAvps(HostIpAddress.CODE);
+        assertThat(ips.size(), is(2));
+        assertThat(ips.get(0).ensure().toHostIpAddress(), is(HostIpAddress.of("10.11.12.13")));
+        assertThat(ips.get(1).ensure().toHostIpAddress(), is(HostIpAddress.of("20.21.22.23")));
+
+        final var apps = (VendorSpecificApplicationId)other.getAvp(VendorSpecificApplicationId.CODE).get().ensure();
+        assertThat(apps.getFramedAvp(AuthApplicationId.CODE).get(), is(authId));
+        assertThat(apps.getFramedAvp(AcctApplicationId.CODE).get(), is(acctId));
+        assertThat(apps.getFramedAvp(VendorId.CODE).get(), is(vendorId));
     }
 
     @Test

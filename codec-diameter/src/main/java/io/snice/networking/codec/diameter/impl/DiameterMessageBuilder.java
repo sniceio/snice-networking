@@ -13,6 +13,8 @@ import io.snice.networking.codec.diameter.avp.api.ExperimentalResultCode;
 import io.snice.networking.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.codec.diameter.avp.api.OriginRealm;
 import io.snice.networking.codec.diameter.avp.api.ResultCode;
+import io.snice.networking.codec.diameter.avp.api.SessionId;
+import io.snice.networking.codec.diameter.avp.api.UserName;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +44,8 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
     private short indexOfOriginRealm = -1;
     private short indexOfDestinationHost = -1;
     private short indexOfDestinationRealm = -1;
+    private short indexOfUserName = -1;
+    private short indexOfSessionId = -1;
 
     protected DiameterMessageBuilder(final int avpSizeHint, final DiameterHeader.Builder header) {
         this(avpSizeHint, header, null, null);
@@ -102,6 +106,10 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
         return this;
     }
 
+    // ----------------------------------------------------------------------
+    // -------------------------- Origin Host -------------------------------
+    // ----------------------------------------------------------------------
+
     @Override
     public DiameterMessage.Builder<T> withOriginHost(final Buffer originHost) {
         indexOfOriginHost = addTrackedAvp(indexOfOriginHost, OriginHost.of(originHost));
@@ -122,6 +130,10 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
         return this;
     }
 
+    // ----------------------------------------------------------------------
+    // ------------------------- Origin Realm -------------------------------
+    // ----------------------------------------------------------------------
+
     @Override
     public DiameterMessage.Builder<T> withOriginRealm(final Buffer originRealm) {
         indexOfOriginRealm = addTrackedAvp(indexOfOriginRealm, OriginRealm.of(originRealm));
@@ -141,12 +153,32 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
         return this;
     }
 
+    // ----------------------------------------------------------------------
+    // ----------------------- Destination Host -----------------------------
+    // ----------------------------------------------------------------------
+
     @Override
     public DiameterMessage.Builder<T> withDestinationHost(final DestinationHost destHost) {
         assertNotNull(destHost, "The DestinationHost cannot be null");
         indexOfDestinationHost = addTrackedAvp(indexOfDestinationHost, destHost);
         return this;
     }
+
+    @Override
+    public DiameterMessage.Builder<T> withDestinationHost(final String destHost) {
+        indexOfDestinationHost = addTrackedAvp(indexOfDestinationHost, DestinationHost.of(destHost));
+        return this;
+    }
+
+    @Override
+    public DiameterMessage.Builder<T> withDestinationHost(final Buffer destHost) {
+        indexOfDestinationHost = addTrackedAvp(indexOfDestinationHost, DestinationHost.of(destHost));
+        return this;
+    }
+
+    // ----------------------------------------------------------------------
+    // ---------------------- Destination Realm -----------------------------
+    // ----------------------------------------------------------------------
 
     @Override
     public DiameterMessage.Builder<T> withDestinationRealm(final Buffer destRealm) {
@@ -164,6 +196,52 @@ public abstract class DiameterMessageBuilder<T extends DiameterMessage> implemen
     public DiameterMessage.Builder<T> withDestinationRealm(final DestinationRealm destRealm) {
         assertNotNull(destRealm, "The DestinationRealm cannot be null");
         indexOfDestinationRealm = addTrackedAvp(indexOfDestinationRealm, destRealm);
+        return this;
+    }
+
+    // ----------------------------------------------------------------------
+    // --------------------------- User Name --------------------------------
+    // ----------------------------------------------------------------------
+
+    @Override
+    public DiameterMessage.Builder<T> withUserName(final UserName userName) {
+        assertNotNull(userName, "The UserName cannot be null");
+        indexOfUserName = addTrackedAvp(indexOfUserName, userName);
+        return this;
+    }
+
+    @Override
+    public DiameterMessage.Builder<T> withUserName(final String userName) {
+        indexOfUserName = addTrackedAvp(indexOfUserName, UserName.of(userName));
+        return this;
+    }
+
+    @Override
+    public DiameterMessage.Builder<T> withUserName(final Buffer userName) {
+        indexOfUserName = addTrackedAvp(indexOfUserName, UserName.of(userName));
+        return this;
+    }
+
+    // ----------------------------------------------------------------------
+    // -------------------------- Session Id --------------------------------
+    // ----------------------------------------------------------------------
+
+    @Override
+    public DiameterMessage.Builder<T> withSessionId(final SessionId sessionId) {
+        assertNotNull(sessionId, "The SessionId cannot be null");
+        indexOfSessionId = addTrackedAvp(indexOfSessionId, sessionId);
+        return this;
+    }
+
+    @Override
+    public DiameterMessage.Builder<T> withSessionId(final String sessionId) {
+        indexOfSessionId = addTrackedAvp(indexOfSessionId, SessionId.of(sessionId));
+        return this;
+    }
+
+    @Override
+    public DiameterMessage.Builder<T> withSessionId(final Buffer sessionId) {
+        indexOfSessionId = addTrackedAvp(indexOfSessionId, SessionId.of(sessionId));
         return this;
     }
 

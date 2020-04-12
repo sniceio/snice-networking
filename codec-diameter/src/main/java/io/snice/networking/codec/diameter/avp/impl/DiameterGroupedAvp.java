@@ -8,4 +8,8 @@ public class DiameterGroupedAvp extends ImmutableAvp<Grouped> {
     public DiameterGroupedAvp(final FramedAvp raw) {
         super(raw, Grouped.parse(raw));
     }
+
+    public DiameterGroupedAvp(final FramedAvp raw, final Grouped value) {
+        super(raw, value);
+    }
 }

@@ -27,6 +27,11 @@ public class ImmutableDiameterHeader implements DiameterHeader {
     }
 
     @Override
+    public int getVersion() {
+        return buffer.getByte(0);
+    }
+
+    @Override
     public boolean isRequest() {
         // 5th byte is the command flags and the 7th bit is whether this
         // is a request or answer.
@@ -176,6 +181,7 @@ public class ImmutableDiameterHeader implements DiameterHeader {
 
         @Override
         public DiameterHeader build() {
+            buffer.setBit0(0, true); // set version to 1 - the only allowed version at this time.
             return new ImmutableDiameterHeader(buffer.build());
         }
     }

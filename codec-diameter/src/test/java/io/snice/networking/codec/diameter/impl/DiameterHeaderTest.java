@@ -43,6 +43,7 @@ public class DiameterHeaderTest extends DiameterTestBase {
     @Test
     public void testCreateDiameterHeader() {
         final var header = DiameterHeader.of().withCommandCode(123).isAnswer().withEndToEndId(5555L).build();
+        assertThat(header.getVersion(), is(1));
         assertThat(header.isAnswer(), is(true));
         assertThat(header.getCommandCode(), is(123));
         assertThat(header.getEndToEndId(), is(5555L));

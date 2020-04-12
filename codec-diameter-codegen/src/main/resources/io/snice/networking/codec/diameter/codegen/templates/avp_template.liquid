@@ -8,7 +8,8 @@ import io.snice.networking.codec.diameter.avp.AvpParseException;
 import io.snice.networking.codec.diameter.avp.AvpProtected;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.Vendor;
-
+{% if avp.type.interface == "Grouped" %}
+import static io.snice.preconditions.PreConditions.assertCollectionNotEmpty;{% endif %}
 import static io.snice.preconditions.PreConditions.assertNotNull;
 {% for import in java.imports %}
 import {{ import }};{% endfor %}
@@ -22,7 +23,48 @@ public interface {{java.class.name}} extends Avp<{{avp.type.interface}}> {
     int CODE = {{avp.code}};
 
     {% if avp.type.interface == "Grouped" %}
-    // TODO: grouped AVP should have some sort of 'of' method too
+    static VendorSpecificApplicationId of(final Avp... avps) {
+        assertNotNull(avps, "The list of AVPs cannot be null");
+        return of(List.of(avps));
+    }
+
+    static VendorSpecificApplicationId of(final List<Avp> avps) {
+        assertCollectionNotEmpty(avps, "The list of AVPs cannot be null or the empty list");
+        return of(Grouped.of(avps));
+    }
+
+    /**
+     * <p>
+     * Get the {@link FramedAvp} based on its AVP code. Note that this is the "raw" un-parsed
+     * AVP and you either have to call {@link FramedAvp#ensure()} if you want to fully ensure it.
+     * </p>
+     *
+     * <p>
+     * Note, if there are many {@link Avp}s of the same type, only the first
+     * one will be returned.
+     * </p>
+     *
+     * @param code the AVP code
+     * @return the first AVP found that has the
+     * specified AVP code, or an empty optional if none is found.
+     */
+    default Optional<? extends FramedAvp> getFramedAvp(long code) {
+        return getValue().getFramedAvp(code);
+    }
+
+    default Optional<? extends FramedAvp> getFramedAvp(final int code) {
+        return getValue().getFramedAvp(code);
+    }
+
+    /**
+     * Get a list of all AVPs
+     *
+     * @return
+     */
+    default List<? extends FramedAvp> getAvps() {
+        return getValue().getAvps();
+    }
+
     {% else %}
     static {{java.class.name}} of(final Buffer value) {
         final {{avp.type.interface}} v = {{avp.type.interface}}.{% if avp.tbcd_formatted %}parse(value, true);{% else %}parse(value);{% endif %}
@@ -32,6 +74,19 @@ public interface {{java.class.name}} extends Avp<{{avp.type.interface}}> {
     static {{java.class.name}} of(final String value) {
         return of(Buffers.wrap(value));
     }
+
+    {% if avp.type.interface == "Unsigned32" or avp.type.interface == "Integer64" %}
+    static {{java.class.name}} of(final long value) {
+        final {{avp.type.interface}} v = {{avp.type.interface}}.of(value);
+        return of(v);
+    }
+    {% endif %}
+    {% if avp.type.interface == "Integer32" %}
+    static {{java.class.name}} of(final int value) {
+        final {{avp.type.interface}} v = {{avp.type.interface}}.of(value);
+        return of(v);
+    }
+    {% endif %}{% endif %}
 
     static {{java.class.name}} of(final {{avp.type.interface}} value) {
         assertNotNull(value);
@@ -45,8 +100,6 @@ public interface {{java.class.name}} extends Avp<{{avp.type.interface}}> {
 
         return new Default{{java.class.name}}(builder.build());
     }
-
-    {% endif %}
 
     @Override
     default long getCode() {
@@ -89,7 +142,7 @@ public interface {{java.class.name}} extends Avp<{{avp.type.interface}}> {
             }
 
             try {
-                final {{java.class.name}} o = ({{java.class.name}})other;
+                final {{java.class.name}} o = ({{java.class.name}})((FramedAvp)other).ensure();
                 final {{avp.type.interface}} v = getValue();
                 return v.equals(o.getValue());
             } catch (final ClassCastException e) {

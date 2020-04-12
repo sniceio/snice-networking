@@ -32,6 +32,14 @@ public interface AuthApplicationId extends Avp<Unsigned32> {
         return of(Buffers.wrap(value));
     }
 
+    
+    static AuthApplicationId of(final long value) {
+        final Unsigned32 v = Unsigned32.of(value);
+        return of(v);
+    }
+    
+    
+
     static AuthApplicationId of(final Unsigned32 value) {
         assertNotNull(value);
         final Builder<Unsigned32> builder =
@@ -44,8 +52,6 @@ public interface AuthApplicationId extends Avp<Unsigned32> {
 
         return new DefaultAuthApplicationId(builder.build());
     }
-
-    
 
     @Override
     default long getCode() {
@@ -88,7 +94,7 @@ public interface AuthApplicationId extends Avp<Unsigned32> {
             }
 
             try {
-                final AuthApplicationId o = (AuthApplicationId)other;
+                final AuthApplicationId o = (AuthApplicationId)((FramedAvp)other).ensure();
                 final Unsigned32 v = getValue();
                 return v.equals(o.getValue());
             } catch (final ClassCastException e) {

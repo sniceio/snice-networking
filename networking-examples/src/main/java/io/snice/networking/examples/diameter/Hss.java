@@ -4,6 +4,7 @@ import io.snice.networking.app.Environment;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.codec.diameter.DiameterMessage;
+import io.snice.networking.codec.diameter.DiameterRequest;
 import io.snice.networking.codec.diameter.avp.api.ExperimentalResultCode;
 import io.snice.networking.codec.diameter.avp.api.ResultCode;
 import io.snice.networking.common.Connection;
@@ -25,13 +26,18 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
     @Override
     public void run(final HssConfig configuration, final Environment<DiameterMessage, HssConfig> environment) {
         if (false) return;
-        final var future = environment.connect(Transport.tcp, "127.0.0.1", 3868);
+        final var future = environment.connect(Transport.tcp, "10.36.10.74", 3868);
+        // final var future = environment.connect(Transport.tcp, "127.0.0.1", 3869);
         future.whenComplete((c, t) -> {
-            System.err.println("HSS got the connection back in thread: " + Thread.currentThread());
             if (c != null) {
-                logger.info("yay, we connected successfully");
-            } else {
-                logger.info("nay, we didn't connect successfully due to exception ", t);
+                final var ulr = DiameterRequest.createULR()
+                        .withUserName("999992134354")
+                        .withDestinationHost("hss.epc.mnc001.mcc001.3gppnetwork.org")
+                        .withDestinationRealm("epc.mnc001.mcc001.3gppnetwork.org")
+                        .withOriginHost("snice.node.mnc999.mcc999.3gpp")
+                        .withSessionId("asedfasdfasdf")
+                        .build();
+                c.send(ulr);
             }
         });
     }
@@ -41,6 +47,7 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
 
         bootstrap.onConnection(ACCEPT_ALL).accept(b -> {
             b.match(DiameterMessage::isULR).consume(Hss::processULR);
+            b.match(DiameterMessage::isULA).consume(Hss::processULA);
         });
 
     }
@@ -51,6 +58,10 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
                 .withAvp(null)
                 .build();
         con.send(ula);
+    }
+
+    private static final void processULA(final Connection<DiameterMessage> con, final DiameterMessage ula) {
+        logger.info("yay, we got a ULA back!");
     }
 
     public static void main(final String... args) throws Exception {

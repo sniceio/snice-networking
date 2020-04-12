@@ -69,6 +69,13 @@ public interface Grouped extends DiameterType {
      */
     Optional<? extends FramedAvp> getFramedAvp(long code);
 
+    /**
+     * Get a list of all AVPs
+     *
+     * @return
+     */
+    List<? extends FramedAvp> getAvps();
+
     default Optional<? extends FramedAvp> getFramedAvp(final int code) {
         return getFramedAvp((long) code);
     }
@@ -89,6 +96,11 @@ public interface Grouped extends DiameterType {
         @Override
         public Optional<? extends FramedAvp> getFramedAvp(final long code) {
             return avps.stream().filter(avp -> avp.getCode() == code).findFirst();
+        }
+
+        @Override
+        public List<? extends FramedAvp> getAvps() {
+            return avps;
         }
 
         @Override

@@ -6,6 +6,7 @@ package io.snice.networking.codec.diameter;
 import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
 import io.snice.buffer.ReadableBuffer;
+import io.snice.buffer.WritableBuffer;
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpHeader;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
@@ -97,6 +98,22 @@ public class DiameterTestBase {
      */
     @After
     public void tearDown() throws Exception {
+    }
+
+    /**
+     * Helper method that takes the given message, writes it to a buffer (serializes it)
+     * and then frames it back out again. Hence, the result should be 100% the same.
+     *
+     * @param msg the message to serialize/deserialize
+     * @return hopefully the same message again after it was serialized/deserialized
+     */
+    public static DiameterMessage serializeDeserialize(final DiameterMessage msg) {
+        final var buffer = msg.getBuffer();
+        final var output = WritableBuffer.of(buffer.capacity());
+        buffer.writeTo(output);
+
+        final var serialized = output.build();
+        return DiameterMessage.frame(serialized);
     }
 
     public static ReadableBuffer loadBuffer(final String resource) throws Exception {
@@ -322,6 +339,7 @@ public class DiameterTestBase {
 
             // also making sure that we don't accidently do something stupid when it comes to the
             // header.isAnswer() - i.e., accidentally remove the not flag or something silly.
+            assertThat("Wrong version in header ", header.getVersion(), is(1));
             assertThat("Incorrect request/response marker bit for resource " + resource, header.isRequest(), is(isRequest));
             assertThat("Incorrect request/response marker bit for resource " + resource, header.isAnswer(), is(!isRequest));
 

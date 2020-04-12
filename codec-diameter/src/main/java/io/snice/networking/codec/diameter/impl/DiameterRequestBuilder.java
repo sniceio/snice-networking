@@ -19,6 +19,12 @@ public class DiameterRequestBuilder extends DiameterMessageBuilder<DiameterReque
         return new DiameterRequestBuilder(header);
     }
 
+    public static DiameterRequestBuilder createULR() {
+        final var header = createHeader(316);
+        header.withApplicationId(16777251L);
+        return new DiameterRequestBuilder(header);
+    }
+
     public static DiameterRequestBuilder createRequest(final int commandCode) {
         final var header = createHeader(257);
         return new DiameterRequestBuilder(header);

@@ -5,7 +5,6 @@ import io.snice.buffer.Buffer;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
-import io.snice.networking.common.event.MessageIOEvent;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -13,7 +12,7 @@ import java.util.Optional;
 
 public class BufferingConnection<T> implements Connection<T> {
 
-    private Connection<T> connection;
+    private final Connection<T> connection;
 
     private T msgToSend;
 
@@ -99,8 +98,10 @@ public class BufferingConnection<T> implements Connection<T> {
     }
 
     public void processMessage(final ChannelHandlerContext ctx) {
-        ctx.write(msgToSend);
-        msgToSend = null;
+        if (msgToSend != null) {
+            ctx.write(msgToSend);
+            msgToSend = null;
+        }
     }
 
     @Override
