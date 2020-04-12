@@ -1,7 +1,8 @@
 package io.snice.networking.codec.diameter.avp.api;
 
+
 import io.snice.buffer.Buffer;
-import io.snice.buffer.Buffers;
+import io.snice.buffer.Buffers; 
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpMandatory;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
@@ -10,6 +11,8 @@ import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.Vendor;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
+import java.util.List;
+import java.util.Optional;
 
 import io.snice.networking.codec.diameter.avp.impl.DiameterUtf8StringAvp;
 import io.snice.networking.codec.diameter.avp.type.UTF8String;
@@ -32,6 +35,9 @@ public interface UserName extends Avp<UTF8String> {
         return of(Buffers.wrap(value));
     }
 
+    
+    
+
     static UserName of(final UTF8String value) {
         assertNotNull(value);
         final Builder<UTF8String> builder =
@@ -44,8 +50,6 @@ public interface UserName extends Avp<UTF8String> {
 
         return new DefaultUserName(builder.build());
     }
-
-    
 
     @Override
     default long getCode() {
@@ -88,7 +92,7 @@ public interface UserName extends Avp<UTF8String> {
             }
 
             try {
-                final UserName o = (UserName)other;
+                final UserName o = (UserName)((FramedAvp)other).ensure();
                 final UTF8String v = getValue();
                 return v.equals(o.getValue());
             } catch (final ClassCastException e) {

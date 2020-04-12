@@ -1,7 +1,6 @@
 package io.snice.networking.codec.diameter.avp.api;
 
-import io.snice.buffer.Buffer;
-import io.snice.buffer.Buffers;
+
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpMandatory;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
@@ -9,7 +8,10 @@ import io.snice.networking.codec.diameter.avp.AvpProtected;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.Vendor;
 
+import static io.snice.preconditions.PreConditions.assertCollectionNotEmpty;
 import static io.snice.preconditions.PreConditions.assertNotNull;
+import java.util.List;
+import java.util.Optional;
 
 import io.snice.networking.codec.diameter.avp.impl.DiameterGroupedAvp;
 import io.snice.networking.codec.diameter.avp.type.Grouped;
@@ -23,8 +25,62 @@ public interface ExperimentalResult extends Avp<Grouped> {
     int CODE = 297;
 
     
-    // TODO: grouped AVP should have some sort of 'of' method too
+    static ExperimentalResult of(final Avp... avps) {
+        assertNotNull(avps, "The list of AVPs cannot be null");
+        return of(List.of(avps));
+    }
+
+    static ExperimentalResult of(final List<Avp> avps) {
+        assertCollectionNotEmpty(avps, "The list of AVPs cannot be null or the empty list");
+        return of(Grouped.of(avps));
+    }
+
+    /**
+     * <p>
+     * Get the {@link FramedAvp} based on its AVP code. Note that this is the "raw" un-parsed
+     * AVP and you either have to call {@link FramedAvp#ensure()} if you want to fully ensure it.
+     * </p>
+     *
+     * <p>
+     * Note, if there are many {@link Avp}s of the same type, only the first
+     * one will be returned.
+     * </p>
+     *
+     * @param code the AVP code
+     * @return the first AVP found that has the
+     * specified AVP code, or an empty optional if none is found.
+     */
+    default Optional<? extends FramedAvp> getFramedAvp(long code) {
+        return getValue().getFramedAvp(code);
+    }
+
+    default Optional<? extends FramedAvp> getFramedAvp(final int code) {
+        return getValue().getFramedAvp(code);
+    }
+
+    /**
+     * Get a list of all AVPs
+     *
+     * @return
+     */
+    default List<? extends FramedAvp> getAvps() {
+        return getValue().getAvps();
+    }
+
     
+
+    static ExperimentalResult of(final Grouped value) {
+        assertNotNull(value);
+        final Builder<Grouped> builder =
+                Avp.ofType(Grouped.class)
+                        .withValue(value)
+                        .withAvpCode(CODE)
+                        .isMandatory(AvpMandatory.MUST.isMandatory())
+                        .isProtected(AvpProtected.MUST_NOT.isProtected())
+                        .withVendor(Vendor.NONE);
+
+        return new DefaultExperimentalResult(builder.build());
+    }
 
     @Override
     default long getCode() {
@@ -67,7 +123,7 @@ public interface ExperimentalResult extends Avp<Grouped> {
             }
 
             try {
-                final ExperimentalResult o = (ExperimentalResult)other;
+                final ExperimentalResult o = (ExperimentalResult)((FramedAvp)other).ensure();
                 final Grouped v = getValue();
                 return v.equals(o.getValue());
             } catch (final ClassCastException e) {

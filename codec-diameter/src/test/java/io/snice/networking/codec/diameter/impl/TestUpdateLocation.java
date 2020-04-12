@@ -50,7 +50,7 @@ public class TestUpdateLocation extends DiameterTestBase {
         final var subscriptionData = (SubscriptionData) ula.getAvp(SubscriptionData.CODE).get().ensure();
 
         final var subscriberStatus = (SubscriberStatus) subscriptionData.getValue().getFramedAvp(SubscriberStatus.CODE).get().ensure();
-        assertThat(subscriberStatus.getAsEnum().get(), is(SubscriberStatus.Code.SERVICE_GRANTED_0));
+        assertThat(subscriberStatus.getAsEnum().get(), is(SubscriberStatus.Code.SERVICE_GRANTED));
 
         final var msisdn = (Msisdn) subscriptionData.getValue().getFramedAvp(Msisdn.CODE).get().ensure();
         assertThat(msisdn.getValue().getValue(), is("43939393939393930303"));

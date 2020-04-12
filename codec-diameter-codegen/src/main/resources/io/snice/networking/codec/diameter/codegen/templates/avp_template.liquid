@@ -1,7 +1,8 @@
 package {{java.package}};
 
+{% if avp.type.interface != "Grouped" %}
 import io.snice.buffer.Buffer;
-import io.snice.buffer.Buffers;
+import io.snice.buffer.Buffers; {% endif %}
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpMandatory;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
@@ -11,6 +12,8 @@ import io.snice.networking.codec.diameter.avp.Vendor;
 {% if avp.type.interface == "Grouped" %}
 import static io.snice.preconditions.PreConditions.assertCollectionNotEmpty;{% endif %}
 import static io.snice.preconditions.PreConditions.assertNotNull;
+import java.util.List;
+import java.util.Optional;
 {% for import in java.imports %}
 import {{ import }};{% endfor %}
 
@@ -23,12 +26,12 @@ public interface {{java.class.name}} extends Avp<{{avp.type.interface}}> {
     int CODE = {{avp.code}};
 
     {% if avp.type.interface == "Grouped" %}
-    static VendorSpecificApplicationId of(final Avp... avps) {
+    static {{java.class.name}} of(final Avp... avps) {
         assertNotNull(avps, "The list of AVPs cannot be null");
         return of(List.of(avps));
     }
 
-    static VendorSpecificApplicationId of(final List<Avp> avps) {
+    static {{java.class.name}} of(final List<Avp> avps) {
         assertCollectionNotEmpty(avps, "The list of AVPs cannot be null or the empty list");
         return of(Grouped.of(avps));
     }

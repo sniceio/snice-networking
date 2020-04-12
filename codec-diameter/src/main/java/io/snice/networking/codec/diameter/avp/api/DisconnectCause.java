@@ -2,9 +2,13 @@ package io.snice.networking.codec.diameter.avp.api;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.WritableBuffer;
+
 import io.snice.networking.codec.diameter.avp.Avp;
+import io.snice.networking.codec.diameter.avp.AvpMandatory;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
+import io.snice.networking.codec.diameter.avp.AvpProtected;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
+import io.snice.networking.codec.diameter.avp.Vendor;
 
 import io.snice.networking.codec.diameter.avp.impl.DiameterEnumeratedAvp;
 import io.snice.networking.codec.diameter.avp.type.Enumerated;
@@ -19,9 +23,9 @@ public interface DisconnectCause extends Avp<Enumerated<DisconnectCause.Code>> {
 
     int CODE = 273;
     
-    DisconnectCause Rebooting0 = DisconnectCause.of(0);
-    DisconnectCause Busy1 = DisconnectCause.of(1);
-    DisconnectCause DoNotWantToTalkToYou2 = DisconnectCause.of(2);
+    DisconnectCause Rebooting = DisconnectCause.of(0);
+    DisconnectCause Busy = DisconnectCause.of(1);
+    DisconnectCause DoNotWantToTalkToYou = DisconnectCause.of(2);
 
     @Override
     default long getCode() {
@@ -44,14 +48,20 @@ public interface DisconnectCause extends Avp<Enumerated<DisconnectCause.Code>> {
     static DisconnectCause of(final int code) {
         final Optional<Code> c = Code.lookup(code);
         final EnumeratedHolder enumerated = new EnumeratedHolder(code, c);
-        final Avp<Enumerated> avp = Avp.ofType(Enumerated.class).withValue(enumerated).withAvpCode(CODE).build();
+        final Avp<Enumerated> avp = Avp.ofType(Enumerated.class)
+                .withValue(enumerated)
+                .withAvpCode(CODE)
+                .isMandatory(AvpMandatory.MUST.isMandatory())
+                .isProtected(AvpProtected.MUST_NOT.isProtected())
+                .withVendor(Vendor.NONE)
+                .build();
         return new DefaultDisconnectCause(avp, enumerated);
     }
 
     enum Code { 
-        REBOOTING_0("REBOOTING", 0),
-        BUSY_1("BUSY", 1),
-        DO_NOT_WANT_TO_TALK_TO_YOU_2("DO_NOT_WANT_TO_TALK_TO_YOU", 2);
+        REBOOTING("REBOOTING", 0),
+        BUSY("BUSY", 1),
+        DO_NOT_WANT_TO_TALK_TO_YOU("DO_NOT_WANT_TO_TALK_TO_YOU", 2);
 
         private final String name;
         private final int code;
@@ -67,9 +77,9 @@ public interface DisconnectCause extends Avp<Enumerated<DisconnectCause.Code>> {
 
         static Optional<Code> lookup(final int code) {
             switch (code) { 
-                case 0: return Optional.of(REBOOTING_0);
-                case 1: return Optional.of(BUSY_1);
-                case 2: return Optional.of(DO_NOT_WANT_TO_TALK_TO_YOU_2);
+                case 0: return Optional.of(REBOOTING);
+                case 1: return Optional.of(BUSY);
+                case 2: return Optional.of(DO_NOT_WANT_TO_TALK_TO_YOU);
                 default:
                     return Optional.empty();
             }

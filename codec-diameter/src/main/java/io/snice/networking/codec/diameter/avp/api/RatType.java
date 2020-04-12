@@ -19,23 +19,33 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
 /**
  * 
  */
-public interface AuthSessionState extends Avp<Enumerated<AuthSessionState.Code>> {
+public interface RatType extends Avp<Enumerated<RatType.Code>> {
 
-    int CODE = 277;
+    int CODE = 1032;
     
-    AuthSessionState StateMaintained = AuthSessionState.of(0);
-    AuthSessionState NoStateMaintained = AuthSessionState.of(1);
+    RatType Wlan = RatType.of(0);
+    RatType Virtual = RatType.of(1);
+    RatType Utran = RatType.of(1000);
+    RatType Geran = RatType.of(1001);
+    RatType Gan = RatType.of(1002);
+    RatType HspaEvolution = RatType.of(1003);
+    RatType Eutran = RatType.of(1004);
+    RatType EutranNbIot = RatType.of(1005);
+    RatType Cdma20001x = RatType.of(2000);
+    RatType Hrpd = RatType.of(2001);
+    RatType Umb = RatType.of(2002);
+    RatType Ehrpd = RatType.of(2003);
 
     @Override
     default long getCode() {
         return CODE;
     }
 
-    default AuthSessionState toAuthSessionState() {
+    default RatType toRatType() {
         return this;
     }
 
-    default boolean isAuthSessionState() {
+    default boolean isRatType() {
         return true;
     }
 
@@ -44,22 +54,32 @@ public interface AuthSessionState extends Avp<Enumerated<AuthSessionState.Code>>
         buffer.write(getValue().getValue());
     }
 
-    static AuthSessionState of(final int code) {
+    static RatType of(final int code) {
         final Optional<Code> c = Code.lookup(code);
         final EnumeratedHolder enumerated = new EnumeratedHolder(code, c);
         final Avp<Enumerated> avp = Avp.ofType(Enumerated.class)
                 .withValue(enumerated)
                 .withAvpCode(CODE)
-                .isMandatory(AvpMandatory.MUST.isMandatory())
+                .isMandatory(AvpMandatory.MUST_NOT.isMandatory())
                 .isProtected(AvpProtected.MAY.isProtected())
-                .withVendor(Vendor.NONE)
+                .withVendor(Vendor.TGPP)
                 .build();
-        return new DefaultAuthSessionState(avp, enumerated);
+        return new DefaultRatType(avp, enumerated);
     }
 
     enum Code { 
-        STATE_MAINTAINED("STATE_MAINTAINED", 0),
-        NO_STATE_MAINTAINED("NO_STATE_MAINTAINED", 1);
+        WLAN("WLAN", 0),
+        VIRTUAL("VIRTUAL", 1),
+        UTRAN("UTRAN", 1000),
+        GERAN("GERAN", 1001),
+        GAN("GAN", 1002),
+        HSPA_EVOLUTION("HSPA_EVOLUTION", 1003),
+        EUTRAN("EUTRAN", 1004),
+        EUTRAN_NB_IoT("EUTRAN_NB_IoT", 1005),
+        CDMA2000_1X("CDMA2000_1X", 2000),
+        HRPD("HRPD", 2001),
+        UMB("UMB", 2002),
+        EHRPD("EHRPD", 2003);
 
         private final String name;
         private final int code;
@@ -75,8 +95,18 @@ public interface AuthSessionState extends Avp<Enumerated<AuthSessionState.Code>>
 
         static Optional<Code> lookup(final int code) {
             switch (code) { 
-                case 0: return Optional.of(STATE_MAINTAINED);
-                case 1: return Optional.of(NO_STATE_MAINTAINED);
+                case 0: return Optional.of(WLAN);
+                case 1: return Optional.of(VIRTUAL);
+                case 1000: return Optional.of(UTRAN);
+                case 1001: return Optional.of(GERAN);
+                case 1002: return Optional.of(GAN);
+                case 1003: return Optional.of(HSPA_EVOLUTION);
+                case 1004: return Optional.of(EUTRAN);
+                case 1005: return Optional.of(EUTRAN_NB_IoT);
+                case 2000: return Optional.of(CDMA2000_1X);
+                case 2001: return Optional.of(HRPD);
+                case 2002: return Optional.of(UMB);
+                case 2003: return Optional.of(EHRPD);
                 default:
                     return Optional.empty();
             }
@@ -87,19 +117,19 @@ public interface AuthSessionState extends Avp<Enumerated<AuthSessionState.Code>>
         return getValue().getAsEnum();
     }
 
-    static AuthSessionState parse(final FramedAvp raw) {
+    static RatType parse(final FramedAvp raw) {
         if (CODE != raw.getCode()) {
-            throw new AvpParseException("AVP Code mismatch - unable to parse the AVP into a " + AuthSessionState.class.getName());
+            throw new AvpParseException("AVP Code mismatch - unable to parse the AVP into a " + RatType.class.getName());
         }
         final Buffer data = raw.getData();
         final int value = data.getInt(0);
         final Optional<Code> e = Code.lookup(value);
         final EnumeratedHolder holder = new EnumeratedHolder(value, e);
-        return new DefaultAuthSessionState(raw, holder);
+        return new DefaultRatType(raw, holder);
     }
 
-    class DefaultAuthSessionState extends DiameterEnumeratedAvp<Code> implements AuthSessionState {
-        private DefaultAuthSessionState(final FramedAvp raw, final EnumeratedHolder value) {
+    class DefaultRatType extends DiameterEnumeratedAvp<Code> implements RatType {
+        private DefaultRatType(final FramedAvp raw, final EnumeratedHolder value) {
             super(raw, value);
         }
 
@@ -108,7 +138,7 @@ public interface AuthSessionState extends Avp<Enumerated<AuthSessionState.Code>>
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            final DefaultAuthSessionState that = (DefaultAuthSessionState) o;
+            final DefaultRatType that = (DefaultRatType) o;
             return getValue().equals(that.getValue());
         }
 

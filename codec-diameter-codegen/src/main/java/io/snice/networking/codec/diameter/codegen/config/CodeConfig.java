@@ -110,12 +110,18 @@ public class CodeConfig {
         avpTypeAttributes.put("class", typeClass.getSimpleName());
         avpTypeAttributes.put("interface", typeInterface.getSimpleName());
 
+        // Unfortunately, for ResultCode and ExperimentalResultCode we also have to stick the code
+        // value at the end because there are overlapping enum names
+        final boolean appendEnumCode = List.of("ResultCode", "ExperimentalResultCode").stream().filter(className::equals).findFirst().isPresent();
+
         if (avp.isEnumerated()) {
             final List<EnumPrimitive> enums = avp.toEnumerated().getSortedEnums();
             final List<String> enumList = enums.stream().map(e -> {
                 // we're building up the enum declaration ourselves here.
                 // was easier than messing with the liquid template.
-                return e.getEnumName() + "_" + e.getEnumCode() + "(\"" + e.getEnumName() + "\", " + e.getEnumCode() + ")";
+                final String fullName = appendEnumCode ? e.getEnumName() + "_" + e.getEnumCode() : e.getEnumName();
+                // return e.getEnumName() + "_" + e.getEnumCode() + "(\"" + e.getEnumName() + "\", " + e.getEnumCode() + ")";
+                return fullName + "(\"" + e.getEnumName() + "\", " + e.getEnumCode() + ")";
             }).collect(Collectors.toList());
             avpAttributes.put("enum_definition", enumList);
 
@@ -124,17 +130,15 @@ public class CodeConfig {
             // structure and an enum cannot be extended in java so we are also creating a wrapper
             // interface. In that case, we still want to actually be able to reference it like an enum
             // with final static single instance variables of a particular "enum", the below does that.
-            //
-            // Unfortunately, we also have to stick the code value at the end because there are overlapping
-            // enum names
             final List<String> staticVariables = enums.stream().map(e -> {
-                final String variableName = avpSettings.convert(e.getEnumName()) + e.getEnumCode();
+                final String enumName = avpSettings.convert(e.getEnumName());
+                final String variableName = appendEnumCode ? enumName + e.getEnumCode() : enumName;
                 return className + " " + variableName + " = " + className + ".of(" + e.getEnumCode() + ");";
             }).collect(Collectors.toList());
             avpAttributes.put("variable_definition", staticVariables);
 
             final List<String> enumSwitch = enums.stream().map(e -> {
-                final String fullName = e.getEnumName() + "_" + e.getEnumCode();
+                final String fullName = appendEnumCode ? e.getEnumName() + "_" + e.getEnumCode() : e.getEnumName();
                 return "case " + e.getEnumCode() + ": return Optional.of(" + fullName + ");";
             }).collect(Collectors.toList());
             avpAttributes.put("enum_switch", enumSwitch);
@@ -323,7 +327,7 @@ public class CodeConfig {
             return new CodeConfig(projectRoot, avp, cmd, app);
         }
 
-        private void ensureDirectory(final Path dir) {
+        private static void ensureDirectory(final Path dir) {
             assertArgument(Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS),
                     "The specified directory doesn't exist or is not a directory (" + dir + ")");
         }
@@ -335,7 +339,7 @@ public class CodeConfig {
          * @return return the same directory again if it indeed is maven directory.
          * This is just a way to write more fluent APIs...
          */
-        private Path ensureMavenDirectory(final Path dir) {
+        private static Path ensureMavenDirectory(final Path dir) {
             ensureDirectory(dir);
             assertArgument(Files.isRegularFile(dir.resolve("pom.xml")), "Unable to find the pom.xml for directory " + dir);
             return dir;

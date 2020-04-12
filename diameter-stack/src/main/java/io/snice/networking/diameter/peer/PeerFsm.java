@@ -260,15 +260,15 @@ public class PeerFsm {
 
         final var cause = dpr.getAvp(DisconnectCause.CODE)
                 .map(c -> ((DisconnectCause)c.ensure()))
-                .orElse(DisconnectCause.DoNotWantToTalkToYou2) // if not present, should we complain?
+                .orElse(DisconnectCause.DoNotWantToTalkToYou) // if not present, should we complain?
                 .getAsEnum().get();
 
         switch (cause) {
-            case REBOOTING_0:
+            case REBOOTING:
                 break;
-            case BUSY_1:
+            case BUSY:
                 break;
-            case DO_NOT_WANT_TO_TALK_TO_YOU_2:
+            case DO_NOT_WANT_TO_TALK_TO_YOU:
                 break;
         }
 

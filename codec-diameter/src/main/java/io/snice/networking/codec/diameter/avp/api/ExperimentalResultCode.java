@@ -2,9 +2,13 @@ package io.snice.networking.codec.diameter.avp.api;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.WritableBuffer;
+
 import io.snice.networking.codec.diameter.avp.Avp;
+import io.snice.networking.codec.diameter.avp.AvpMandatory;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
+import io.snice.networking.codec.diameter.avp.AvpProtected;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
+import io.snice.networking.codec.diameter.avp.Vendor;
 
 import io.snice.networking.codec.diameter.avp.impl.DiameterEnumeratedAvp;
 import io.snice.networking.codec.diameter.avp.type.Enumerated;
@@ -186,7 +190,13 @@ public interface ExperimentalResultCode extends Avp<Enumerated<ExperimentalResul
     static ExperimentalResultCode of(final int code) {
         final Optional<Code> c = Code.lookup(code);
         final EnumeratedHolder enumerated = new EnumeratedHolder(code, c);
-        final Avp<Enumerated> avp = Avp.ofType(Enumerated.class).withValue(enumerated).withAvpCode(CODE).build();
+        final Avp<Enumerated> avp = Avp.ofType(Enumerated.class)
+                .withValue(enumerated)
+                .withAvpCode(CODE)
+                .isMandatory(AvpMandatory.MUST.isMandatory())
+                .isProtected(AvpProtected.MUST_NOT.isProtected())
+                .withVendor(Vendor.NONE)
+                .build();
         return new DefaultExperimentalResultCode(avp, enumerated);
     }
 

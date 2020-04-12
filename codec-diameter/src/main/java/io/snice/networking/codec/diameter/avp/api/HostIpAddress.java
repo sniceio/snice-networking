@@ -1,7 +1,8 @@
 package io.snice.networking.codec.diameter.avp.api;
 
+
 import io.snice.buffer.Buffer;
-import io.snice.buffer.Buffers;
+import io.snice.buffer.Buffers; 
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpMandatory;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
@@ -10,6 +11,8 @@ import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.Vendor;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
+import java.util.List;
+import java.util.Optional;
 
 import io.snice.networking.codec.diameter.avp.impl.DiameterIpAddressAvp;
 import io.snice.networking.codec.diameter.avp.type.IpAddress;
@@ -32,6 +35,9 @@ public interface HostIpAddress extends Avp<IpAddress> {
         return of(Buffers.wrap(value));
     }
 
+    
+    
+
     static HostIpAddress of(final IpAddress value) {
         assertNotNull(value);
         final Builder<IpAddress> builder =
@@ -44,8 +50,6 @@ public interface HostIpAddress extends Avp<IpAddress> {
 
         return new DefaultHostIpAddress(builder.build());
     }
-
-    
 
     @Override
     default long getCode() {
@@ -88,7 +92,7 @@ public interface HostIpAddress extends Avp<IpAddress> {
             }
 
             try {
-                final HostIpAddress o = (HostIpAddress)other;
+                final HostIpAddress o = (HostIpAddress)((FramedAvp)other).ensure();
                 final IpAddress v = getValue();
                 return v.equals(o.getValue());
             } catch (final ClassCastException e) {

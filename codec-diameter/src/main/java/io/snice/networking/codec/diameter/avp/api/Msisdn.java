@@ -1,7 +1,8 @@
 package io.snice.networking.codec.diameter.avp.api;
 
+
 import io.snice.buffer.Buffer;
-import io.snice.buffer.Buffers;
+import io.snice.buffer.Buffers; 
 import io.snice.networking.codec.diameter.avp.Avp;
 import io.snice.networking.codec.diameter.avp.AvpMandatory;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
@@ -10,6 +11,8 @@ import io.snice.networking.codec.diameter.avp.FramedAvp;
 import io.snice.networking.codec.diameter.avp.Vendor;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
+import java.util.List;
+import java.util.Optional;
 
 import io.snice.networking.codec.diameter.avp.impl.DiameterOctetStringAvp;
 import io.snice.networking.codec.diameter.avp.type.OctetString;
@@ -32,6 +35,9 @@ public interface Msisdn extends Avp<OctetString> {
         return of(Buffers.wrap(value));
     }
 
+    
+    
+
     static Msisdn of(final OctetString value) {
         assertNotNull(value);
         final Builder<OctetString> builder =
@@ -44,8 +50,6 @@ public interface Msisdn extends Avp<OctetString> {
 
         return new DefaultMsisdn(builder.build());
     }
-
-    
 
     @Override
     default long getCode() {
@@ -88,7 +92,7 @@ public interface Msisdn extends Avp<OctetString> {
             }
 
             try {
-                final Msisdn o = (Msisdn)other;
+                final Msisdn o = (Msisdn)((FramedAvp)other).ensure();
                 final OctetString v = getValue();
                 return v.equals(o.getValue());
             } catch (final ClassCastException e) {

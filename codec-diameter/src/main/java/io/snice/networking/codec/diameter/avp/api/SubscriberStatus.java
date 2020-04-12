@@ -2,9 +2,13 @@ package io.snice.networking.codec.diameter.avp.api;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.WritableBuffer;
+
 import io.snice.networking.codec.diameter.avp.Avp;
+import io.snice.networking.codec.diameter.avp.AvpMandatory;
 import io.snice.networking.codec.diameter.avp.AvpParseException;
+import io.snice.networking.codec.diameter.avp.AvpProtected;
 import io.snice.networking.codec.diameter.avp.FramedAvp;
+import io.snice.networking.codec.diameter.avp.Vendor;
 
 import io.snice.networking.codec.diameter.avp.impl.DiameterEnumeratedAvp;
 import io.snice.networking.codec.diameter.avp.type.Enumerated;
@@ -19,8 +23,8 @@ public interface SubscriberStatus extends Avp<Enumerated<SubscriberStatus.Code>>
 
     int CODE = 1424;
     
-    SubscriberStatus ServiceGranted0 = SubscriberStatus.of(0);
-    SubscriberStatus OperatorDeterminedBarring1 = SubscriberStatus.of(1);
+    SubscriberStatus ServiceGranted = SubscriberStatus.of(0);
+    SubscriberStatus OperatorDeterminedBarring = SubscriberStatus.of(1);
 
     @Override
     default long getCode() {
@@ -43,13 +47,19 @@ public interface SubscriberStatus extends Avp<Enumerated<SubscriberStatus.Code>>
     static SubscriberStatus of(final int code) {
         final Optional<Code> c = Code.lookup(code);
         final EnumeratedHolder enumerated = new EnumeratedHolder(code, c);
-        final Avp<Enumerated> avp = Avp.ofType(Enumerated.class).withValue(enumerated).withAvpCode(CODE).build();
+        final Avp<Enumerated> avp = Avp.ofType(Enumerated.class)
+                .withValue(enumerated)
+                .withAvpCode(CODE)
+                .isMandatory(AvpMandatory.MUST.isMandatory())
+                .isProtected(AvpProtected.MAY.isProtected())
+                .withVendor(Vendor.TGPP)
+                .build();
         return new DefaultSubscriberStatus(avp, enumerated);
     }
 
     enum Code { 
-        SERVICE_GRANTED_0("SERVICE_GRANTED", 0),
-        OPERATOR_DETERMINED_BARRING_1("OPERATOR_DETERMINED_BARRING", 1);
+        SERVICE_GRANTED("SERVICE_GRANTED", 0),
+        OPERATOR_DETERMINED_BARRING("OPERATOR_DETERMINED_BARRING", 1);
 
         private final String name;
         private final int code;
@@ -65,8 +75,8 @@ public interface SubscriberStatus extends Avp<Enumerated<SubscriberStatus.Code>>
 
         static Optional<Code> lookup(final int code) {
             switch (code) { 
-                case 0: return Optional.of(SERVICE_GRANTED_0);
-                case 1: return Optional.of(OPERATOR_DETERMINED_BARRING_1);
+                case 0: return Optional.of(SERVICE_GRANTED);
+                case 1: return Optional.of(OPERATOR_DETERMINED_BARRING);
                 default:
                     return Optional.empty();
             }
