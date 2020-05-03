@@ -1,7 +1,7 @@
 package io.snice.networking.diameter;
 
-import io.snice.networking.codec.diameter.avp.api.ProductName;
-import io.snice.networking.codec.diameter.avp.api.VendorId;
+import io.snice.codecs.codec.diameter.avp.api.ProductName;
+import io.snice.codecs.codec.diameter.avp.api.VendorId;
 import io.snice.networking.diameter.peer.PeerConfiguration;
 
 import java.util.ArrayList;

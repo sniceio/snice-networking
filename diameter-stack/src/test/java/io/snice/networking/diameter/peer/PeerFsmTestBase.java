@@ -2,8 +2,8 @@ package io.snice.networking.diameter.peer;
 
 import io.hektor.fsm.FSM;
 import io.hektor.fsm.TransitionListener;
-import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
-import io.snice.networking.codec.diameter.avp.type.IpAddress;
+import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
+import io.snice.codecs.codec.diameter.avp.type.IpAddress;
 import io.snice.networking.common.ChannelContext;
 import io.snice.networking.diameter.Peer;
 import org.junit.After;

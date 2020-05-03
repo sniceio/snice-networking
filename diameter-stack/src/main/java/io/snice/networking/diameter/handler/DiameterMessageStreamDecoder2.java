@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.snice.buffer.Buffer;
-import io.snice.networking.codec.diameter.impl.DiameterParser;
+import io.snice.codecs.codec.diameter.impl.DiameterParser;
 
 import java.util.List;
 

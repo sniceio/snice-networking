@@ -2,7 +2,7 @@ package io.snice.networking.app;
 
 import io.snice.buffer.Buffer;
 import io.snice.networking.app.impl.NettyNetworkStack;
-import io.snice.networking.codec.SerializationFactory;
+import io.snice.codecs.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;

@@ -6,7 +6,7 @@ import io.snice.networking.app.MessagePipe;
 import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.app.SingleMessagePipe;
-import io.snice.networking.codec.SerializationFactory;
+import io.snice.codecs.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 

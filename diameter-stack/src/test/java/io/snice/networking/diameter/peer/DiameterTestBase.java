@@ -1,14 +1,14 @@
 package io.snice.networking.diameter.peer;
 
-import io.snice.networking.codec.diameter.DiameterAnswer;
-import io.snice.networking.codec.diameter.DiameterHeader;
-import io.snice.networking.codec.diameter.DiameterRequest;
-import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
-import io.snice.networking.codec.diameter.avp.api.OriginHost;
-import io.snice.networking.codec.diameter.avp.api.OriginRealm;
-import io.snice.networking.codec.diameter.avp.api.ProductName;
-import io.snice.networking.codec.diameter.avp.api.ResultCode;
-import io.snice.networking.codec.diameter.avp.type.IpAddress;
+import io.snice.codecs.codec.diameter.DiameterAnswer;
+import io.snice.codecs.codec.diameter.DiameterHeader;
+import io.snice.codecs.codec.diameter.DiameterRequest;
+import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
+import io.snice.codecs.codec.diameter.avp.api.OriginHost;
+import io.snice.codecs.codec.diameter.avp.api.OriginRealm;
+import io.snice.codecs.codec.diameter.avp.api.ProductName;
+import io.snice.codecs.codec.diameter.avp.api.ResultCode;
+import io.snice.codecs.codec.diameter.avp.type.IpAddress;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;

@@ -7,7 +7,7 @@ import io.snice.buffer.Buffer;
 import io.snice.generics.Generics;
 import io.snice.networking.app.impl.DefaultEnvironment;
 import io.snice.networking.app.impl.NettyBootstrap;
-import io.snice.networking.codec.SerializationFactory;
+import io.snice.codecs.codec.SerializationFactory;
 import io.snice.networking.config.NetworkInterfaceConfiguration;
 import io.snice.networking.config.NetworkInterfaceDeserializer;
 

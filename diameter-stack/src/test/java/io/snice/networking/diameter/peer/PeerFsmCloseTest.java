@@ -1,6 +1,6 @@
 package io.snice.networking.diameter.peer;
 
-import io.snice.networking.codec.diameter.avp.api.ResultCode;
+import io.snice.codecs.codec.diameter.avp.api.ResultCode;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

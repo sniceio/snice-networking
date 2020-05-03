@@ -5,7 +5,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.snice.buffer.Buffer;
-import io.snice.networking.codec.diameter.DiameterMessage;
+import io.snice.codecs.codec.diameter.DiameterMessage;
 
 public class DiameterStreamEncoder3 extends ChannelOutboundHandlerAdapter {
 

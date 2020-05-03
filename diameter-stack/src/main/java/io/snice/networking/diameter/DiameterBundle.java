@@ -2,11 +2,11 @@ package io.snice.networking.diameter;
 
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import io.snice.codecs.codec.diameter.DiameterMessage;
+import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
+import io.snice.codecs.codec.diameter.avp.api.ProductName;
+import io.snice.codecs.codec.diameter.avp.type.IpAddress;
 import io.snice.networking.app.AppBundle;
-import io.snice.networking.codec.diameter.DiameterMessage;
-import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
-import io.snice.networking.codec.diameter.avp.api.ProductName;
-import io.snice.networking.codec.diameter.avp.type.IpAddress;
 import io.snice.networking.common.Transport;
 import io.snice.networking.common.fsm.FsmFactory;
 import io.snice.networking.diameter.handler.DiameterMessageStreamDecoder2;

@@ -1,12 +1,12 @@
 package io.snice.networking.examples.gtp;
 
+import io.snice.codecs.codec.gtp.GtpMessage;
+import io.snice.codecs.codec.gtp.GtpSerializationFactory;
+import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.networking.app.Environment;
 import io.snice.networking.app.MessagePipe;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
-import io.snice.networking.codec.gtp.GtpMessage;
-import io.snice.networking.codec.gtp.GtpSerializationFactory;
-import io.snice.networking.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 

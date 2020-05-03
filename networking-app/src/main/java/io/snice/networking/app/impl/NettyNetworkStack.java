@@ -8,7 +8,7 @@ import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkStack;
-import io.snice.networking.codec.SerializationFactory;
+import io.snice.codecs.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;

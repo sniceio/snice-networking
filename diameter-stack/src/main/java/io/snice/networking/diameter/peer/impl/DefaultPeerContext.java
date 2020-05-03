@@ -1,8 +1,8 @@
 package io.snice.networking.diameter.peer.impl;
 
 import io.hektor.fsm.Scheduler;
-import io.snice.networking.codec.diameter.DiameterMessage;
-import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
+import io.snice.codecs.codec.diameter.DiameterMessage;
+import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
 import io.snice.networking.common.ChannelContext;
 import io.snice.networking.diameter.peer.PeerConfiguration;
 import io.snice.networking.diameter.peer.PeerContext;

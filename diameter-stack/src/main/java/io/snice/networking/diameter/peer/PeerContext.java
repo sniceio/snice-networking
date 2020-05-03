@@ -1,10 +1,10 @@
 package io.snice.networking.diameter.peer;
 
-import io.snice.networking.codec.diameter.DiameterMessage;
-import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
-import io.snice.networking.codec.diameter.avp.api.OriginHost;
-import io.snice.networking.codec.diameter.avp.api.OriginRealm;
-import io.snice.networking.codec.diameter.avp.api.ProductName;
+import io.snice.codecs.codec.diameter.DiameterMessage;
+import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
+import io.snice.codecs.codec.diameter.avp.api.OriginHost;
+import io.snice.codecs.codec.diameter.avp.api.OriginRealm;
+import io.snice.codecs.codec.diameter.avp.api.ProductName;
 import io.snice.networking.common.fsm.NetworkContext;
 import io.snice.networking.diameter.Peer;
 

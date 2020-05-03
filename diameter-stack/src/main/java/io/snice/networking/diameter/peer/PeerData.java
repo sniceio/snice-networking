@@ -1,8 +1,8 @@
 package io.snice.networking.diameter.peer;
 
 import io.hektor.fsm.Data;
-import io.snice.networking.codec.diameter.DiameterMessage;
-import io.snice.networking.codec.diameter.TransactionIdentifier;
+import io.snice.codecs.codec.diameter.DiameterMessage;
+import io.snice.codecs.codec.diameter.TransactionIdentifier;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
 import io.snice.networking.diameter.Peer;
 

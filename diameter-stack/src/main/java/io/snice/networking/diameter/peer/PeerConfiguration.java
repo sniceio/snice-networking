@@ -1,8 +1,8 @@
 package io.snice.networking.diameter.peer;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.snice.networking.codec.diameter.avp.api.HostIpAddress;
-import io.snice.networking.codec.diameter.avp.api.ProductName;
+import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
+import io.snice.codecs.codec.diameter.avp.api.ProductName;
 
 import java.util.List;
 
@@ -51,7 +51,7 @@ public class PeerConfiguration {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 }

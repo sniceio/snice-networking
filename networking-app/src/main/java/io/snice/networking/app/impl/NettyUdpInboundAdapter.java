@@ -9,7 +9,7 @@ import io.netty.channel.socket.DatagramPacket;
 import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
 import io.snice.networking.app.ConnectionContext;
-import io.snice.networking.codec.SerializationFactory;
+import io.snice.codecs.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;

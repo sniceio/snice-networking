@@ -3,7 +3,7 @@ package io.snice.networking.diameter.handler;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import io.snice.networking.codec.diameter.DiameterMessage;
+import io.snice.codecs.codec.diameter.DiameterMessage;
 
 public class DiameterStreamEncoder extends MessageToByteEncoder<DiameterMessage> {
 

@@ -1,6 +1,6 @@
 package io.snice.networking.diameter.peer;
 
-import io.snice.networking.codec.diameter.DiameterMessage;
+import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.networking.common.fsm.FsmFactory;
 import io.snice.networking.diameter.DiameterConfig;
 import io.snice.networking.diameter.peer.impl.DefaultPeerFactory;
