@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.snice.buffer.Buffer;
+import io.snice.codecs.codec.SerializationFactory;
 import io.snice.generics.Generics;
 import io.snice.networking.app.impl.DefaultEnvironment;
 import io.snice.networking.app.impl.NettyBootstrap;
-import io.snice.codecs.codec.SerializationFactory;
 import io.snice.networking.config.NetworkInterfaceConfiguration;
 import io.snice.networking.config.NetworkInterfaceDeserializer;
 
@@ -24,18 +24,18 @@ public abstract class NetworkApplication<T, C extends NetworkAppConfig> {
     private Environment<T, C> env;
     private final Optional<AppBundle<T>> bundle;
 
-    public NetworkApplication(Class<T> type) {
+    public NetworkApplication(final Class<T> type) {
         assertNotNull(type, "The type cannot be null");
         this.type = type;
         this.bundle = Optional.empty();
     }
 
-    public NetworkApplication(AppBundle<T> bundle) {
+    public NetworkApplication(final AppBundle<T> bundle) {
         this.bundle = Optional.of(bundle);
         this.type = bundle.getType();
     }
 
-    public void run(C configuration, Environment<T, C> environment) {
+    public void run(final C configuration, final Environment<T, C> environment) {
         // sub-classes may override this method in order to setup additional
         // resources etc as the application starts running.
     }
@@ -56,13 +56,9 @@ public abstract class NetworkApplication<T, C extends NetworkAppConfig> {
 
     /**
      * Call this method from your {@code public static void main} entry point
-     * into your application.
+     * of your application.
      */
-    public final void run(final String... args) throws Exception {
-        // TODO: actually call a bootstrap method here that allows the app
-        // to register the AppBundle (rename it to NetworkStackBundle or something)
-
-        final C config = loadConfiguration(args[1]);
+    public final void run(final C config, final String... args) throws Exception {
         final NettyBootstrap<T, C> bootstrap = new NettyBootstrap<>(config);
         initialize(bootstrap);
         final List<ConnectionContext> connectionContexts = bootstrap.getConnectionContexts();
@@ -90,8 +86,19 @@ public abstract class NetworkApplication<T, C extends NetworkAppConfig> {
         run(config, env); // TODO: app can throw exception. Handle it.
         network.sync();
     }
+    /**
+     * Call this method from your {@code public static void main} entry point
+     * into your application.
+     */
+    public final void run(final String... args) throws Exception {
+        // TODO: actually call a bootstrap method here that allows the app
+        // to register the AppBundle (rename it to NetworkStackBundle or something)
 
-    private SerializationFactory<T> ensureSerializationFactory(NettyBootstrap<T, C> bootstrap) {
+        final C config = loadConfiguration(args[1]);
+        run(config, args);
+    }
+
+    private SerializationFactory<T> ensureSerializationFactory(final NettyBootstrap<T, C> bootstrap) {
         final var factory = bootstrap.getSerializationFactory();
         if (factory != null) {
             return factory;

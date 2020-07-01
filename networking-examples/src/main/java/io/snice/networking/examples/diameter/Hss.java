@@ -48,7 +48,7 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
                             .withDestinationRealm("epc.mnc001.mcc001.3gppnetwork.org")
                             .withOriginRealm("epc.mnc999.mcc999.3gppnetwork.org")
                             .withOriginHost("snice.node.epc.mnc999.mcc999.3gppnetwork.org")
-                            .withAvp(VisitedPlmnId.of(Buffers.wrap("999999")))
+                            .withAvp(VisitedPlmnId.of(Buffers.wrap("999001")))
                             .withAvp(AuthSessionState.NoStateMaintained)
                             .withAvp(RatType.Eutran)
                             .withAvp(UlrFlags.of(b.build()))

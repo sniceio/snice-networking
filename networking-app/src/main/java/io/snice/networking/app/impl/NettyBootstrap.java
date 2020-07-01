@@ -1,12 +1,12 @@
 package io.snice.networking.app.impl;
 
+import io.snice.codecs.codec.SerializationFactory;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.app.ConnectionContext.MessageProcessingBuilder;
 import io.snice.networking.app.MessagePipe;
 import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.app.SingleMessagePipe;
-import io.snice.codecs.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 
