@@ -32,7 +32,7 @@ public interface ConnectionContext<C extends Connection<T>, T> extends Predicate
         void drop(Function<C, T> f);
     }
 
-    interface ConfigurationBuilder<C extends Connection, T, R> {
+    interface ConfigurationBuilder<C extends Connection<T>, T, R> {
 
         ConfigurationBuilder<C, T, R> withDefaultStatisticsModule();
 
@@ -43,7 +43,7 @@ public interface ConnectionContext<C extends Connection<T>, T> extends Predicate
         void withPipe(SingleMessagePipe<T, ?> pipe);
     }
 
-    interface MessageProcessingBuilder<C extends Connection, T, R> {
+    interface MessageProcessingBuilder<C extends Connection<T>, T, R> {
 
         <NEW_R> MessageProcessingBuilder<C, T, NEW_R> withPipe(MessagePipe<C, ? super R, ? extends NEW_R> f);
 

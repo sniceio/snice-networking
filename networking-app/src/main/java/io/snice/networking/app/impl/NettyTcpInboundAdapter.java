@@ -47,7 +47,6 @@ public class NettyTcpInboundAdapter<T> extends ChannelOutboundHandlerAdapter imp
     private final UUID uuid = UUID.randomUUID();
 
     private final List<ConnectionContext> ctxs;
-    private final SerializationFactory<T> factory;
     private final int exceptionCounter = 0;
 
     /**
@@ -73,9 +72,8 @@ public class NettyTcpInboundAdapter<T> extends ChannelOutboundHandlerAdapter imp
 
     private boolean hasProcessedConnectionActiveIOEvent = false;
 
-    public NettyTcpInboundAdapter(final Clock clock, final SerializationFactory<T> factory, final Optional<URI> vipAddress, final List<ConnectionContext> ctxs) {
+    public NettyTcpInboundAdapter(final Clock clock, final Optional<URI> vipAddress, final List<ConnectionContext> ctxs) {
         this.clock = clock;
-        this.factory = factory;
         this.vipAddress = vipAddress;
         this.ctxs = ctxs;
 

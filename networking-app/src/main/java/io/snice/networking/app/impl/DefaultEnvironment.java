@@ -10,12 +10,12 @@ import io.snice.networking.common.Transport;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletionStage;
 
-public class DefaultEnvironment <T, C extends NetworkAppConfig> implements Environment<T, C> {
+public class DefaultEnvironment <K extends Connection<T>, T, C extends NetworkAppConfig> implements Environment<K, T, C> {
 
-    private final NetworkStack<T, C> stack;
+    private final NetworkStack<K, T, C> stack;
     private final C config;
 
-    public DefaultEnvironment(final NetworkStack<T, C> stack, final C config) {
+    public DefaultEnvironment(final NetworkStack<K, T, C> stack, final C config) {
         this.stack = stack;
         this.config = config;
     }
@@ -27,6 +27,8 @@ public class DefaultEnvironment <T, C extends NetworkAppConfig> implements Envir
 
     @Override
     public CompletionStage<Connection<T>> connect(final Transport transport, final InetSocketAddress remoteAddress) throws IllegalTransportException {
+        // TODO: here is where we need to probably convert into the specific connection type
+        // or actually, the stack should probably do that.
         return stack.connect(transport, remoteAddress);
     }
 }

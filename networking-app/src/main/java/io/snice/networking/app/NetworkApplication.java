@@ -8,6 +8,7 @@ import io.snice.codecs.codec.SerializationFactory;
 import io.snice.generics.Generics;
 import io.snice.networking.app.impl.DefaultEnvironment;
 import io.snice.networking.app.impl.NettyBootstrap;
+import io.snice.networking.common.Connection;
 import io.snice.networking.config.NetworkInterfaceConfiguration;
 import io.snice.networking.config.NetworkInterfaceDeserializer;
 
@@ -18,24 +19,27 @@ import java.util.Optional;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
-public abstract class NetworkApplication<T, C extends NetworkAppConfig> {
+public abstract class NetworkApplication<K extends Connection<T>, T, C extends NetworkAppConfig> {
 
     private final Class<T> type;
-    private Environment<T, C> env;
-    private final Optional<AppBundle<T>> bundle;
+    private final Class<K> connectionType;
+    private Environment<K, T, C> env;
+    private final Optional<AppBundle<K, T>> bundle;
 
-    public NetworkApplication(final Class<T> type) {
+    public NetworkApplication(final Class<T> type, final Class<K> connectionType) {
         assertNotNull(type, "The type cannot be null");
         this.type = type;
+        this.connectionType = connectionType;
         this.bundle = Optional.empty();
     }
 
-    public NetworkApplication(final AppBundle<T> bundle) {
+    public NetworkApplication(final AppBundle<K, T> bundle) {
         this.bundle = Optional.of(bundle);
         this.type = bundle.getType();
+        this.connectionType = bundle.getConnectionType();
     }
 
-    public void run(final C configuration, final Environment<T, C> environment) {
+    public void run(final C configuration, final Environment<K, T, C> environment) {
         // sub-classes may override this method in order to setup additional
         // resources etc as the application starts running.
     }
@@ -71,7 +75,7 @@ public abstract class NetworkApplication<T, C extends NetworkAppConfig> {
         // final SerializationFactory<T> serializationFactory = ensureSerializationFactory(bootstrap);
 
         final var builder = NetworkStack.ofType(type)
-                .withSerializationFactory(null)
+                .withConnectionType(connectionType)
                 .withConfiguration(config)
                 .withConnectionContexts(connectionContexts)
                 .withApplication(this);
@@ -120,7 +124,7 @@ public abstract class NetworkApplication<T, C extends NetworkAppConfig> {
                 "stream across the network into your network stacks object type of " + type.getSimpleName());
     }
 
-    private Environment<T, C> buildEnvironment(final NetworkStack<T, C> stack, final NettyBootstrap<T, C> bootstrap) {
+    private Environment<K, T, C> buildEnvironment(final NetworkStack<K, T, C> stack, final NettyBootstrap<T, C> bootstrap) {
         return new DefaultEnvironment(stack, bootstrap.getConfiguration());
     }
 

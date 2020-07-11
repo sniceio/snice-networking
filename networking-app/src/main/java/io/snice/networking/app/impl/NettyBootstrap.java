@@ -142,7 +142,7 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBoo
             }
         }
 
-        private class MessageProcessingBuilderImpl<C extends Connection, T, R> implements MessageProcessingBuilder<C, T, R> {
+        private class MessageProcessingBuilderImpl<C extends Connection<T>, T, R> implements MessageProcessingBuilder<C, T, R> {
 
             private final MessagePipe<C, T, R> pipe;
             private MessageProcessingBuilderImpl<C, T, ?> child;

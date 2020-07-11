@@ -13,7 +13,7 @@ import io.snice.networking.common.ConnectionId;
 import static io.snice.networking.app.MessagePipe.match;
 
 
-public class Pgw extends NetworkApplication<GtpMessage, GtpConfig> {
+public class Pgw extends NetworkApplication<Connection<GtpMessage>, GtpMessage, GtpConfig> {
 
     private static final MessagePipe<Connection<GtpMessage>, Gtp2Message, Gtp2Message> echo;
     private static final MessagePipe<Connection<GtpMessage>, Gtp2Message, Gtp2Message> csr;
@@ -38,11 +38,11 @@ public class Pgw extends NetworkApplication<GtpMessage, GtpConfig> {
 
 
     public Pgw() {
-        super(GtpMessage.class);
+        super(GtpMessage.class, (Class<Connection<GtpMessage>>)null);
     }
 
     @Override
-    public void run(final GtpConfig configuration, final Environment<GtpMessage, GtpConfig> environment) {
+    public void run(final GtpConfig configuration, final Environment<Connection<GtpMessage>, GtpMessage, GtpConfig> environment) {
 
     }
 

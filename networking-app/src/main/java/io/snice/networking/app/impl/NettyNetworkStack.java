@@ -29,43 +29,45 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
 
 @ChannelHandler.Sharable
-public class NettyNetworkStack<T, C extends NetworkAppConfig> implements NetworkStack<T, C> {
+public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppConfig> implements NetworkStack<K, T, C> {
 
     private final Class<T> type;
-    private final SerializationFactory<T> serializationFactory;
+    private final Class<K> connectionType;
     private final C config;
-    private final NetworkApplication<T, C> app;
-    private final List<ConnectionContext> ctxs;
+    private final NetworkApplication<K, T, C> app;
+    private final List<ConnectionContext<K, T>> ctxs;
     private NettyNetworkLayer network;
     private final Clock clock = new SystemClock();
-    private final AppBundle<T> appBundle;
+    private final AppBundle<K, T> appBundle;
 
     private NettyNetworkStack(final Class<T> type,
+                              final Class<K> connectionType,
                               final C config,
-                              final SerializationFactory<T> framerFactory,
-                              final NetworkApplication<T, C> app,
-                              final AppBundle<T> appBundle,
-                              final List<ConnectionContext> ctxs) {
+                              final NetworkApplication<K, T, C> app,
+                              final AppBundle<K, T> appBundle,
+                              final List<ConnectionContext<K, T>> ctxs) {
         this.type = type;
-        this.serializationFactory = framerFactory;
+        this.connectionType = connectionType;
         this.config = config;
         this.app = app;
         this.appBundle = appBundle;
         this.ctxs = ctxs;
     }
 
-    public static <T> FramerFactoryStep<T> ofType(final Class<T> type) {
+    public static <K extends Connection<T>, T> ConnectionTypeStep<T> ofType(final Class<T> type) {
         assertNotNull(type, "The type cannot be null");
-        return framerFactory -> {
-            // assertNotNull(framerFactory, "The Framer Factory cannot be null");
-            return new ConfigurationStep<T>() {
-                @Override
-                public <C extends NetworkAppConfig> Builder<T, C> withConfiguration(final C config) {
-                    assertNotNull(config, "The configuration for the network stack cannot be null");
-                    return new Builder(type, framerFactory, config);
-                }
-            };
-
+        return new ConnectionTypeStep<T>() {
+            @Override
+            public <K extends Connection<T>> ConfigurationStep<K, T> withConnectionType(Class<K> connectionType) {
+                assertNotNull(connectionType, "The connection type cannot be null");
+                return new ConfigurationStep<K, T>() {
+                    @Override
+                    public <C extends NetworkAppConfig> NetworkStack.Builder<K, T, C> withConfiguration(C config) {
+                        assertNotNull(config, "The configuration for the network stack cannot be null");
+                        return new Builder(type, connectionType, config);
+                    }
+                };
+            }
         };
 
     }
@@ -95,8 +97,8 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
                 // .withHandler("diameter-codec-encoder", () -> new DiameterStreamEncoder(), Transport.tcp)
                 // .withHandler("diameter-code-decoder", () -> new DiameterMessageStreamDecoder2(), Transport.tcp)
 
-                .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, serializationFactory, Optional.empty(), ctxs), Transport.udp)
-                .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, serializationFactory, Optional.empty(), ctxs), Transport.tcp)
+                .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, Optional.empty(), ctxs), Transport.udp)
+                .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, Optional.empty(), ctxs), Transport.tcp)
                 // .withHandler("tcp-adapter-outbound", () -> new NettyTcpOutboundAdapter<>(clock, serializationFactory, Optional.empty(), ctxs), Transport.tcp)
 
                 // the optional fsm layer - will also be injected dynamically depending on whether
@@ -131,30 +133,30 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
         network.stop();
     }
 
-    private static class Builder<T, C extends NetworkAppConfig> implements NetworkStack.Builder<T, C> {
+    private static class Builder<K extends Connection<T>, T, C extends NetworkAppConfig> implements NetworkStack.Builder<K, T, C> {
 
         private final Class<T> type;
-        private final SerializationFactory<T> serializationFactory;
+        private final Class<K> connectionType;
         private final C config;
         private NetworkApplication application;
         private List<ConnectionContext> ctxs;
-        private AppBundle<T> appBundle;
+        private AppBundle<K, T> appBundle;
 
-        private Builder(final Class<T> type, final SerializationFactory<T> serializationFactory, final C config) {
+        private Builder(final Class<T> type, final Class<K> connectionType, final C config) {
             this.type = type;
-            this.serializationFactory = serializationFactory;
+            this.connectionType = connectionType;
             this.config = config;
         }
 
         @Override
-        public NetworkStack.Builder<T, C> withApplication(final NetworkApplication<T, C> application) {
+        public NetworkStack.Builder<K, T, C> withApplication(final NetworkApplication<K, T, C> application) {
             assertNotNull(application, "The application cannot be null");
             this.application = application;
             return this;
         }
 
         @Override
-        public NetworkStack.Builder<T, C> withAppBundle(final AppBundle<T> bundle) {
+        public NetworkStack.Builder<K, T, C> withAppBundle(final AppBundle<K, T> bundle) {
             assertNotNull(bundle, "The application bundle cannot be null");
             this.appBundle = bundle;
             return this;
@@ -162,31 +164,38 @@ public class NettyNetworkStack<T, C extends NetworkAppConfig> implements Network
 
 
         @Override
-        public NetworkStack.Builder<T, C> withConnectionContexts(final List<ConnectionContext> ctxs) {
+        public NetworkStack.Builder<K, T, C> withConnectionContexts(final List<ConnectionContext> ctxs) {
             assertArgument(ctxs != null && !ctxs.isEmpty(), "You cannot have a null or empty list of " + ConnectionContext.class.getSimpleName());
             this.ctxs = ctxs;
             return this;
         }
 
         @Override
-        public NetworkStack<T, C> build() {
+        public NetworkStack<K, T, C> build() {
             ensureNotNull(application, "You must specify the Sip Application");
-            final var bundle = appBundle != null ? appBundle : new EmptyAppBundle<T>(type);
-            return new NettyNetworkStack(type, config, serializationFactory, application, bundle, ctxs);
+            final var bundle = appBundle != null ? appBundle : new EmptyAppBundle<K, T>(type, connectionType);
+            return new NettyNetworkStack(type, connectionType, config, application, bundle, ctxs);
         }
     }
 
-    private static class EmptyAppBundle<T> implements AppBundle<T> {
+    private static class EmptyAppBundle<K extends Connection<T>, T> implements AppBundle<K, T> {
         private final Class<T> type;
+        private final Class<K> connectionType;
 
-        private EmptyAppBundle(final Class<T> type) {
+        private EmptyAppBundle(final Class<T> type, final Class<K> connectionType) {
             this.type = type;
+            this.connectionType = connectionType;
         }
 
 
         @Override
         public Class<T> getType() {
             return type;
+        }
+
+        @Override
+        public Class<K> getConnectionType() {
+            return connectionType;
         }
 
         @Override
