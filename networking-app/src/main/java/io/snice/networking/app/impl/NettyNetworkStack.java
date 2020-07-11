@@ -76,7 +76,7 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
     public void start() {
 
 
-        final var appLayer = new NettyApplicationLayer();
+        final var appLayer = new NettyApplicationLayer(appBundle);
         // final var diameterConf = new DiameterConfig();
         // final var fsmFactory = PeerFactory.createDefault(diameterConf);
 
@@ -90,15 +90,12 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
         // TODO: so perhaps
         // TODO: config.getNetworkInterfaces().stream().groupBy(schema).collect();
         // TODO: and then
-        network = NettyNetworkLayer.with(config.getNetworkInterfaces())
+        var builder = NettyNetworkLayer.with(config.getNetworkInterfaces())
 
                 .withHandler(appBundle.getProtocolEncoders())
                 .withHandler(appBundle.getProtocolDecoders())
-                // .withHandler("diameter-codec-encoder", () -> new DiameterStreamEncoder(), Transport.tcp)
-                // .withHandler("diameter-code-decoder", () -> new DiameterMessageStreamDecoder2(), Transport.tcp)
-
                 .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, Optional.empty(), ctxs), Transport.udp)
-                .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, Optional.empty(), ctxs), Transport.tcp)
+                .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, Optional.empty(), ctxs), Transport.tcp);
                 // .withHandler("tcp-adapter-outbound", () -> new NettyTcpOutboundAdapter<>(clock, serializationFactory, Optional.empty(), ctxs), Transport.tcp)
 
                 // the optional fsm layer - will also be injected dynamically depending on whether
@@ -106,14 +103,17 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
                 // Also, whether there is a separate FSM layer per connection or a shared
                 // one for the entire stack will be dependent on the actual need of the implementation.
 
-                // TODO: need to handle when it is not configured.
-                .withHandler("fsm-layer", () -> new NettyFsmLayer(appBundle.getFsmFactory().get()), Transport.tcp)
+        // TODO: need to ensure that the FSM factory is for a particular transport too
+        appBundle.getFsmFactory().ifPresent(fsmFactory -> {
+                builder.withHandler("fsm-layer", () -> new NettyFsmLayer(fsmFactory), Transport.tcp);
+        });
 
-                // App layer is not optional so it will always be injected but it will need to be configured by
-                // the NetworkApplication etc in order to inject the message pipelines and whatnot.
-                .withHandler("app-layer", () -> appLayer, Transport.tcp)
+        // App layer is not optional so it will always be injected but it will need to be configured by
+        // the NetworkApplication etc in order to inject the message pipelines and whatnot.
+        network = builder.withHandler("app-layer", () -> appLayer, Transport.tcp)
                 .withHandler("app-layer", () -> appLayer, Transport.udp)
                 .build();
+
         network.start();
         appBundle.start();
     }
@@ -211,6 +211,11 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
         @Override
         public List<ProtocolHandler> getProtocolDecoders() {
             return List.of();
+        }
+
+        @Override
+        public K wrapConnection(Connection<T> connection) {
+            return (K)connection;
         }
 
         @Override

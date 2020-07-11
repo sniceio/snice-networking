@@ -17,7 +17,7 @@ import java.util.function.Predicate;
  * @param <T> the data type that we'll actually be receiving from the network.
  * @param <C> the configuration type
  */
-public interface NetworkBootstrap<T, C extends NetworkAppConfig> {
+public interface NetworkBootstrap<K extends Connection<T>, T, C extends NetworkAppConfig> {
 
     /**
      * Convenience predicate for accepting all connections.
@@ -52,6 +52,6 @@ public interface NetworkBootstrap<T, C extends NetworkAppConfig> {
      * @param condition
      * @return
      */
-    ConnectionContext.Builder<Connection<T>, T, T> onConnection(Predicate<ConnectionId> condition);
+    ConnectionContext.Builder<K, T, T> onConnection(Predicate<ConnectionId> condition);
 
 }

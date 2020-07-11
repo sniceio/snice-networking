@@ -84,7 +84,7 @@ public class PeerFsm {
          * as specified. Hence, we know the {@link ConnectionActiveIOEvent} is an inbound event here because we previously
          * checked if it was outbound and apparently that didn't match so has to be inbound.
          */
-        closed.transitionTo(WAIT_CER).onEvent(ConnectionActiveIOEvent.class);
+        closed.transitionTo(WAIT_CER).onEvent(ConnectionActiveIOEvent.class).withAction(PeerFsm::processConnectionActive);
 
         /**
          * Temp - hektor.io will evaluate the FSM to ensure you can reach the final state in some
@@ -178,6 +178,17 @@ public class PeerFsm {
     // ----------------------------------------------------------------------
 
     /**
+     * When the underlying network stack has accepted a connection (TCP, UDP, SCTP, whatever) that event
+     * will propagate up the stack and eventually be given to this FSM. Since we need to do the CER/CEA
+     * handshake, we will "hold onto" this event until we have successfully established the Peer and
+     * at that point, we will propagate that event again. Hence, all this method does is to save the
+     * event.
+     */
+    private static final void processConnectionActive(final ConnectionActiveIOEvent evt, final PeerContext ctx, final PeerData data) {
+        data.storeConnectionActiveIoEvent(evt);
+    }
+
+    /**
      * According to spec, upon receiving a CER the FSM should perform the following three actions:
      * <ul>
      *     <li>R-Accept</li>
@@ -198,6 +209,7 @@ public class PeerFsm {
         ctx.getChannelContext().sendDownstream(builder.build());
 
         // should we perhaps create "PeerConnection" here?
+        data.consumeConnectionActiveEvent().ifPresent(evt -> ctx.getChannelContext().fireUserEvent(evt));
     }
 
     /**

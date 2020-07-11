@@ -3,6 +3,7 @@ package io.snice.networking.app.impl;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.snice.networking.app.AppBundle;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
@@ -12,9 +13,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ChannelHandler.Sharable
-public class NettyApplicationLayer<T> extends ChannelInboundHandlerAdapter {
+public class NettyApplicationLayer<K extends Connection<T>, T> extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyApplicationLayer.class);
+    private final AppBundle<K, T> bundle;
+
+    public NettyApplicationLayer(final AppBundle<K, T> bundle) {
+        this.bundle = bundle;
+    }
 
     @Override
     public void channelRead(final ChannelHandlerContext ctx, final Object object) throws Exception {
@@ -32,7 +38,8 @@ public class NettyApplicationLayer<T> extends ChannelInboundHandlerAdapter {
         // TODO:
         // TODO:
         final var bufferingConnection = new BufferingConnection<T>(null);
-        appRules.match(bufferingConnection, msg).apply(bufferingConnection, msg);
+        final var appConnection = bundle.wrapConnection(bufferingConnection);
+        appRules.match(appConnection, msg).apply(appConnection, msg);
         bufferingConnection.processMessage(ctx);
     }
 
@@ -43,6 +50,8 @@ public class NettyApplicationLayer<T> extends ChannelInboundHandlerAdapter {
             final IOEvent<T> ioEvent = (IOEvent<T>)evt;
             if (ioEvent.isConnectionAttemptCompletedIOEvent()) {
                 completeConnectionFuture(ioEvent.toConnectionAttemptCompletedIOEvent());
+            } else if (ioEvent.isConnectionActiveIOEvent()) {
+                logger.info("ConnectionActiveIOEvent - turn into a Peer connection here?");
             } else {
                 // TODO: log warn with an AlertCode etc...
                 logger.warn("Unhandled IOEvent " + ioEvent);

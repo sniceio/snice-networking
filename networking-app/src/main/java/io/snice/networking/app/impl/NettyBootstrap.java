@@ -23,13 +23,13 @@ import java.util.stream.Collectors;
 import static io.snice.preconditions.PreConditions.assertArgument;
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
-public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBootstrap<T, C> {
+public class NettyBootstrap<K extends Connection<T>, T, C extends NetworkAppConfig> implements NetworkBootstrap<K, T, C> {
 
     private SerializationFactory<T> serializationFactory;
 
     private final C config;
 
-    private final List<ConnectionCtxBuilder<Connection<T>, T, ?>> rules = new ArrayList<>();
+    private final List<ConnectionCtxBuilder<K, T, ?>> rules = new ArrayList<>();
 
     public NettyBootstrap(final C config) {
         this.config = config;
@@ -55,26 +55,26 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBoo
     }
 
     @Override
-    public ConnectionContext.Builder<Connection<T>, T, T> onConnection(final Predicate<ConnectionId> condition) {
+    public ConnectionContext.Builder<K, T, T> onConnection(final Predicate<ConnectionId> condition) {
         assertNotNull(condition, "The condition cannot be null");
-        final ConnectionCtxBuilder<Connection<T>, T, T> builder = new ConnectionCtxBuilder<>(condition);
+        final ConnectionCtxBuilder<K, T, T> builder = new ConnectionCtxBuilder<>(condition);
         rules.add(builder);
         return builder;
     }
 
-    private static class ConnectionCtxBuilder<C extends Connection<T>, T, R> implements ConnectionContext.Builder<C, T, R> {
+    private static class ConnectionCtxBuilder<K extends Connection<T>, T, R> implements ConnectionContext.Builder<K, T, R> {
 
         private final Predicate<ConnectionId> condition;
-        private Function<C, T> dropFunction;
-        private Consumer<ConnectionContext.ConfigurationBuilder<C, T, R>> confBuilderConsumer;
+        private Function<K, T> dropFunction;
+        private Consumer<ConnectionContext.ConfigurationBuilder<K, T, R>> confBuilderConsumer;
 
         private ConnectionCtxBuilder(final Predicate<ConnectionId> condition) {
             this.condition = condition;
         }
 
-        public ConnectionContext<C, T> build() {
+        public ConnectionContext<K, T> build() {
             System.out.println("Building the connection context");
-            final List<MessagePipe<C, T, ?>> rules;
+            final List<MessagePipe<K, T, ?>> rules;
             if (confBuilderConsumer != null) {
                 final ConfBuilder b = new ConfBuilder();
                 confBuilderConsumer.accept(b);
@@ -84,11 +84,11 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBoo
                 rules = List.of();
             }
 
-            return new NettyConnectionContext<C, T>(condition, dropFunction, rules);
+            return new NettyConnectionContext<K, T>(condition, dropFunction, rules);
         }
 
         @Override
-        public void accept(final Consumer<ConnectionContext.ConfigurationBuilder<C, T, R>> consumer) {
+        public void accept(final Consumer<ConnectionContext.ConfigurationBuilder<K, T, R>> consumer) {
             assertArgument(dropFunction == null, "You have already marked this connection to be dropped, " +
                     "you cannot also accept the connection. You have to choose one or the other");
             assertNotNull(consumer, "The consumer cannot be null");
@@ -101,7 +101,7 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBoo
         }
 
         @Override
-        public void drop(final Function<C, T> f) {
+        public void drop(final Function<K, T> f) {
             assertArgument(confBuilderConsumer == null, "You have already marked this connection to be accepted, " +
                     "you cannot also drop the connection. You have to choose one or the other");
             assertArgument(dropFunction == null, "You cannot specify to drop the connection twice");
@@ -109,30 +109,30 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBoo
             dropFunction = f;
         }
 
-        private class ConfBuilder implements ConnectionContext.ConfigurationBuilder<C, T, R> {
+        private class ConfBuilder implements ConnectionContext.ConfigurationBuilder<K, T, R> {
 
-            private final List<MessageProcessingBuilderImpl<C, T, T>> rules = new ArrayList<>();
+            private final List<MessageProcessingBuilderImpl<K, T, T>> rules = new ArrayList<>();
 
             @Override
-            public ConnectionContext.ConfigurationBuilder<C, T, R> withDefaultStatisticsModule() {
+            public ConnectionContext.ConfigurationBuilder<K, T, R> withDefaultStatisticsModule() {
                 return this;
             }
 
-            private List<MessagePipe<C, T, ?>> getRules() {
+            private List<MessagePipe<K, T, ?>> getRules() {
                 return rules.stream().map(MessageProcessingBuilderImpl::getFinalPipe).collect(Collectors.toList());
             }
 
             @Override
-            public MessageProcessingBuilder<C, T, R> match(final Predicate<T> filter) {
-                final BiPredicate<C, T> filter2 = (c, t) -> filter.test(t);
-                final MessagePipe<C, T, T> initialPipe = MessagePipe.match(filter2);
+            public MessageProcessingBuilder<K, T, R> match(final Predicate<T> filter) {
+                final BiPredicate<K, T> filter2 = (c, t) -> filter.test(t);
+                final MessagePipe<K, T, T> initialPipe = MessagePipe.match(filter2);
                 final MessageProcessingBuilderImpl builder = new MessageProcessingBuilderImpl(initialPipe);
                 rules.add(builder);
                 return builder;
             }
 
             @Override
-            public void withPipe(final MessagePipe<C, T, ?> pipe) {
+            public void withPipe(final MessagePipe<K, T, ?> pipe) {
 
             }
 
@@ -142,49 +142,49 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBoo
             }
         }
 
-        private class MessageProcessingBuilderImpl<C extends Connection<T>, T, R> implements MessageProcessingBuilder<C, T, R> {
+        private class MessageProcessingBuilderImpl<K extends Connection<T>, T, R> implements MessageProcessingBuilder<K, T, R> {
 
-            private final MessagePipe<C, T, R> pipe;
-            private MessageProcessingBuilderImpl<C, T, ?> child;
+            private final MessagePipe<K, T, R> pipe;
+            private MessageProcessingBuilderImpl<K, T, ?> child;
 
-            private MessageProcessingBuilderImpl(final MessagePipe<C, T, R> pipe) {
+            private MessageProcessingBuilderImpl(final MessagePipe<K, T, R> pipe) {
                 this.pipe = pipe;
             }
 
             @Override
-            public <NEW_R> MessageProcessingBuilder<C, T, NEW_R> withPipe(final MessagePipe<C, ? super R, ? extends NEW_R> f) {
+            public <NEW_R> MessageProcessingBuilder<K, T, NEW_R> withPipe(final MessagePipe<K, ? super R, ? extends NEW_R> f) {
                 return null;
             }
 
             @Override
-            public MessageProcessingBuilder<C, T, R> consume(final Consumer<R> consumer) {
+            public MessageProcessingBuilder<K, T, R> consume(final Consumer<R> consumer) {
                 final var builder = new MessageProcessingBuilderImpl(pipe.consume(consumer));
                 child = builder;
                 return builder;
             }
 
             @Override
-            public MessageProcessingBuilder<C, T, R> consume(final BiConsumer<C, R> consumer) {
+            public MessageProcessingBuilder<K, T, R> consume(final BiConsumer<K, R> consumer) {
                 final var builder = new MessageProcessingBuilderImpl(pipe.consume(consumer));
                 child = builder;
                 return builder;
             }
 
             @Override
-            public <NEW_R> MessageProcessingBuilder<C, T, NEW_R> map(final Function<? super R, ? extends NEW_R> f){
+            public <NEW_R> MessageProcessingBuilder<K, T, NEW_R> map(final Function<? super R, ? extends NEW_R> f){
                 final var builder = new MessageProcessingBuilderImpl(pipe.map(f));
                 child = builder;
                 return builder;
             }
 
             @Override
-            public <NEW_R> MessageProcessingBuilder<C, T, NEW_R> map(final BiFunction<C, ? super R, ? extends NEW_R> f) {
+            public <NEW_R> MessageProcessingBuilder<K, T, NEW_R> map(final BiFunction<K, ? super R, ? extends NEW_R> f) {
                 final var builder = new MessageProcessingBuilderImpl(pipe.map(f));
                 child = builder;
                 return builder;
             }
 
-            private MessagePipe<C, T, ?> getFinalPipe() {
+            private MessagePipe<K, T, ?> getFinalPipe() {
                 if (child == null) {
                     return pipe;
                 }

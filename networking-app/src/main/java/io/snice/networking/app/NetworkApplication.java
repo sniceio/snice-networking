@@ -56,14 +56,14 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
      * So, make this one optional and then in the {@link Environment} you rather return a similar
      * builder object as the bootstrap has etc etc.
      */
-    public abstract void initialize(final NetworkBootstrap<T, C> bootstrap);
+    public abstract void initialize(final NetworkBootstrap<K, T, C> bootstrap);
 
     /**
      * Call this method from your {@code public static void main} entry point
      * of your application.
      */
     public final void run(final C config, final String... args) throws Exception {
-        final NettyBootstrap<T, C> bootstrap = new NettyBootstrap<>(config);
+        final NettyBootstrap<K, T, C> bootstrap = new NettyBootstrap<>(config);
         initialize(bootstrap);
         final List<ConnectionContext> connectionContexts = bootstrap.getConnectionContexts();
 
@@ -102,7 +102,7 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
         run(config, args);
     }
 
-    private SerializationFactory<T> ensureSerializationFactory(final NettyBootstrap<T, C> bootstrap) {
+    private SerializationFactory<T> ensureSerializationFactory(final NettyBootstrap<K, T, C> bootstrap) {
         final var factory = bootstrap.getSerializationFactory();
         if (factory != null) {
             return factory;
@@ -124,7 +124,7 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
                 "stream across the network into your network stacks object type of " + type.getSimpleName());
     }
 
-    private Environment<K, T, C> buildEnvironment(final NetworkStack<K, T, C> stack, final NettyBootstrap<T, C> bootstrap) {
+    private Environment<K, T, C> buildEnvironment(final NetworkStack<K, T, C> stack, final NettyBootstrap<K, T, C> bootstrap) {
         return new DefaultEnvironment(stack, bootstrap.getConfiguration());
     }
 

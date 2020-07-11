@@ -84,6 +84,11 @@ public class DiameterBundle implements AppBundle<Peer, DiameterMessage> {
     }
 
     @Override
+    public Peer wrapConnection(final Connection<DiameterMessage> connection) {
+        return Peer.of(connection);
+    }
+
+    @Override
     public Optional<FsmFactory<DiameterMessage, PeerState, PeerContext, PeerData>> getFsmFactory() {
         return Optional.of(peerFactory);
     }

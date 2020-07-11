@@ -47,7 +47,7 @@ public class Pgw extends NetworkApplication<Connection<GtpMessage>, GtpMessage, 
     }
 
     @Override
-    public void initialize(final NetworkBootstrap<GtpMessage, GtpConfig> bootstrap) {
+    public void initialize(final NetworkBootstrap<Connection<GtpMessage>, GtpMessage, GtpConfig> bootstrap) {
 
         bootstrap.registerSerializationFactory(new GtpSerializationFactory());
 

@@ -15,7 +15,6 @@ import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
-import io.snice.networking.diameter.Apa;
 import io.snice.networking.diameter.DiameterBundle;
 import io.snice.networking.diameter.Peer;
 import org.slf4j.Logger;
@@ -64,8 +63,7 @@ public class Hss extends NetworkApplication<Peer, DiameterMessage, HssConfig> {
     }
 
     @Override
-    public void initialize(final NetworkBootstrap<DiameterMessage, HssConfig> bootstrap) {
-
+    public void initialize(final NetworkBootstrap<Peer, DiameterMessage, HssConfig> bootstrap) {
         bootstrap.onConnection(ACCEPT_ALL).accept(b -> {
             b.match(DiameterMessage::isULR).consume(Hss::processULR);
             b.match(DiameterMessage::isULA).consume(Hss::processULA);

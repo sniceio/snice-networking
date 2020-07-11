@@ -3,7 +3,9 @@ package io.snice.networking.diameter.peer;
 import io.hektor.fsm.Data;
 import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.TransactionIdentifier;
+import io.snice.networking.common.event.ConnectionActiveIOEvent;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
+import io.snice.networking.common.event.ConnectionIOEvent;
 import io.snice.networking.diameter.Peer;
 
 import java.util.HashMap;
@@ -18,6 +20,7 @@ public class PeerData implements Data {
     private final PeerConfiguration config;
 
     private ConnectionAttemptCompletedIOEvent event;
+    private ConnectionActiveIOEvent activeEvent;
 
     public PeerData(final PeerConfiguration config) {
         this.config = config;
@@ -41,6 +44,21 @@ public class PeerData implements Data {
     }
 
     /**
+     * For incoming connections, we need to store away the event stating that the underlying e.g.
+     * TCP or SCTP connection was established since we need to make sure that the Peer
+     * is correctly established first. So, hold onto this event.
+     */
+    public void storeConnectionActiveIoEvent(final ConnectionActiveIOEvent event) {
+        this.activeEvent = event;
+    }
+
+    public Optional<ConnectionActiveIOEvent> consumeConnectionActiveEvent() {
+        final var evt = Optional.ofNullable(activeEvent);
+        activeEvent = null;
+        return evt;
+    }
+
+    /**
      * When a user asks to open a new connection we will attempt to create a {@link Peer}
      * (this is diameter after all) and even though we may e.g. manage to establish the underlying
      * transport channel (tcp, sctp etc) we may fail in the Capability Exchange negotiation.
@@ -54,11 +72,7 @@ public class PeerData implements Data {
     }
 
     public Optional<ConnectionAttemptCompletedIOEvent> consumeConnectionAttemptEvent() {
-        if (event == null) {
-            return Optional.empty();
-        }
-
-        final var evt = Optional.of(event);
+        final var evt = Optional.ofNullable(event);
         event = null;
         return evt;
     }
