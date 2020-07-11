@@ -27,6 +27,10 @@ public class NettyApplicationLayer<T> extends ChannelInboundHandlerAdapter {
 
     private void invokeApplication(final T msg, final ChannelHandlerContext ctx, final ConnectionContext<Connection<T>, T> appRules) {
         // TODO: this needs to take place in a different thread pool!
+        // TODO: should we here potentially convert the Connection to an application specific connection
+        // TODO: object? For Diameter that would be a peer.
+        // TODO:
+        // TODO:
         final var bufferingConnection = new BufferingConnection<T>(null);
         appRules.match(bufferingConnection, msg).apply(bufferingConnection, msg);
         bufferingConnection.processMessage(ctx);
@@ -34,13 +38,14 @@ public class NettyApplicationLayer<T> extends ChannelInboundHandlerAdapter {
 
     @Override
     public void userEventTriggered(final ChannelHandlerContext ctx, final Object evt) throws Exception {
+        logger.info("UserEventTriggered: " + evt);
         try {
             final IOEvent<T> ioEvent = (IOEvent<T>)evt;
             if (ioEvent.isConnectionAttemptCompletedIOEvent()) {
                 completeConnectionFuture(ioEvent.toConnectionAttemptCompletedIOEvent());
             } else {
                 // TODO: log warn with an AlertCode etc...
-                logger.warn("Unandled IOEvent " + ioEvent);
+                logger.warn("Unhandled IOEvent " + ioEvent);
             }
         } catch (final ClassCastException e) {
             // TODO: log warn...
@@ -49,6 +54,7 @@ public class NettyApplicationLayer<T> extends ChannelInboundHandlerAdapter {
     }
 
     private void completeConnectionFuture(final ConnectionAttemptCompletedIOEvent<T> evt) {
+        logger.info("CompleteConnectionFuture: " + evt);
         final var future = evt.getUserFuture();
         evt.getConnection().ifPresent(future::complete);
         evt.getCause().ifPresent(future::completeExceptionally);

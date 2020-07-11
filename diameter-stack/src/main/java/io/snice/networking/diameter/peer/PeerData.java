@@ -43,10 +43,10 @@ public class PeerData implements Data {
     /**
      * When a user asks to open a new connection we will attempt to create a {@link Peer}
      * (this is diameter after all) and even though we may e.g. manage to establish the underlying
-     * transport channel (tcp, sctp etc) we may fail in the Capability Echange negotiation.
+     * transport channel (tcp, sctp etc) we may fail in the Capability Exchange negotiation.
      * Therefore, we cannot actually claim that the connection was successfully made until
      * the underlying peer FSM is happy. Since the Snice Networking Stack doesn't know
-     * about this for diamter, we must catch and hold onto the actual event and only
+     * about this for diameter, we must catch and hold onto the actual event and only
      * propagate it once we have successfully established the Peer ala Diameter rules.
      */
     public void storeConnectionAttemptEvent(final ConnectionAttemptCompletedIOEvent event) {

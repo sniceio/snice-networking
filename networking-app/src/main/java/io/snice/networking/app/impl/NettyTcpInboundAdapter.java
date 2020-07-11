@@ -225,6 +225,7 @@ public class NettyTcpInboundAdapter<T> extends ChannelOutboundHandlerAdapter imp
 
     @Override
     public void userEventTriggered(final ChannelHandlerContext ctx, final Object evt) throws Exception {
+        log("UserEventTriggered: " + evt);
         try {
             final NetworkEvent<T> event = (NetworkEvent<T>) evt;
             if (event.isConnectionAttemptEvent()) {

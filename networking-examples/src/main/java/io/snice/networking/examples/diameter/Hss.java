@@ -31,7 +31,7 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
 
     @Override
     public void run(final HssConfig configuration, final Environment<DiameterMessage, HssConfig> environment) {
-        if (false) return;
+        if (true) return;
         final var future = environment.connect(Transport.tcp, "10.36.10.74", 3868);
         // final var future = environment.connect(Transport.tcp, "127.0.0.1", 3869);
         future.whenComplete((c, t) -> {
@@ -74,7 +74,6 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
     private static final void processULR(final Connection<DiameterMessage> con, final DiameterMessage ulr) {
         final var ula = ulr.createAnswer(ResultCode.DiameterErrorUserUnknown5032)
                 .withAvp(ExperimentalResultCode.DiameterErrorUserUnknown5001)
-                .withAvp(null)
                 .build();
         con.send(ula);
     }
