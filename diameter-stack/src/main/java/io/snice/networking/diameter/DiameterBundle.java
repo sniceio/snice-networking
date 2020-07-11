@@ -7,6 +7,7 @@ import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
 import io.snice.codecs.codec.diameter.avp.api.ProductName;
 import io.snice.codecs.codec.diameter.avp.type.IpAddress;
 import io.snice.networking.app.AppBundle;
+import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
 import io.snice.networking.common.fsm.FsmFactory;
 import io.snice.networking.diameter.handler.DiameterMessageStreamDecoder2;
@@ -24,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 
-public class DiameterBundle implements AppBundle<DiameterMessage> {
+public class DiameterBundle implements AppBundle<Peer, DiameterMessage> {
 
     private static final Logger logger = LoggerFactory.getLogger(DiameterBundle.class);
 
@@ -50,6 +51,11 @@ public class DiameterBundle implements AppBundle<DiameterMessage> {
     @Override
     public Class<DiameterMessage> getType() {
         return DiameterMessage.class;
+    }
+
+    @Override
+    public Class<Peer> getConnectionType() {
+        return Peer.class;
     }
 
     @Override

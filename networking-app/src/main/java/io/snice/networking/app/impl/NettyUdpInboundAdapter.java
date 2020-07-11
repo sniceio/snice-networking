@@ -46,7 +46,6 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
     private final Optional<URI> vipAddress;
     private final UUID uuid = UUID.randomUUID();
     private final List<ConnectionContext> ctxs;
-    private final SerializationFactory<T> factory;
 
     private final Map<ConnectionId, ConnectionAdapter<UdpConnection<T>, T>> adapters;
 
@@ -54,11 +53,10 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
 
     private InetSocketAddress localAddress;
 
-    public NettyUdpInboundAdapter(final Clock clock , final SerializationFactory<T> factory, final Optional<URI> vipAddress, final List<ConnectionContext> ctxs) {
+    public NettyUdpInboundAdapter(final Clock clock , final Optional<URI> vipAddress, final List<ConnectionContext> ctxs) {
         this.clock = clock;
         this.vipAddress = vipAddress;
         this.ctxs = ctxs;
-        this.factory = factory;
 
         adapters = allocateInitialMapSize();
 

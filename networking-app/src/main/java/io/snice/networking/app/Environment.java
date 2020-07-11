@@ -12,7 +12,7 @@ import static io.snice.preconditions.PreConditions.assertNotEmpty;
 /**
  * @author jonas@jonasborjesson.com
  */
-public interface Environment<T, C extends NetworkAppConfig> {
+public interface Environment<K extends Connection<T>, T, C extends NetworkAppConfig> {
 
     /**
      * Obtain the loaded configuration.

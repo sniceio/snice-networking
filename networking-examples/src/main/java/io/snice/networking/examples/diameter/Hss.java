@@ -15,13 +15,15 @@ import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
+import io.snice.networking.diameter.Apa;
 import io.snice.networking.diameter.DiameterBundle;
+import io.snice.networking.diameter.Peer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.snice.networking.app.NetworkBootstrap.ACCEPT_ALL;
 
-public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
+public class Hss extends NetworkApplication<Peer, DiameterMessage, HssConfig> {
 
     private static final Logger logger = LoggerFactory.getLogger(Hss.class);
 
@@ -30,7 +32,7 @@ public class Hss extends NetworkApplication<DiameterMessage, HssConfig> {
     }
 
     @Override
-    public void run(final HssConfig configuration, final Environment<DiameterMessage, HssConfig> environment) {
+    public void run(final HssConfig configuration, final Environment<Peer, DiameterMessage, HssConfig> environment) {
         if (true) return;
         final var future = environment.connect(Transport.tcp, "10.36.10.74", 3868);
         // final var future = environment.connect(Transport.tcp, "127.0.0.1", 3869);

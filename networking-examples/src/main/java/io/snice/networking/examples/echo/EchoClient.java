@@ -3,6 +3,7 @@ package io.snice.networking.examples.echo;
 import io.snice.networking.app.Environment;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
+import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
 
 /**
@@ -16,14 +17,14 @@ import io.snice.networking.common.Transport;
  * it finds to match, it has a default match-all that does the echo part.
  *
  */
-public class EchoClient extends NetworkApplication<String, EchoClientConfig> {
+public class EchoClient extends NetworkApplication<Connection<String>, String, EchoClientConfig> {
 
     public EchoClient() {
-        super(String.class);
+        super(String.class, (Class<Connection<String>>)null);
     }
 
     @Override
-    public void run(final EchoClientConfig config, final Environment<String, EchoClientConfig> environment) {
+    public void run(final EchoClientConfig config, final Environment<Connection<String>, String, EchoClientConfig> environment) {
         environment.connect(Transport.udp, config.getEchoServerIp(), config.getEchoServerPort())
                 .thenAccept(connection -> {
                     connection.send("hello");

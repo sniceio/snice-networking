@@ -11,7 +11,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-public interface NetworkStack<T, C extends NetworkAppConfig> {
+public interface NetworkStack<K extends Connection<T>, T, C extends NetworkAppConfig> {
 
     /**
      * A {@link NetworkStack} will only deal with one type of "message" at a time. E.g.,
@@ -23,17 +23,17 @@ public interface NetworkStack<T, C extends NetworkAppConfig> {
      * @param <T>
      * @return
      */
-    static <T> FramerFactoryStep<T> ofType(final Class<T> type) {
+    static <T> ConnectionTypeStep<T> ofType(final Class<T> type) {
         return NettyNetworkStack.ofType(type);
     }
 
-    interface FramerFactoryStep<T> {
-        ConfigurationStep<T> withSerializationFactory(SerializationFactory<T> serializationFactory);
+    interface ConnectionTypeStep<T> {
+        <K extends Connection<T>> ConfigurationStep<K, T> withConnectionType(Class<K> type);
     }
 
 
-    interface ConfigurationStep<D> {
-        <C extends NetworkAppConfig> Builder<D, C> withConfiguration(C config);
+    interface ConfigurationStep<K extends Connection<T>, T> {
+        <C extends NetworkAppConfig> Builder<K, T, C> withConfiguration(C config);
     }
 
     /**
@@ -73,10 +73,11 @@ public interface NetworkStack<T, C extends NetworkAppConfig> {
      */
     void stop();
 
-    interface Builder<T, C extends NetworkAppConfig> {
-        Builder<T, C> withApplication(NetworkApplication<T, C> application);
-        Builder<T, C> withAppBundle(AppBundle<T> bundle);
-        Builder<T, C> withConnectionContexts(List<ConnectionContext> ctxs);
-        NetworkStack<T, C> build();
+    interface Builder<K extends Connection<T>, T, C extends NetworkAppConfig> {
+        Builder<K, T, C> withApplication(NetworkApplication<K, T, C> application);
+        Builder<K, T, C> withAppBundle(AppBundle<K, T> bundle);
+        Builder<K, T, C> withConnectionContexts(List<ConnectionContext> ctxs);
+        NetworkStack<K, T, C> build();
     }
+
 }

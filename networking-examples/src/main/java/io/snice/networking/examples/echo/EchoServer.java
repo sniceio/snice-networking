@@ -3,6 +3,7 @@ package io.snice.networking.examples.echo;
 import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
+import io.snice.networking.common.Connection;
 
 /**
  * This is a simple echo server that deals with Strings. I.e., it expects to receive
@@ -15,10 +16,11 @@ import io.snice.networking.app.NetworkBootstrap;
  * it finds to match, it has a default match-all that does the echo part.
  *
  */
-public class EchoServer extends NetworkApplication<String, NetworkAppConfig> {
+public class EchoServer extends NetworkApplication<Connection<String>, String, NetworkAppConfig> {
 
     public EchoServer() {
-        super(String.class);
+        // TODO: how do you do this?
+        super(String.class, (Class<Connection<String>>)null);
     }
 
     @Override
