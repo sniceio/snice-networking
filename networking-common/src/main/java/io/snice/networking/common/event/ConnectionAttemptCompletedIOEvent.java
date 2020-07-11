@@ -35,12 +35,12 @@ public interface ConnectionAttemptCompletedIOEvent<T> extends ConnectionIOEvent<
 
     /**
      * Depending on the implementing protocol, it may be that after e.g. a TCP connection
-     * had sucessfully been established and the underlying Snice Newtworking layer produced
+     * had successfully been established and the underlying Snice Newtworking layer produced
      * a successful {@link ConnectionAttemptCompletedIOEvent}, it could be that it should
      * fail because of other business logic.
      *
      * E.g., in Diameter, after you establish a "connection" the two sides exchange messages to
-     * establish a common "ground". If this fails, then the "conneciton" (called Peer in Diameter)
+     * establish a common "ground". If this fails, then the "connection" (called Peer in Diameter)
      * should also fail and as such, the original success attempt will be turned into a failed on.
      *
      * @return a failed {@link ConnectionAttemptCompletedIOEvent}

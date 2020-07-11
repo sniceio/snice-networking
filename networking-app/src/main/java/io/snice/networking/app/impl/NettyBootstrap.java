@@ -73,7 +73,7 @@ public class NettyBootstrap<T, C extends NetworkAppConfig> implements NetworkBoo
         }
 
         public ConnectionContext<C, T> build() {
-            System.out.println("Building the connetion context");
+            System.out.println("Building the connection context");
             final List<MessagePipe<C, T, ?>> rules;
             if (confBuilderConsumer != null) {
                 final ConfBuilder b = new ConfBuilder();

@@ -196,6 +196,8 @@ public class PeerFsm {
         ctx.getHostIpAddresses().forEach(builder::withAvp);
         builder.withAvp(ctx.getConfig().getProductName());
         ctx.getChannelContext().sendDownstream(builder.build());
+
+        // should we perhaps create "PeerConnection" here?
     }
 
     /**
@@ -286,7 +288,7 @@ public class PeerFsm {
      * {@link ConnectionActiveIOEvent} event.
      */
     private static final void processRcvConnAck(final ConnectionActiveIOEvent event, final PeerContext ctx, final PeerData data) {
-        logger.info("Yay, connection established. Nedd to send the CER now...");
+        logger.info("Yay, connection established. Need to send the CER now...");
     }
 
     // ----------------------------------------------------------------------
