@@ -2,6 +2,7 @@ package io.snice.networking.common.fsm;
 
 import io.hektor.fsm.Context;
 import io.snice.networking.common.ChannelContext;
+import io.snice.networking.common.Connection;
 
 /**
  * Snice Networking provides an execution environment for those protocols that wish to

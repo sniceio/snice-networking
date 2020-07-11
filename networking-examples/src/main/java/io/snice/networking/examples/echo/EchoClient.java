@@ -32,7 +32,7 @@ public class EchoClient extends NetworkApplication<Connection<String>, String, E
     }
 
     @Override
-    public void initialize(final NetworkBootstrap<String, EchoClientConfig> bootstrap) {
+    public void initialize(final NetworkBootstrap<Connection<String>, String, EchoClientConfig> bootstrap) {
 
         // we are just a client so we will drop any connection attempts made to us.
         bootstrap.onConnection(con -> true).accept(builder -> {

@@ -3,6 +3,7 @@ package io.snice.networking.app.impl;
 import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
 import io.snice.networking.app.NetworkAppConfig;
+import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,7 +14,7 @@ import static org.junit.Assert.assertThat;
 public class NettyBootstrapTest {
 
     private NetworkAppConfig conf;
-    private NettyBootstrap<Buffer, NetworkAppConfig> bootstrap;
+    private NettyBootstrap<Connection<Buffer>, Buffer, NetworkAppConfig> bootstrap;
 
     @Before
     public void setup() throws Exception {

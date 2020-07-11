@@ -24,7 +24,7 @@ public class EchoServer extends NetworkApplication<Connection<String>, String, N
     }
 
     @Override
-    public void initialize(final NetworkBootstrap<String, NetworkAppConfig> bootstrap) {
+    public void initialize(final NetworkBootstrap<Connection<String>, String, NetworkAppConfig> bootstrap) {
         bootstrap.onConnection(con -> true).accept(builder -> {
             builder.match(s -> s.startsWith("hello")).consume((connection, str) -> connection.send("hello world!\n"));
             builder.match(s -> true).map(String::strip).consume((c, str) -> c.send(str));
