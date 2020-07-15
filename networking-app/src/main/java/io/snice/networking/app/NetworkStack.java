@@ -59,6 +59,11 @@ public interface NetworkStack<K extends Connection<T>, T, C extends NetworkAppCo
     /**
      * Connect to a remote address using the supplied {@link Transport}.
      *
+     * Some protocols may want to convert the {@link Connection} into a specific type of connection
+     * and must do so by implementing a {@link Environment} and convert it there. Many stacks may not need
+     * this but e.g. Diameter deals with so-called Peers as connection objects and as such, the Diameter
+     * applications should interact with a Peer as opposed to a "raw" connection.
+     *
      * @param remoteAddress
      * @param transport
      * @return a {@link CompletionStage} that, once completed, will contain the {@link } that

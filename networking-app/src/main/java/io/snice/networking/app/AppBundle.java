@@ -48,5 +48,9 @@ public interface AppBundle<K extends Connection<T>, T> {
         // default is to do nothing. Implementing bundles should override this.
     }
 
+    default void stop() {
+        // default is to do nothing. Implementing bundles should override this.
+    }
+
     <S extends Enum<S>, C extends NetworkContext<T>, D extends Data> Optional<FsmFactory<T, S, C, D>> getFsmFactory();
 }

@@ -4,16 +4,10 @@ import io.snice.buffer.Buffers;
 import io.snice.buffer.WritableBuffer;
 import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.DiameterRequest;
-import io.snice.codecs.codec.diameter.avp.api.AuthSessionState;
-import io.snice.codecs.codec.diameter.avp.api.ExperimentalResultCode;
-import io.snice.codecs.codec.diameter.avp.api.RatType;
-import io.snice.codecs.codec.diameter.avp.api.ResultCode;
-import io.snice.codecs.codec.diameter.avp.api.UlrFlags;
-import io.snice.codecs.codec.diameter.avp.api.VisitedPlmnId;
+import io.snice.codecs.codec.diameter.avp.api.*;
 import io.snice.networking.app.Environment;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
-import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
 import io.snice.networking.diameter.DiameterBundle;
 import io.snice.networking.diameter.Peer;
@@ -71,14 +65,14 @@ public class Hss extends NetworkApplication<Peer, DiameterMessage, HssConfig> {
 
     }
 
-    private static final void processULR(final Connection<DiameterMessage> con, final DiameterMessage ulr) {
+    private static final void processULR(final Peer peer, final DiameterMessage ulr) {
         final var ula = ulr.createAnswer(ResultCode.DiameterErrorUserUnknown5032)
                 .withAvp(ExperimentalResultCode.DiameterErrorUserUnknown5001)
                 .build();
-        con.send(ula);
+        peer.send(ula);
     }
 
-    private static final void processULA(final Connection<DiameterMessage> con, final DiameterMessage ula) {
+    private static final void processULA(final Peer peer, final DiameterMessage ula) {
         logger.info("yay, we got a ULA back!");
     }
 
