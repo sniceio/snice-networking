@@ -31,8 +31,8 @@ import static io.snice.preconditions.PreConditions.ensureNotNull;
 @ChannelHandler.Sharable
 public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppConfig> implements NetworkStack<K, T, C> {
 
-    private final Class<T> type;
-    private final Class<K> connectionType;
+    // private final Class<T> type;
+    // private final Class<K> connectionType;
     private final C config;
     private final NetworkApplication<K, T, C> app;
     private final List<ConnectionContext<K, T>> ctxs;
@@ -40,18 +40,22 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
     private final Clock clock = new SystemClock();
     private final AppBundle<K, T> appBundle;
 
-    private NettyNetworkStack(final Class<T> type,
-                              final Class<K> connectionType,
+    private NettyNetworkStack(// final Class<T> type,
+                              // final Class<K> connectionType,
                               final C config,
                               final NetworkApplication<K, T, C> app,
                               final AppBundle<K, T> appBundle,
                               final List<ConnectionContext<K, T>> ctxs) {
-        this.type = type;
-        this.connectionType = connectionType;
+        // this.type = type;
+        // this.connectionType = connectionType;
         this.config = config;
         this.app = app;
         this.appBundle = appBundle;
         this.ctxs = ctxs;
+    }
+
+    public static <K extends Connection<T>, T, C extends NetworkAppConfig> Builder<K, T, C> ofConfiguration(C config) {
+        return new Builder(null, null, config);
     }
 
     public static <K extends Connection<T>, T> ConnectionTypeStep<T> ofType(final Class<T> type) {
@@ -135,16 +139,16 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
 
     private static class Builder<K extends Connection<T>, T, C extends NetworkAppConfig> implements NetworkStack.Builder<K, T, C> {
 
-        private final Class<T> type;
-        private final Class<K> connectionType;
+        // private final Class<T> type;
+        // private final Class<K> connectionType;
         private final C config;
         private NetworkApplication application;
         private List<ConnectionContext> ctxs;
         private AppBundle<K, T> appBundle;
 
         private Builder(final Class<T> type, final Class<K> connectionType, final C config) {
-            this.type = type;
-            this.connectionType = connectionType;
+            // this.type = type;
+            // this.connectionType = connectionType;
             this.config = config;
         }
 
@@ -172,31 +176,36 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
 
         @Override
         public NetworkStack<K, T, C> build() {
-            ensureNotNull(application, "You must specify the Sip Application");
-            final var bundle = appBundle != null ? appBundle : new EmptyAppBundle<K, T>(type, connectionType);
-            return new NettyNetworkStack(type, connectionType, config, application, bundle, ctxs);
+            ensureNotNull(application, "You must specify the actual Application");
+            final var bundle = appBundle != null ? appBundle : new EmptyAppBundle<K, T>();
+            // return new NettyNetworkStack(type, connectionType, config, application, bundle, ctxs);
+            return new NettyNetworkStack(config, application, bundle, ctxs);
         }
     }
 
     private static class EmptyAppBundle<K extends Connection<T>, T> implements AppBundle<K, T> {
-        private final Class<T> type;
-        private final Class<K> connectionType;
+        // private final Class<T> type;
+        // private final Class<K> connectionType;
 
-        private EmptyAppBundle(final Class<T> type, final Class<K> connectionType) {
-            this.type = type;
-            this.connectionType = connectionType;
+        // private EmptyAppBundle(final Class<T> type, final Class<K> connectionType) {
+        private EmptyAppBundle() {
+            // this.type = type;
+            // this.connectionType = connectionType;
         }
-
 
         @Override
         public Class<T> getType() {
-            return type;
+            // return type;
+            return null;
         }
 
+        /*
         @Override
         public Class<K> getConnectionType() {
-            return connectionType;
+            // return connectionType;
+            return null;
         }
+         */
 
         @Override
         public Optional<Module> getObjectMapModule() {

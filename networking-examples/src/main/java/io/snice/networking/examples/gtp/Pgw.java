@@ -3,9 +3,9 @@ package io.snice.networking.examples.gtp;
 import io.snice.codecs.codec.gtp.GtpMessage;
 import io.snice.codecs.codec.gtp.GtpSerializationFactory;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
+import io.snice.networking.app.BasicNetworkApplication;
 import io.snice.networking.app.Environment;
 import io.snice.networking.app.MessagePipe;
-import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
@@ -13,7 +13,7 @@ import io.snice.networking.common.ConnectionId;
 import static io.snice.networking.app.MessagePipe.match;
 
 
-public class Pgw extends NetworkApplication<Connection<GtpMessage>, GtpMessage, GtpConfig> {
+public class Pgw extends BasicNetworkApplication<GtpMessage, GtpConfig> {
 
     private static final MessagePipe<Connection<GtpMessage>, Gtp2Message, Gtp2Message> echo;
     private static final MessagePipe<Connection<GtpMessage>, Gtp2Message, Gtp2Message> csr;
@@ -38,7 +38,7 @@ public class Pgw extends NetworkApplication<Connection<GtpMessage>, GtpMessage, 
 
 
     public Pgw() {
-        super(GtpMessage.class, (Class<Connection<GtpMessage>>)null);
+        super(GtpMessage.class);
     }
 
     @Override

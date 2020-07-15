@@ -4,6 +4,7 @@ import io.netty.channel.ChannelHandler;
 import io.snice.networking.common.Transport;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -42,6 +43,14 @@ public interface ProtocolHandler {
         public Builder withTransport(final Transport transport) {
             assertNotNull(transport);
             transports.add(transport);
+            return this;
+        }
+
+        public Builder withTransports(final Transport... transports) {
+            if (transports == null) {
+                return this;
+            }
+            Arrays.stream(transports).forEach(this.transports::add);
             return this;
         }
 

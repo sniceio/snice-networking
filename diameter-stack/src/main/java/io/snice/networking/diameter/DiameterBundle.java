@@ -45,7 +45,6 @@ public class DiameterBundle implements AppBundle<Peer, DiameterMessage> {
                 .build();
 
         peerFactory = new DefaultPeerFactory(null);
-
     }
 
     @Override
@@ -53,10 +52,12 @@ public class DiameterBundle implements AppBundle<Peer, DiameterMessage> {
         return DiameterMessage.class;
     }
 
+    /*
     @Override
     public Class<Peer> getConnectionType() {
         return Peer.class;
     }
+     */
 
     @Override
     public void start() {
@@ -74,8 +75,6 @@ public class DiameterBundle implements AppBundle<Peer, DiameterMessage> {
     @Override
     public List<ProtocolHandler> getProtocolEncoders() {
         return List.of(encoder);
-                // .withHandler("diameter-codec-encoder", () -> new DiameterStreamEncoder(), Transport.tcp)
-                // .withHandler("diameter-code-decoder", () -> new DiameterMessageStreamDecoder2(), Transport.tcp)
     }
 
     @Override
