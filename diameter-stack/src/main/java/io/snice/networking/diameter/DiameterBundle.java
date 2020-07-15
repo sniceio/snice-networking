@@ -65,6 +65,11 @@ public class DiameterBundle implements AppBundle<Peer, DiameterMessage> {
     }
 
     @Override
+    public void stop() {
+        logger.info("Stopping diameter stack");
+    }
+
+    @Override
     public Optional<Module> getObjectMapModule() {
         final SimpleModule module = new SimpleModule();
         module.addDeserializer(ProductName.class, new StandardAvpDeserializer<>(ProductName::of));

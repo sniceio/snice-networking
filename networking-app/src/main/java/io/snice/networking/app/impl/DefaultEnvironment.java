@@ -27,8 +27,6 @@ public class DefaultEnvironment <K extends Connection<T>, T, C extends NetworkAp
 
     @Override
     public CompletionStage<Connection<T>> connect(final Transport transport, final InetSocketAddress remoteAddress) throws IllegalTransportException {
-        // TODO: here is where we need to probably convert into the specific connection type
-        // or actually, the stack should probably do that.
         return stack.connect(transport, remoteAddress);
     }
 }

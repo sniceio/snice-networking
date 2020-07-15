@@ -3,8 +3,6 @@ package io.snice.networking.app;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.snice.buffer.Buffer;
-import io.snice.codecs.codec.SerializationFactory;
 import io.snice.generics.Generics;
 import io.snice.networking.app.impl.DefaultEnvironment;
 import io.snice.networking.app.impl.NettyBootstrap;
@@ -16,9 +14,6 @@ import io.snice.preconditions.PreConditions;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Optional;
-
-import static io.snice.preconditions.PreConditions.assertNotNull;
 
 public abstract class NetworkApplication<K extends Connection<T>, T, C extends NetworkAppConfig> {
 
@@ -89,17 +84,6 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
         initialize(bootstrap);
         final List<ConnectionContext> connectionContexts = bootstrap.getConnectionContexts();
 
-        // TODO: will probably do it differently... better to make use of
-        // Netty pipelines, which locks the various things down a little to Netty
-        // but whatever. Probably won't integrating with another framework anyway.
-        // Thinking about doing some kind of "CodecBundle" where you configure
-        // all of those etc etc. Then we can have a NettyCodecBundle
-        // final SerializationFactory<T> serializationFactory = ensureSerializationFactory(bootstrap);
-
-
-        // final var builder = NetworkStack.ofType(type)
-        // .withConnectionType(connectionType)
-        // .withConfiguration(config)
         final NetworkStack.Builder<K, T, C> builder = NetworkStack.withConfiguration(config);
         builder.withConnectionContexts(connectionContexts);
         builder.withApplication(this);
@@ -127,33 +111,11 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
         run(config, args);
     }
 
-    /*
-    private SerializationFactory<T> ensureSerializationFactory(final NettyBootstrap<K, T, C> bootstrap) {
-        final var factory = bootstrap.getSerializationFactory();
-        if (factory != null) {
-            return factory;
-        }
-
-        return (SerializationFactory<T>)findDefaultSerializationFactory();
-    }
-     */
-
-    /*
-    private SerializationFactory<?> findDefaultSerializationFactory() {
-        if (type == String.class) {
-            return () -> b -> Optional.of(b.toString());
-        }
-
-        if (type == Buffer.class) {
-            return () -> Optional::of;
-        }
-
-        throw new IllegalArgumentException("You must specify the framer factory in order to convert the incoming byte" +
-                "stream across the network into your network stacks object type of " + type.getSimpleName());
-    }
-     */
 
     private Environment<K, T, C> buildEnvironment(final NetworkStack<K, T, C> stack, final NettyBootstrap<K, T, C> bootstrap) {
+        // TODO: perhaps call the bundle here in case that want to create another environment
+        // bundle.createEnvironment(...)
+        // and
         return new DefaultEnvironment(stack, bootstrap.getConfiguration());
     }
 
