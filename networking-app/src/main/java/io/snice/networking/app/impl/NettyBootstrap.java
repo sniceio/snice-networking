@@ -1,23 +1,14 @@
 package io.snice.networking.app.impl;
 
 import io.snice.codecs.codec.SerializationFactory;
-import io.snice.networking.app.ConnectionContext;
+import io.snice.networking.app.*;
 import io.snice.networking.app.ConnectionContext.MessageProcessingBuilder;
-import io.snice.networking.app.MessagePipe;
-import io.snice.networking.app.NetworkAppConfig;
-import io.snice.networking.app.NetworkBootstrap;
-import io.snice.networking.app.SingleMessagePipe;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.BiPredicate;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 import java.util.stream.Collectors;
 
 import static io.snice.preconditions.PreConditions.assertArgument;
@@ -73,13 +64,11 @@ public class NettyBootstrap<K extends Connection<T>, T, C extends NetworkAppConf
         }
 
         public ConnectionContext<K, T> build() {
-            System.out.println("Building the connection context");
             final List<MessagePipe<K, T, ?>> rules;
             if (confBuilderConsumer != null) {
                 final ConfBuilder b = new ConfBuilder();
                 confBuilderConsumer.accept(b);
                 rules = b.getRules();
-                System.out.println("The rules are: " + rules);
             } else {
                 rules = List.of();
             }

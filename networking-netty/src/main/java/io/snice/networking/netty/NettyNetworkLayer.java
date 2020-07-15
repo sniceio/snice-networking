@@ -5,12 +5,7 @@ package io.snice.networking.netty;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.SocketChannel;
@@ -28,26 +23,15 @@ import io.snice.time.SystemClock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Optional;
+import java.net.*;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
 
-import static io.snice.preconditions.PreConditions.assertNotNull;
-import static io.snice.preconditions.PreConditions.ensureNotEmpty;
-import static io.snice.preconditions.PreConditions.ensureNotNull;
+import static io.snice.preconditions.PreConditions.*;
 
 /**
  * The {@link NettyNetworkLayer} is the glue between the network (netty) and
@@ -303,25 +287,36 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
             final Clock clock = this.clock != null ? this.clock : new SystemClock();
 
             final List<NettyNetworkInterface.Builder> builders = new ArrayList<>();
-            if (this.ifs.isEmpty()) {
-                final Inet4Address address = findPrimaryAddress();
-                final String ip = address.getHostAddress();
-                throw new IllegalArgumentException("Sorry, but I haven't finished implementing this so you have to " +
-                        "specify at least one listening point in your configuration");
-            } else {
-                this.ifs.forEach(i -> {
-                    final NettyNetworkInterface.Builder ifBuilder = NettyNetworkInterface.with(i);
-                    ifBuilder.udpBootstrap(ensureUDPBootstrap());
-                    ifBuilder.tcpBootstrap(ensureTCPBootstrap());
-                    ifBuilder.tcpServerBootstrap(ensureTCPServerBootstrap(clock, i.getVipAddress()));
-                    builders.add(ifBuilder);
-                });
-            }
+            final var interfaces = ifs.isEmpty() ? createDefaultNetworkInterfaceListeningPoint() : ifs;
+            interfaces.forEach(i -> {
+                final NettyNetworkInterface.Builder ifBuilder = NettyNetworkInterface.with(i);
+                ifBuilder.udpBootstrap(ensureUDPBootstrap());
+                ifBuilder.tcpBootstrap(ensureTCPBootstrap());
+                ifBuilder.tcpServerBootstrap(ensureTCPServerBootstrap(clock, i.getVipAddress()));
+                builders.add(ifBuilder);
+            });
 
             final CountDownLatch latch = new CountDownLatch(builders.size());
             final List<NettyNetworkInterface> ifs = new ArrayList<>();
             builders.forEach(ifBuilder -> ifs.add(ifBuilder.latch(latch).build()));
             return new NettyNetworkLayer(latch, Collections.unmodifiableList(ifs));
+        }
+
+        private List<NetworkInterfaceConfiguration> createDefaultNetworkInterfaceListeningPoint() {
+            try {
+                final Inet4Address address = findPrimaryAddress();
+                final String ip = address.getHostAddress();
+                final String interfaceName = "default";
+                final URI listen = new URI("whatever://" + ip + ":7777");
+                final NetworkInterfaceConfiguration tcp
+                        = new NetworkInterfaceConfiguration(interfaceName, listen, null, Transport.tcp);
+                final NetworkInterfaceConfiguration udp
+                        = new NetworkInterfaceConfiguration(interfaceName, listen, null, Transport.udp);
+                return List.of(tcp, udp);
+            } catch (final Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException("unable to find suitable local interface");
+            }
         }
 
         private Bootstrap ensureUDPBootstrap() {
@@ -331,8 +326,8 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
             if (this.bootstrap == null) {
                 final Bootstrap b = new Bootstrap();
                 b.group(this.udpGroup)
-                .channel(NioDatagramChannel.class)
-                .handler(new ChannelInitializer<DatagramChannel>() {
+                        .channel(NioDatagramChannel.class)
+                        .handler(new ChannelInitializer<DatagramChannel>() {
                     @Override
                     protected void initChannel(final DatagramChannel ch) throws Exception {
                         final ChannelPipeline pipeline = ch.pipeline();

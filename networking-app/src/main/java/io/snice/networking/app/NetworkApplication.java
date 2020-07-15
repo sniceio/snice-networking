@@ -11,6 +11,7 @@ import io.snice.networking.app.impl.NettyBootstrap;
 import io.snice.networking.common.Connection;
 import io.snice.networking.config.NetworkInterfaceConfiguration;
 import io.snice.networking.config.NetworkInterfaceDeserializer;
+import io.snice.preconditions.PreConditions;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -21,22 +22,43 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
 
 public abstract class NetworkApplication<K extends Connection<T>, T, C extends NetworkAppConfig> {
 
-    private final Class<T> type;
-    private final Class<K> connectionType;
+    // private final Class<T> type;
+    // private final Class<K> connectionType;
     private Environment<K, T, C> env;
-    private final Optional<AppBundle<K, T>> bundle;
+    private final AppBundle<K, T> bundle;
 
-    public NetworkApplication(final Class<T> type, final Class<K> connectionType) {
+    /**
+     * Constructor that assumes that the connection type is
+     * just the regular base {@link Connection} object and not
+     * a specific sub-class (such as Peer for Diameter)
+     *
+     * @param type
+     */
+    /*
+    public NetworkApplication(final Class<T> type) {
+        // scap this. regular network application needs a bundle and that's is
+            // then the basic networking app can figure out the basic bundles
         assertNotNull(type, "The type cannot be null");
-        this.type = type;
-        this.connectionType = connectionType;
-        this.bundle = Optional.empty();
+        // this.type = type;
+        // this.connectionType = null;
+        this.bundle = null;
     }
 
+     */
+
+    /*
+    public NetworkApplication(final Class<T> type, final Class<K> connectionType) {
+        assertNotNull(type, "The type cannot be null");
+        assertNotNull(connectionType, "The type cannot be null");
+        // this.type = type;
+        // this.connectionType = connectionType;
+        this.bundle = null;
+    }
+     */
+
     public NetworkApplication(final AppBundle<K, T> bundle) {
-        this.bundle = Optional.of(bundle);
-        this.type = bundle.getType();
-        this.connectionType = bundle.getConnectionType();
+        PreConditions.assertNotNull(bundle, "The app bundle cannot be null");
+        this.bundle = bundle;
     }
 
     public void run(final C configuration, final Environment<K, T, C> environment) {
@@ -74,12 +96,14 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
         // all of those etc etc. Then we can have a NettyCodecBundle
         // final SerializationFactory<T> serializationFactory = ensureSerializationFactory(bootstrap);
 
-        final var builder = NetworkStack.ofType(type)
-                .withConnectionType(connectionType)
-                .withConfiguration(config)
-                .withConnectionContexts(connectionContexts)
-                .withApplication(this);
-        bundle.ifPresent(builder::withAppBundle);
+
+        // final var builder = NetworkStack.ofType(type)
+        // .withConnectionType(connectionType)
+        // .withConfiguration(config)
+        final NetworkStack.Builder<K, T, C> builder = NetworkStack.withConfiguration(config);
+        builder.withConnectionContexts(connectionContexts);
+        builder.withApplication(this);
+        builder.withAppBundle(bundle);
 
         final var network = builder.build();
 
@@ -90,6 +114,7 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
         run(config, env); // TODO: app can throw exception. Handle it.
         network.sync();
     }
+
     /**
      * Call this method from your {@code public static void main} entry point
      * into your application.
@@ -102,6 +127,7 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
         run(config, args);
     }
 
+    /*
     private SerializationFactory<T> ensureSerializationFactory(final NettyBootstrap<K, T, C> bootstrap) {
         final var factory = bootstrap.getSerializationFactory();
         if (factory != null) {
@@ -110,7 +136,9 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
 
         return (SerializationFactory<T>)findDefaultSerializationFactory();
     }
+     */
 
+    /*
     private SerializationFactory<?> findDefaultSerializationFactory() {
         if (type == String.class) {
             return () -> b -> Optional.of(b.toString());
@@ -123,6 +151,7 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
         throw new IllegalArgumentException("You must specify the framer factory in order to convert the incoming byte" +
                 "stream across the network into your network stacks object type of " + type.getSimpleName());
     }
+     */
 
     private Environment<K, T, C> buildEnvironment(final NetworkStack<K, T, C> stack, final NettyBootstrap<K, T, C> bootstrap) {
         return new DefaultEnvironment(stack, bootstrap.getConfiguration());
@@ -141,9 +170,7 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
         module.addDeserializer(NetworkInterfaceConfiguration.class, new NetworkInterfaceDeserializer());
         mapper.registerModule(module);
 
-
-        bundle.flatMap(AppBundle::getObjectMapModule).ifPresent(mapper::registerModule);
-
+        bundle.getObjectMapModule().ifPresent(mapper::registerModule);
         return mapper.readValue(stream, getConfigurationClass());
     }
 

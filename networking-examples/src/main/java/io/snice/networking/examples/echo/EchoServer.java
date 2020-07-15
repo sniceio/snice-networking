@@ -1,5 +1,6 @@
 package io.snice.networking.examples.echo;
 
+import io.snice.networking.app.BasicNetworkApplication;
 import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
@@ -16,11 +17,10 @@ import io.snice.networking.common.Connection;
  * it finds to match, it has a default match-all that does the echo part.
  *
  */
-public class EchoServer extends NetworkApplication<Connection<String>, String, NetworkAppConfig> {
+public class EchoServer extends BasicNetworkApplication<String, NetworkAppConfig> {
 
     public EchoServer() {
-        // TODO: how do you do this?
-        super(String.class, (Class<Connection<String>>)null);
+        super(String.class);
     }
 
     @Override
@@ -32,6 +32,6 @@ public class EchoServer extends NetworkApplication<Connection<String>, String, N
     }
 
     public static void main(final String... args) throws Exception {
-        new EchoServer().run(args);
+        new EchoServer().run(new NetworkAppConfig());
     }
 }

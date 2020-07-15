@@ -31,6 +31,9 @@ public interface NetworkStack<K extends Connection<T>, T, C extends NetworkAppCo
         <K extends Connection<T>> ConfigurationStep<K, T> withConnectionType(Class<K> type);
     }
 
+    static <K extends Connection<T>, T, C extends NetworkAppConfig> Builder<K, T, C> withConfiguration(C config) {
+        return NettyNetworkStack.ofConfiguration(config);
+    }
 
     interface ConfigurationStep<K extends Connection<T>, T> {
         <C extends NetworkAppConfig> Builder<K, T, C> withConfiguration(C config);

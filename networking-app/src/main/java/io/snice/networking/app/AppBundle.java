@@ -14,7 +14,7 @@ public interface AppBundle<K extends Connection<T>, T> {
 
     Class<T> getType();
 
-    Class<K> getConnectionType();
+    // Class<K> getConnectionType();
 
     /**
      * An application may need to register it's own

@@ -1,5 +1,6 @@
 package io.snice.networking.examples.echo;
 
+import io.snice.networking.app.BasicNetworkApplication;
 import io.snice.networking.app.Environment;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
@@ -17,10 +18,10 @@ import io.snice.networking.common.Transport;
  * it finds to match, it has a default match-all that does the echo part.
  *
  */
-public class EchoClient extends NetworkApplication<Connection<String>, String, EchoClientConfig> {
+public class EchoClient extends BasicNetworkApplication<String, EchoClientConfig> {
 
     public EchoClient() {
-        super(String.class, (Class<Connection<String>>)null);
+        super(String.class);
     }
 
     @Override
