@@ -7,13 +7,13 @@ import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
 import io.snice.networking.diameter.Peer;
-import io.snice.preconditions.PreConditions;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Optional;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
+import static io.snice.preconditions.PreConditions.ensureNotNull;
 
 public class PeerConnectionWrapper implements Peer {
     private final Connection<DiameterMessage> actualConnection;
@@ -26,6 +26,14 @@ public class PeerConnectionWrapper implements Peer {
     @Override
     public OriginHost getOriginHost() {
         return null;
+    }
+
+    @Override
+    public void send(final DiameterMessage.Builder msg) {
+        ensureNotNull(msg, "You cannot send a null message");
+        // TODO: check if we are to add the origin host and realm
+        // to this message
+        send(msg.build());
     }
 
     private PeerConnectionWrapper(final Connection<DiameterMessage> actualConnection) {

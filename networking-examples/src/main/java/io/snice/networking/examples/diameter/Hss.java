@@ -67,8 +67,7 @@ public class Hss extends NetworkApplication<Peer, DiameterMessage, HssConfig> {
 
     private static final void processULR(final Peer peer, final DiameterMessage ulr) {
         final var ula = ulr.createAnswer(ResultCode.DiameterErrorUserUnknown5032)
-                .withAvp(ExperimentalResultCode.DiameterErrorUserUnknown5001)
-                .build();
+                .withAvp(ExperimentalResultCode.DiameterErrorUserUnknown5001);
         peer.send(ula);
     }
 

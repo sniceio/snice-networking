@@ -1,21 +1,15 @@
 package io.snice.networking.app.impl;
 
-import com.fasterxml.jackson.databind.Module;
-import io.hektor.fsm.Data;
 import io.netty.channel.ChannelHandler;
-import io.snice.codecs.codec.SerializationFactory;
-import io.snice.networking.app.AppBundle;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkStack;
+import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
-import io.snice.networking.common.fsm.FsmFactory;
-import io.snice.networking.common.fsm.NetworkContext;
 import io.snice.networking.netty.NettyNetworkLayer;
-import io.snice.networking.netty.ProtocolHandler;
 import io.snice.time.Clock;
 import io.snice.time.SystemClock;
 
@@ -24,9 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
-import static io.snice.preconditions.PreConditions.assertArgument;
-import static io.snice.preconditions.PreConditions.assertNotNull;
-import static io.snice.preconditions.PreConditions.ensureNotNull;
+import static io.snice.preconditions.PreConditions.*;
 
 @ChannelHandler.Sharable
 public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppConfig> implements NetworkStack<K, T, C> {
@@ -38,23 +30,23 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
     private final List<ConnectionContext<K, T>> ctxs;
     private NettyNetworkLayer network;
     private final Clock clock = new SystemClock();
-    private final AppBundle<K, T> appBundle;
+    private final ProtocolBundle<K, T> protocolBundle;
 
     private NettyNetworkStack(// final Class<T> type,
                               // final Class<K> connectionType,
                               final C config,
                               final NetworkApplication<K, T, C> app,
-                              final AppBundle<K, T> appBundle,
+                              final ProtocolBundle<K, T> protocolBundle,
                               final List<ConnectionContext<K, T>> ctxs) {
         // this.type = type;
         // this.connectionType = connectionType;
         this.config = config;
         this.app = app;
-        this.appBundle = appBundle;
+        this.protocolBundle = protocolBundle;
         this.ctxs = ctxs;
     }
 
-    public static <K extends Connection<T>, T, C extends NetworkAppConfig> Builder<K, T, C> ofConfiguration(C config) {
+    public static <K extends Connection<T>, T, C extends NetworkAppConfig> Builder<K, T, C> ofConfiguration(final C config) {
         return new Builder(null, null, config);
     }
 
@@ -62,11 +54,11 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
         assertNotNull(type, "The type cannot be null");
         return new ConnectionTypeStep<T>() {
             @Override
-            public <K extends Connection<T>> ConfigurationStep<K, T> withConnectionType(Class<K> connectionType) {
+            public <K extends Connection<T>> ConfigurationStep<K, T> withConnectionType(final Class<K> connectionType) {
                 assertNotNull(connectionType, "The connection type cannot be null");
                 return new ConfigurationStep<K, T>() {
                     @Override
-                    public <C extends NetworkAppConfig> NetworkStack.Builder<K, T, C> withConfiguration(C config) {
+                    public <C extends NetworkAppConfig> NetworkStack.Builder<K, T, C> withConfiguration(final C config) {
                         assertNotNull(config, "The configuration for the network stack cannot be null");
                         return new Builder(type, connectionType, config);
                     }
@@ -80,7 +72,7 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
     public void start() {
 
 
-        final var appLayer = new NettyApplicationLayer(appBundle);
+        final var appLayer = new NettyApplicationLayer(protocolBundle);
         // final var diameterConf = new DiameterConfig();
         // final var fsmFactory = PeerFactory.createDefault(diameterConf);
 
@@ -94,10 +86,10 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
         // TODO: so perhaps
         // TODO: config.getNetworkInterfaces().stream().groupBy(schema).collect();
         // TODO: and then
-        var builder = NettyNetworkLayer.with(config.getNetworkInterfaces())
+        final var builder = NettyNetworkLayer.with(config.getNetworkInterfaces())
 
-                .withHandler(appBundle.getProtocolEncoders())
-                .withHandler(appBundle.getProtocolDecoders())
+                .withHandler(protocolBundle.getProtocolEncoders())
+                .withHandler(protocolBundle.getProtocolDecoders())
                 .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, Optional.empty(), ctxs), Transport.udp)
                 .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, Optional.empty(), ctxs), Transport.tcp);
                 // .withHandler("tcp-adapter-outbound", () -> new NettyTcpOutboundAdapter<>(clock, serializationFactory, Optional.empty(), ctxs), Transport.tcp)
@@ -108,8 +100,8 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
                 // one for the entire stack will be dependent on the actual need of the implementation.
 
         // TODO: need to ensure that the FSM factory is for a particular transport too
-        appBundle.getFsmFactory().ifPresent(fsmFactory -> {
-                builder.withHandler("fsm-layer", () -> new NettyFsmLayer(fsmFactory), Transport.tcp);
+        protocolBundle.getFsmFactory().ifPresent(fsmFactory -> {
+            builder.withHandler("fsm-layer", () -> new NettyFsmLayer(fsmFactory), Transport.tcp);
         });
 
         // App layer is not optional so it will always be injected but it will need to be configured by
@@ -119,7 +111,7 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
                 .build();
 
         network.start();
-        appBundle.start();
+        protocolBundle.start();
     }
 
     @Override
@@ -144,7 +136,7 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
         private final C config;
         private NetworkApplication application;
         private List<ConnectionContext> ctxs;
-        private AppBundle<K, T> appBundle;
+        private ProtocolBundle<K, T> protocolBundle;
 
         private Builder(final Class<T> type, final Class<K> connectionType, final C config) {
             // this.type = type;
@@ -160,9 +152,9 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
         }
 
         @Override
-        public NetworkStack.Builder<K, T, C> withAppBundle(final AppBundle<K, T> bundle) {
+        public NetworkStack.Builder<K, T, C> withAppBundle(final ProtocolBundle<K, T> bundle) {
             assertNotNull(bundle, "The application bundle cannot be null");
-            this.appBundle = bundle;
+            this.protocolBundle = bundle;
             return this;
         }
 
@@ -177,59 +169,9 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
         @Override
         public NetworkStack<K, T, C> build() {
             ensureNotNull(application, "You must specify the actual Application");
-            final var bundle = appBundle != null ? appBundle : new EmptyAppBundle<K, T>();
-            // return new NettyNetworkStack(type, connectionType, config, application, bundle, ctxs);
-            return new NettyNetworkStack(config, application, bundle, ctxs);
+            ensureNotNull(protocolBundle, "You must specify the application bundle");
+            return new NettyNetworkStack(config, application, protocolBundle, ctxs);
         }
     }
 
-    private static class EmptyAppBundle<K extends Connection<T>, T> implements AppBundle<K, T> {
-        // private final Class<T> type;
-        // private final Class<K> connectionType;
-
-        // private EmptyAppBundle(final Class<T> type, final Class<K> connectionType) {
-        private EmptyAppBundle() {
-            // this.type = type;
-            // this.connectionType = connectionType;
-        }
-
-        @Override
-        public Class<T> getType() {
-            // return type;
-            return null;
-        }
-
-        /*
-        @Override
-        public Class<K> getConnectionType() {
-            // return connectionType;
-            return null;
-        }
-         */
-
-        @Override
-        public Optional<Module> getObjectMapModule() {
-            return Optional.empty();
-        }
-
-        @Override
-        public List<ProtocolHandler> getProtocolEncoders() {
-            return List.of();
-        }
-
-        @Override
-        public List<ProtocolHandler> getProtocolDecoders() {
-            return List.of();
-        }
-
-        @Override
-        public K wrapConnection(Connection<T> connection) {
-            return (K)connection;
-        }
-
-        @Override
-        public <S extends Enum<S>, C extends NetworkContext<T>, D extends Data> Optional<FsmFactory<T, S, C, D>> getFsmFactory() {
-            return Optional.empty();
-        }
-    }
 }

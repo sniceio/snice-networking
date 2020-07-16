@@ -1,9 +1,8 @@
-package io.snice.networking.app.bundles;
+package io.snice.networking.bundles;
 
 import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
-import io.snice.networking.app.AppBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
 import io.snice.networking.netty.ProtocolHandler;
@@ -12,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * A simple {@link AppBundle} for applications (probably only simple test apps) that only
+ * A simple {@link ProtocolBundle} for applications (probably only simple test apps) that only
  * deal with sending/receiving Strings over a network.
  */
 public class StringBundle extends BundleSupport<Connection<String>, String> {
@@ -39,6 +38,11 @@ public class StringBundle extends BundleSupport<Connection<String>, String> {
                 .build();
 
         decoders = List.of(frameDecoder, stringDecoder);
+    }
+
+    @Override
+    public String getBundleName() {
+        return "StringBundle";
     }
 
     @Override

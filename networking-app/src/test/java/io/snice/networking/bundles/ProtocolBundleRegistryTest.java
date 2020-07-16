@@ -1,5 +1,8 @@
-package io.snice.networking.app;
+package io.snice.networking.bundles;
 
+import io.snice.networking.bundles.ProtocolBundleRegistry;
+import org.hamcrest.CoreMatchers;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -7,13 +10,13 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
-public class AppBundleRegistryTest {
+public class ProtocolBundleRegistryTest {
 
-    private AppBundleRegistry registry;
+    private ProtocolBundleRegistry registry;
 
     @Before
     public void setup() {
-        registry = AppBundleRegistry.getDefaultRegistry();
+        registry = ProtocolBundleRegistry.getDefaultRegistry();
     }
 
     @Test(expected = IllegalArgumentException.class)

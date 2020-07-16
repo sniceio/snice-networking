@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DiameterConfig {
+
     private ProductName productName;
     private VendorId vendorId;
     private String productVersion;
