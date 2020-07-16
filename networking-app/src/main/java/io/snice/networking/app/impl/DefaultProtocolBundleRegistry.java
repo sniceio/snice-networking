@@ -1,40 +1,41 @@
 package io.snice.networking.app.impl;
 
-import io.snice.networking.app.AppBundle;
-import io.snice.networking.app.AppBundleRegistry;
-import io.snice.networking.app.bundles.StringBundle;
+import io.snice.networking.bundles.ProtocolBundle;
+import io.snice.networking.bundles.ProtocolBundleRegistry;
+import io.snice.networking.bundles.StringBundle;
 import io.snice.networking.common.Connection;
-import io.snice.preconditions.PreConditions;
 
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static io.snice.preconditions.PreConditions.*;
+import static io.snice.preconditions.PreConditions.assertNotNull;
+import static io.snice.preconditions.PreConditions.checkIfNotEmpty;
 
-public class DefaultAppBundleRegistry implements AppBundleRegistry {
+public class DefaultProtocolBundleRegistry implements ProtocolBundleRegistry {
 
-    private final Map<Class, AppBundle<? extends Connection<?>, ?>> bundles = new HashMap<>();
+    private final Map<Class, ProtocolBundle<? extends Connection<?>, ?>> bundles = new HashMap<>();
 
     // not sure this is doable actually.
-    private final Map<String, AppBundle<? extends Connection<?>, ?>> schemeBundles = new HashMap<>();
+    private final Map<String, ProtocolBundle<? extends Connection<?>, ?>> schemeBundles = new HashMap<>();
 
-    private static final AppBundleRegistry DEFAULT_REGISTRY = new DefaultAppBundleRegistry();
+    private static final ProtocolBundleRegistry DEFAULT_REGISTRY = new DefaultProtocolBundleRegistry();
 
     static {
         DEFAULT_REGISTRY.registerBundle(new StringBundle(), String.class, "str");
     }
 
-    public static AppBundleRegistry getDefaultRegistry() {
+    public static ProtocolBundleRegistry getDefaultRegistry() {
         return DEFAULT_REGISTRY;
     }
 
-    public <K extends Connection<T>, T> void registerBundle(final AppBundle<K, T> bundle, final Class klass) {
+    @Override
+    public <K extends Connection<T>, T> void registerBundle(final ProtocolBundle<K, T> bundle, final Class klass) {
         registerBundle(bundle, klass, null);
     }
 
-    public <K extends Connection<T>, T> void registerBundle(final AppBundle<K, T> bundle, final Class klass, final String scheme) {
+    @Override
+    public <K extends Connection<T>, T> void registerBundle(final ProtocolBundle<K, T> bundle, final Class klass, final String scheme) {
         assertNotNull(bundle, "The bundle cannot be null");
         assertNotNull(klass, "The Class cannot be null");
         bundles.put(klass, bundle);
@@ -44,9 +45,9 @@ public class DefaultAppBundleRegistry implements AppBundleRegistry {
     }
 
     @Override
-    public <K extends Connection<T>, T> Optional<AppBundle<K, T>> find(final Class<T> type) {
+    public <K extends Connection<T>, T> Optional<ProtocolBundle<K, T>> find(final Class<T> type) {
         assertNotNull(type, "The type cannot be null");
-        final AppBundle<K, T> bundle = (AppBundle<K, T>) bundles.get(type);
+        final ProtocolBundle<K, T> bundle = (ProtocolBundle<K, T>) bundles.get(type);
         return Optional.ofNullable(bundle);
     }
 

@@ -24,12 +24,12 @@ public interface Environment<K extends Connection<T>, T, C extends NetworkAppCon
      *
      * @param remoteAddress
      * @param transport
-     * @return a {@link CompletionStage} that, once completed, will contain the {@link } that
-     *         is connected to the remote address.
+     * @return a {@link CompletionStage} that, once completed, will contain the {@link Connection} that
+     * is connected to the remote address.
      * @throws IllegalTransportException in case the underlying {@link NetworkStack} isn't configured with
-     *         the specified {@link Transport}
+     *                                   the specified {@link Transport}
      */
-    CompletionStage<Connection<T>> connect(Transport transport, InetSocketAddress remoteAddress)
+    CompletionStage<K> connect(Transport transport, InetSocketAddress remoteAddress)
             throws IllegalTransportException;
 
     /**
@@ -50,10 +50,9 @@ public interface Environment<K extends Connection<T>, T, C extends NetworkAppCon
      * @throws IllegalArgumentException  in case the remote host is null or the empty string or if the remote IP
      *                                   is not within a valid port range.
      */
-    default CompletionStage<Connection<T>> connect(final Transport transport, final String remoteHost, final int remoteIp)
+    default CompletionStage<K> connect(final Transport transport, final String remoteHost, final int remoteIp)
             throws IllegalTransportException, IllegalArgumentException {
         assertNotEmpty(remoteHost, "The remote host cannot be null or the empty string");
-        // return connect(transport, InetSocketAddress.createUnresolved(remoteHost, remoteIp));
         return connect(transport, new InetSocketAddress(remoteHost, remoteIp));
     }
 

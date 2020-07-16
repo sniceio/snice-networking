@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.snice.generics.Generics;
-import io.snice.networking.app.impl.DefaultEnvironment;
 import io.snice.networking.app.impl.NettyBootstrap;
+import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.config.NetworkInterfaceConfiguration;
 import io.snice.networking.config.NetworkInterfaceDeserializer;
@@ -15,19 +15,20 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
 
+import static io.snice.preconditions.PreConditions.ensureNotNull;
+
 public abstract class NetworkApplication<K extends Connection<T>, T, C extends NetworkAppConfig> {
 
     // private final Class<T> type;
     // private final Class<K> connectionType;
     private Environment<K, T, C> env;
-    private final AppBundle<K, T> bundle;
+    private final ProtocolBundle<K, T> bundle;
 
     /**
      * Constructor that assumes that the connection type is
      * just the regular base {@link Connection} object and not
      * a specific sub-class (such as Peer for Diameter)
      *
-     * @param type
      */
     /*
     public NetworkApplication(final Class<T> type) {
@@ -50,8 +51,7 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
         this.bundle = null;
     }
      */
-
-    public NetworkApplication(final AppBundle<K, T> bundle) {
+    public NetworkApplication(final ProtocolBundle<K, T> bundle) {
         PreConditions.assertNotNull(bundle, "The app bundle cannot be null");
         this.bundle = bundle;
     }
@@ -90,8 +90,9 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
         builder.withAppBundle(bundle);
 
         final var network = builder.build();
-
-        env = buildEnvironment(network, bootstrap);
+        env = bundle.createEnvironment(network, bootstrap.getConfiguration());
+        ensureNotNull(env, "Bundle \"" + bundle.getBundleName()
+                + "\" produced a null value for the Environment. Stack is shutting down");
         network.start();
 
         // call application
@@ -109,14 +110,6 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
 
         final C config = loadConfiguration(args[1]);
         run(config, args);
-    }
-
-
-    private Environment<K, T, C> buildEnvironment(final NetworkStack<K, T, C> stack, final NettyBootstrap<K, T, C> bootstrap) {
-        // TODO: perhaps call the bundle here in case that want to create another environment
-        // bundle.createEnvironment(...)
-        // and
-        return new DefaultEnvironment(stack, bootstrap.getConfiguration());
     }
 
     protected Class<C> getConfigurationClass() {

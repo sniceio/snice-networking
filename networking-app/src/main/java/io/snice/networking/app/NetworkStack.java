@@ -1,8 +1,8 @@
 package io.snice.networking.app;
 
 import io.snice.buffer.Buffer;
-import io.snice.codecs.codec.SerializationFactory;
 import io.snice.networking.app.impl.NettyNetworkStack;
+import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
@@ -31,7 +31,7 @@ public interface NetworkStack<K extends Connection<T>, T, C extends NetworkAppCo
         <K extends Connection<T>> ConfigurationStep<K, T> withConnectionType(Class<K> type);
     }
 
-    static <K extends Connection<T>, T, C extends NetworkAppConfig> Builder<K, T, C> withConfiguration(C config) {
+    static <K extends Connection<T>, T, C extends NetworkAppConfig> Builder<K, T, C> withConfiguration(final C config) {
         return NettyNetworkStack.ofConfiguration(config);
     }
 
@@ -83,7 +83,9 @@ public interface NetworkStack<K extends Connection<T>, T, C extends NetworkAppCo
 
     interface Builder<K extends Connection<T>, T, C extends NetworkAppConfig> {
         Builder<K, T, C> withApplication(NetworkApplication<K, T, C> application);
-        Builder<K, T, C> withAppBundle(AppBundle<K, T> bundle);
+
+        Builder<K, T, C> withAppBundle(ProtocolBundle<K, T> bundle);
+
         Builder<K, T, C> withConnectionContexts(List<ConnectionContext> ctxs);
         NetworkStack<K, T, C> build();
     }

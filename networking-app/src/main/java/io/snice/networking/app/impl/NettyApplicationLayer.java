@@ -3,8 +3,8 @@ package io.snice.networking.app.impl;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.snice.networking.app.AppBundle;
 import io.snice.networking.app.ConnectionContext;
+import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
 import io.snice.networking.common.event.IOEvent;
@@ -16,9 +16,9 @@ import org.slf4j.LoggerFactory;
 public class NettyApplicationLayer<K extends Connection<T>, T> extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyApplicationLayer.class);
-    private final AppBundle<K, T> bundle;
+    private final ProtocolBundle<K, T> bundle;
 
-    public NettyApplicationLayer(final AppBundle<K, T> bundle) {
+    public NettyApplicationLayer(final ProtocolBundle<K, T> bundle) {
         this.bundle = bundle;
     }
 

@@ -1,15 +1,14 @@
 package io.snice.networking.examples.diameter;
 
-import io.snice.buffer.Buffers;
-import io.snice.buffer.WritableBuffer;
 import io.snice.codecs.codec.diameter.DiameterMessage;
-import io.snice.codecs.codec.diameter.DiameterRequest;
-import io.snice.codecs.codec.diameter.avp.api.*;
-import io.snice.networking.app.*;
+import io.snice.codecs.codec.diameter.avp.api.ExperimentalResultCode;
+import io.snice.codecs.codec.diameter.avp.api.ResultCode;
+import io.snice.networking.app.BasicNetworkApplication;
+import io.snice.networking.app.Environment;
+import io.snice.networking.app.NetworkBootstrap;
+import io.snice.networking.bundles.ProtocolBundleRegistry;
 import io.snice.networking.common.Connection;
-import io.snice.networking.common.Transport;
 import io.snice.networking.diameter.DiameterBundle;
-import io.snice.networking.diameter.Peer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +22,8 @@ public class BasicHss extends BasicNetworkApplication<DiameterMessage, HssConfig
 
     private static final Logger logger = LoggerFactory.getLogger(BasicHss.class);
 
-    public BasicHss(final DiameterBundle bundle) {
-        super((AppBundle)bundle);
+    public BasicHss() {
+        super(DiameterMessage.class);
     }
 
     @Override
@@ -37,7 +36,6 @@ public class BasicHss extends BasicNetworkApplication<DiameterMessage, HssConfig
             b.match(DiameterMessage::isULR).consume(BasicHss::processULR);
             b.match(DiameterMessage::isULA).consume(BasicHss::processULA);
         });
-
     }
 
     private static final void processULR(final Connection<DiameterMessage> con, final DiameterMessage ulr) {
@@ -52,7 +50,11 @@ public class BasicHss extends BasicNetworkApplication<DiameterMessage, HssConfig
     }
 
     public static void main(final String... args) throws Exception {
-        final var hss = new BasicHss(new DiameterBundle());
+        // TODO: how to deal with this.
+        // TODO: perhaps via Java SPI - https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/ServiceLoader.html
+        ProtocolBundleRegistry.getDefaultRegistry().registerBundle(new DiameterBundle(), DiameterMessage.class);
+
+        final var hss = new BasicHss();
         hss.run("server", "networking-examples/src/main/resources/io/snice/networking/examples/Hss.yml");
     }
 }

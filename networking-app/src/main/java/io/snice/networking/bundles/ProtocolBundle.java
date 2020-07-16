@@ -1,7 +1,11 @@
-package io.snice.networking.app;
+package io.snice.networking.bundles;
 
 import com.fasterxml.jackson.databind.Module;
 import io.hektor.fsm.Data;
+import io.snice.networking.app.Environment;
+import io.snice.networking.app.NetworkAppConfig;
+import io.snice.networking.app.NetworkStack;
+import io.snice.networking.app.impl.DefaultEnvironment;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.fsm.FsmFactory;
 import io.snice.networking.common.fsm.NetworkContext;
@@ -10,14 +14,31 @@ import io.snice.networking.netty.ProtocolHandler;
 import java.util.List;
 import java.util.Optional;
 
-public interface AppBundle<K extends Connection<T>, T> {
+public interface ProtocolBundle<K extends Connection<T>, T> {
+
+    /**
+     * Just a human friendly name of this bundle. Only used for logging.
+     */
+    String getBundleName();
 
     Class<T> getType();
 
-    // Class<K> getConnectionType();
+    /**
+     * During the bootstrapping of the network application, the bundle is asked to
+     * create an appropriate {@link Environment}. Many stacks may not care to create
+     * a specific environment and as such, may be ok by using the {@link DefaultEnvironment}.
+     * If the bundle extends {@link BundleSupport}, by default, the {@link DefaultEnvironment}
+     * will be created and returned.
+     *
+     * @param stack         the underlying {@link NetworkStack}
+     * @param configuration the specific configuration of network application.
+     * @return
+     */
+    <C extends NetworkAppConfig> Environment<K, T, C> createEnvironment(final NetworkStack<K, T, C> stack, C configuration);
 
     /**
      * An application may need to register it's own
+     *
      * @return
      */
     Optional<Module> getObjectMapModule();
