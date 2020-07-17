@@ -1,5 +1,6 @@
 package io.snice.networking.app.impl;
 
+import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.bundles.ProtocolBundleRegistry;
 import io.snice.networking.bundles.StringBundle;
@@ -14,10 +15,10 @@ import static io.snice.preconditions.PreConditions.checkIfNotEmpty;
 
 public class DefaultProtocolBundleRegistry implements ProtocolBundleRegistry {
 
-    private final Map<Class, ProtocolBundle<? extends Connection<?>, ?>> bundles = new HashMap<>();
+    private final Map<Class, ProtocolBundle<? extends Connection<?>, ?, ? extends NetworkAppConfig>> bundles = new HashMap<>();
 
     // not sure this is doable actually.
-    private final Map<String, ProtocolBundle<? extends Connection<?>, ?>> schemeBundles = new HashMap<>();
+    private final Map<String, ProtocolBundle<? extends Connection<?>, ?, ? extends NetworkAppConfig>> schemeBundles = new HashMap<>();
 
     private static final ProtocolBundleRegistry DEFAULT_REGISTRY = new DefaultProtocolBundleRegistry();
 
@@ -30,12 +31,12 @@ public class DefaultProtocolBundleRegistry implements ProtocolBundleRegistry {
     }
 
     @Override
-    public <K extends Connection<T>, T> void registerBundle(final ProtocolBundle<K, T> bundle, final Class klass) {
+    public <K extends Connection<T>, T, C extends NetworkAppConfig> void registerBundle(final ProtocolBundle<K, T, C> bundle, final Class klass) {
         registerBundle(bundle, klass, null);
     }
 
     @Override
-    public <K extends Connection<T>, T> void registerBundle(final ProtocolBundle<K, T> bundle, final Class klass, final String scheme) {
+    public <K extends Connection<T>, T, C extends NetworkAppConfig> void registerBundle(final ProtocolBundle<K, T, C> bundle, final Class klass, final String scheme) {
         assertNotNull(bundle, "The bundle cannot be null");
         assertNotNull(klass, "The Class cannot be null");
         bundles.put(klass, bundle);
@@ -45,9 +46,9 @@ public class DefaultProtocolBundleRegistry implements ProtocolBundleRegistry {
     }
 
     @Override
-    public <K extends Connection<T>, T> Optional<ProtocolBundle<K, T>> find(final Class<T> type) {
+    public <K extends Connection<T>, T, C extends NetworkAppConfig> Optional<ProtocolBundle<K, T, C>> find(final Class<T> type) {
         assertNotNull(type, "The type cannot be null");
-        final ProtocolBundle<K, T> bundle = (ProtocolBundle<K, T>) bundles.get(type);
+        final ProtocolBundle<K, T, C> bundle = (ProtocolBundle<K, T, C>) bundles.get(type);
         return Optional.ofNullable(bundle);
     }
 

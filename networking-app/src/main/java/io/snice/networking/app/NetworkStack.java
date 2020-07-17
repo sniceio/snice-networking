@@ -23,21 +23,26 @@ public interface NetworkStack<K extends Connection<T>, T, C extends NetworkAppCo
      * @param <T>
      * @return
      */
-    static <T> ConnectionTypeStep<T> ofType(final Class<T> type) {
+    /*
+    static <T> ConfigurationStep<T> ofType(final Class<T> type) {
         return NettyNetworkStack.ofType(type);
     }
+     */
 
+    /*
     interface ConnectionTypeStep<T> {
         <K extends Connection<T>> ConfigurationStep<K, T> withConnectionType(Class<K> type);
     }
-
-    static <K extends Connection<T>, T, C extends NetworkAppConfig> Builder<K, T, C> withConfiguration(final C config) {
+     */
+    static <E extends Environment<K, T, C>, K extends Connection<T>, T, C extends NetworkAppConfig> Builder<E, K, T, C> withConfiguration(final C config) {
         return NettyNetworkStack.ofConfiguration(config);
     }
 
+    /*
     interface ConfigurationStep<K extends Connection<T>, T> {
         <C extends NetworkAppConfig> Builder<K, T, C> withConfiguration(C config);
     }
+     */
 
     /**
      * Start the stack. This will configure the underlying network, bind to all
@@ -81,12 +86,13 @@ public interface NetworkStack<K extends Connection<T>, T, C extends NetworkAppCo
      */
     void stop();
 
-    interface Builder<K extends Connection<T>, T, C extends NetworkAppConfig> {
-        Builder<K, T, C> withApplication(NetworkApplication<K, T, C> application);
+    interface Builder<E extends Environment<K, T, C>, K extends Connection<T>, T, C extends NetworkAppConfig> {
+        Builder<E, K, T, C> withApplication(NetworkApplication<E, K, T, C> application);
 
-        Builder<K, T, C> withAppBundle(ProtocolBundle<K, T> bundle);
+        Builder<E, K, T, C> withAppBundle(ProtocolBundle<K, T, C> bundle);
 
-        Builder<K, T, C> withConnectionContexts(List<ConnectionContext> ctxs);
+        Builder<E, K, T, C> withConnectionContexts(List<ConnectionContext> ctxs);
+
         NetworkStack<K, T, C> build();
     }
 

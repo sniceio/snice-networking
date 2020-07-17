@@ -4,6 +4,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.snice.networking.app.ConnectionContext;
+import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
@@ -13,12 +14,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ChannelHandler.Sharable
-public class NettyApplicationLayer<K extends Connection<T>, T> extends ChannelInboundHandlerAdapter {
+public class NettyApplicationLayer<K extends Connection<T>, T, C extends NetworkAppConfig> extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyApplicationLayer.class);
-    private final ProtocolBundle<K, T> bundle;
+    private final ProtocolBundle<K, T, C> bundle;
 
-    public NettyApplicationLayer(final ProtocolBundle<K, T> bundle) {
+    public NettyApplicationLayer(final ProtocolBundle<K, T, C> bundle) {
         this.bundle = bundle;
     }
 
