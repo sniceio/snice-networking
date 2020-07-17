@@ -3,6 +3,7 @@ package io.snice.networking.bundles;
 import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
+import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
 import io.snice.networking.netty.ProtocolHandler;
@@ -14,7 +15,7 @@ import java.util.List;
  * A simple {@link ProtocolBundle} for applications (probably only simple test apps) that only
  * deal with sending/receiving Strings over a network.
  */
-public class StringBundle extends BundleSupport<Connection<String>, String> {
+public class StringBundle<C extends NetworkAppConfig> extends BundleSupport<Connection<String>, String, C> {
 
     private final List<ProtocolHandler> encoders;
     private final List<ProtocolHandler> decoders;

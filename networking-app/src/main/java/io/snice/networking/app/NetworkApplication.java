@@ -9,54 +9,25 @@ import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.config.NetworkInterfaceConfiguration;
 import io.snice.networking.config.NetworkInterfaceDeserializer;
-import io.snice.preconditions.PreConditions;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
 
+import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
 
-public abstract class NetworkApplication<K extends Connection<T>, T, C extends NetworkAppConfig> {
+public abstract class NetworkApplication<E extends Environment<K, T, C>, K extends Connection<T>, T, C extends NetworkAppConfig> {
 
-    // private final Class<T> type;
-    // private final Class<K> connectionType;
-    private Environment<K, T, C> env;
-    private final ProtocolBundle<K, T> bundle;
+    private E env;
+    private final ProtocolBundle<K, T, C> bundle;
 
-    /**
-     * Constructor that assumes that the connection type is
-     * just the regular base {@link Connection} object and not
-     * a specific sub-class (such as Peer for Diameter)
-     *
-     */
-    /*
-    public NetworkApplication(final Class<T> type) {
-        // scap this. regular network application needs a bundle and that's is
-            // then the basic networking app can figure out the basic bundles
-        assertNotNull(type, "The type cannot be null");
-        // this.type = type;
-        // this.connectionType = null;
-        this.bundle = null;
-    }
-
-     */
-
-    /*
-    public NetworkApplication(final Class<T> type, final Class<K> connectionType) {
-        assertNotNull(type, "The type cannot be null");
-        assertNotNull(connectionType, "The type cannot be null");
-        // this.type = type;
-        // this.connectionType = connectionType;
-        this.bundle = null;
-    }
-     */
-    public NetworkApplication(final ProtocolBundle<K, T> bundle) {
-        PreConditions.assertNotNull(bundle, "The app bundle cannot be null");
+    public NetworkApplication(final ProtocolBundle<K, T, C> bundle) {
+        assertNotNull(bundle, "The app bundle cannot be null");
         this.bundle = bundle;
     }
 
-    public void run(final C configuration, final Environment<K, T, C> environment) {
+    public void run(final C configuration, final E environment) {
         // sub-classes may override this method in order to setup additional
         // resources etc as the application starts running.
     }
@@ -84,7 +55,7 @@ public abstract class NetworkApplication<K extends Connection<T>, T, C extends N
         initialize(bootstrap);
         final List<ConnectionContext> connectionContexts = bootstrap.getConnectionContexts();
 
-        final NetworkStack.Builder<K, T, C> builder = NetworkStack.withConfiguration(config);
+        final NetworkStack.Builder<E, K, T, C> builder = NetworkStack.withConfiguration(config);
         builder.withConnectionContexts(connectionContexts);
         builder.withApplication(this);
         builder.withAppBundle(bundle);

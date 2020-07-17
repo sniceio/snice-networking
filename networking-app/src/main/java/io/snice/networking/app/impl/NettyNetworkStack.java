@@ -1,10 +1,7 @@
 package io.snice.networking.app.impl;
 
 import io.netty.channel.ChannelHandler;
-import io.snice.networking.app.ConnectionContext;
-import io.snice.networking.app.NetworkAppConfig;
-import io.snice.networking.app.NetworkApplication;
-import io.snice.networking.app.NetworkStack;
+import io.snice.networking.app.*;
 import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.IllegalTransportException;
@@ -21,35 +18,32 @@ import java.util.concurrent.CompletionStage;
 import static io.snice.preconditions.PreConditions.*;
 
 @ChannelHandler.Sharable
-public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppConfig> implements NetworkStack<K, T, C> {
+public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connection<T>, T, C extends NetworkAppConfig> implements NetworkStack<K, T, C> {
 
     // private final Class<T> type;
     // private final Class<K> connectionType;
     private final C config;
-    private final NetworkApplication<K, T, C> app;
+    private final NetworkApplication<E, K, T, C> app;
     private final List<ConnectionContext<K, T>> ctxs;
     private NettyNetworkLayer network;
     private final Clock clock = new SystemClock();
-    private final ProtocolBundle<K, T> protocolBundle;
+    private final ProtocolBundle<K, T, C> protocolBundle;
 
-    private NettyNetworkStack(// final Class<T> type,
-                              // final Class<K> connectionType,
-                              final C config,
-                              final NetworkApplication<K, T, C> app,
-                              final ProtocolBundle<K, T> protocolBundle,
+    private NettyNetworkStack(final C config,
+                              final NetworkApplication<E, K, T, C> app,
+                              final ProtocolBundle<K, T, C> protocolBundle,
                               final List<ConnectionContext<K, T>> ctxs) {
-        // this.type = type;
-        // this.connectionType = connectionType;
         this.config = config;
         this.app = app;
         this.protocolBundle = protocolBundle;
         this.ctxs = ctxs;
     }
 
-    public static <K extends Connection<T>, T, C extends NetworkAppConfig> Builder<K, T, C> ofConfiguration(final C config) {
-        return new Builder(null, null, config);
+    public static <E extends Environment<K, T, C>, K extends Connection<T>, T, C extends NetworkAppConfig> Builder<E, K, T, C> ofConfiguration(final C config) {
+        return new Builder(config);
     }
 
+    /*
     public static <K extends Connection<T>, T> ConnectionTypeStep<T> ofType(final Class<T> type) {
         assertNotNull(type, "The type cannot be null");
         return new ConnectionTypeStep<T>() {
@@ -65,8 +59,8 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
                 };
             }
         };
-
     }
+     */
 
     @Override
     public void start() {
@@ -129,38 +123,33 @@ public class NettyNetworkStack<K extends Connection<T>, T, C extends NetworkAppC
         network.stop();
     }
 
-    private static class Builder<K extends Connection<T>, T, C extends NetworkAppConfig> implements NetworkStack.Builder<K, T, C> {
+    private static class Builder<E extends Environment<K, T, C>, K extends Connection<T>, T, C extends NetworkAppConfig> implements NetworkStack.Builder<E, K, T, C> {
 
-        // private final Class<T> type;
-        // private final Class<K> connectionType;
         private final C config;
-        private NetworkApplication application;
+        private NetworkApplication<E, K, T, C> application;
         private List<ConnectionContext> ctxs;
-        private ProtocolBundle<K, T> protocolBundle;
+        private ProtocolBundle<K, T, C> protocolBundle;
 
-        private Builder(final Class<T> type, final Class<K> connectionType, final C config) {
-            // this.type = type;
-            // this.connectionType = connectionType;
+        private Builder(final C config) {
             this.config = config;
         }
 
         @Override
-        public NetworkStack.Builder<K, T, C> withApplication(final NetworkApplication<K, T, C> application) {
+        public NetworkStack.Builder<E, K, T, C> withApplication(final NetworkApplication<E, K, T, C> application) {
             assertNotNull(application, "The application cannot be null");
             this.application = application;
             return this;
         }
 
         @Override
-        public NetworkStack.Builder<K, T, C> withAppBundle(final ProtocolBundle<K, T> bundle) {
+        public NetworkStack.Builder<E, K, T, C> withAppBundle(final ProtocolBundle<K, T, C> bundle) {
             assertNotNull(bundle, "The application bundle cannot be null");
             this.protocolBundle = bundle;
             return this;
         }
 
-
         @Override
-        public NetworkStack.Builder<K, T, C> withConnectionContexts(final List<ConnectionContext> ctxs) {
+        public NetworkStack.Builder<E, K, T, C> withConnectionContexts(final List<ConnectionContext> ctxs) {
             assertArgument(ctxs != null && !ctxs.isEmpty(), "You cannot have a null or empty list of " + ConnectionContext.class.getSimpleName());
             this.ctxs = ctxs;
             return this;

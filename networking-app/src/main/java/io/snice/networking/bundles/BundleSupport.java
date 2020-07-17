@@ -12,7 +12,7 @@ import io.snice.networking.common.fsm.NetworkContext;
 
 import java.util.Optional;
 
-public abstract class BundleSupport<K extends Connection<T>, T> implements ProtocolBundle<K, T> {
+public abstract class BundleSupport<K extends Connection<T>, T, C extends NetworkAppConfig> implements ProtocolBundle<K, T, C> {
 
     private final Class<T> type;
 
@@ -36,8 +36,8 @@ public abstract class BundleSupport<K extends Connection<T>, T> implements Proto
     }
 
     @Override
-    public <C extends NetworkAppConfig> Environment<K, T, C> createEnvironment(final NetworkStack<K, T, C> stack, final C configuration) {
-        return new DefaultEnvironment<>(stack, configuration);
+    public <E extends Environment<K, T, C>> E createEnvironment(final NetworkStack<K, T, C> stack, C configuration) {
+        return (E)new DefaultEnvironment(stack, configuration);
     }
 
     @Override

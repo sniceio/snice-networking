@@ -7,9 +7,7 @@ import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
 import io.snice.codecs.codec.diameter.avp.api.ProductName;
 import io.snice.codecs.codec.diameter.avp.type.IpAddress;
 import io.snice.networking.app.Environment;
-import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.app.NetworkStack;
-import io.snice.networking.app.impl.DefaultEnvironment;
 import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
@@ -29,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 
-public class DiameterBundle implements ProtocolBundle<Peer, DiameterMessage> {
+public class DiameterBundle<C extends DiameterAppConfig> implements ProtocolBundle<Peer, DiameterMessage, C> {
 
     private static final Logger logger = LoggerFactory.getLogger(DiameterBundle.class);
 
@@ -95,13 +93,12 @@ public class DiameterBundle implements ProtocolBundle<Peer, DiameterMessage> {
     }
 
     @Override
-    public <C extends NetworkAppConfig> Environment<Peer, DiameterMessage, C> createEnvironment(final NetworkStack<Peer, DiameterMessage, C> stack, final C configuration) {
-        return new DefaultEnvironment<>(stack, configuration);
+    public <E extends Environment<Peer, DiameterMessage, C>> E createEnvironment(final NetworkStack<Peer, DiameterMessage, C> stack, final C configuration) {
+        return (E) new DiameterEnvironment(stack, configuration);
     }
 
     @Override
     public Optional<FsmFactory<DiameterMessage, PeerState, PeerContext, PeerData>> getFsmFactory() {
         return Optional.of(peerFactory);
     }
-
 }

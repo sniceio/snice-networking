@@ -8,7 +8,7 @@ public class NetworkStackTest {
 
     @Test
     public void testCreateStack() {
-        NetworkStack.Builder<Connection<String>, String, NetworkAppConfig> builder = NetworkStack.withConfiguration(new NetworkAppConfig());
+        final NetworkStack.Builder<Environment<Connection<String>, String, NetworkAppConfig>, Connection<String>, String, NetworkAppConfig> builder = NetworkStack.withConfiguration(new NetworkAppConfig());
         builder.withAppBundle(new StringBundle());
         builder.withApplication(new TestApp());
         builder.build();
@@ -21,7 +21,7 @@ public class NetworkStackTest {
         }
 
         @Override
-        public void initialize(NetworkBootstrap<Connection<String>, String, NetworkAppConfig> bootstrap) {
+        public void initialize(final NetworkBootstrap<Connection<String>, String, NetworkAppConfig> bootstrap) {
         }
     }
 

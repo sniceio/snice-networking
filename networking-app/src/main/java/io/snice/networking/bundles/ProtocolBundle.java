@@ -14,7 +14,7 @@ import io.snice.networking.netty.ProtocolHandler;
 import java.util.List;
 import java.util.Optional;
 
-public interface ProtocolBundle<K extends Connection<T>, T> {
+public interface ProtocolBundle<K extends Connection<T>, T, C extends NetworkAppConfig> {
 
     /**
      * Just a human friendly name of this bundle. Only used for logging.
@@ -34,7 +34,7 @@ public interface ProtocolBundle<K extends Connection<T>, T> {
      * @param configuration the specific configuration of network application.
      * @return
      */
-    <C extends NetworkAppConfig> Environment<K, T, C> createEnvironment(final NetworkStack<K, T, C> stack, C configuration);
+    <E extends Environment<K, T, C>> E createEnvironment(final NetworkStack<K, T, C> stack, C configuration);
 
     /**
      * An application may need to register it's own

@@ -1,10 +1,10 @@
 package io.snice.networking.examples.diameter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.snice.networking.app.NetworkAppConfig;
+import io.snice.networking.diameter.DiameterAppConfig;
 import io.snice.networking.diameter.DiameterConfig;
 
-public class HssConfig extends NetworkAppConfig {
+public class HssConfig extends DiameterAppConfig {
 
     @JsonProperty("diameter")
     private DiameterConfig diameterConfig;
