@@ -6,7 +6,7 @@ import io.snice.networking.app.NetworkAppConfig;
 public class DiameterAppConfig extends NetworkAppConfig {
 
     @JsonProperty("diameter")
-    private DiameterConfig config;
+    private final DiameterConfig config = new DiameterConfig();
 
     public DiameterConfig getConfig() {
         return config;

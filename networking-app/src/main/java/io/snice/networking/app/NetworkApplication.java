@@ -3,6 +3,7 @@ package io.snice.networking.app;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.snice.generics.Generics;
 import io.snice.networking.app.impl.NettyBootstrap;
 import io.snice.networking.bundles.ProtocolBundle;
@@ -55,6 +56,8 @@ public abstract class NetworkApplication<E extends Environment<K, T, C>, K exten
         initialize(bootstrap);
         final List<ConnectionContext> connectionContexts = bootstrap.getConnectionContexts();
 
+        bundle.initialize(config);
+
         final NetworkStack.Builder<E, K, T, C> builder = NetworkStack.withConfiguration(config);
         builder.withConnectionContexts(connectionContexts);
         builder.withApplication(this);
@@ -65,6 +68,7 @@ public abstract class NetworkApplication<E extends Environment<K, T, C>, K exten
         ensureNotNull(env, "Bundle \"" + bundle.getBundleName()
                 + "\" produced a null value for the Environment. Stack is shutting down");
         network.start();
+        bundle.start(network);
 
         // call application
         run(config, env); // TODO: app can throw exception. Handle it.
@@ -95,6 +99,7 @@ public abstract class NetworkApplication<E extends Environment<K, T, C>, K exten
         final SimpleModule module = new SimpleModule();
         module.addDeserializer(NetworkInterfaceConfiguration.class, new NetworkInterfaceDeserializer());
         mapper.registerModule(module);
+        mapper.registerModule(new Jdk8Module());
 
         bundle.getObjectMapModule().ifPresent(mapper::registerModule);
         return mapper.readValue(stream, getConfigurationClass());

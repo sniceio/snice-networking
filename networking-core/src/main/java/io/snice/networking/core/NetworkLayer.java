@@ -52,23 +52,33 @@ public interface NetworkLayer<T> {
      *
      * @return
      */
-    NetworkInterface getDefaultNetworkInterface();
+    NetworkInterface<T> getDefaultNetworkInterface();
 
     /**
      * Get the named {@link NetworkInterface}.
      *
-     * @param name the name of the interface
+     * @param name the name of the interface (case insensitive)
      * @return an optional with the named interface if found,
      * otherwise an empty optional will be returned.
      */
-    Optional<? extends NetworkInterface> getNetworkInterface(String name);
+    Optional<? extends NetworkInterface<T>> getNetworkInterface(String name);
+
+    Optional<? extends NetworkInterface<T>> getNetworkInterface(final String interfaceName, final Transport transport);
+
 
     /**
      * Get a list of all the {@link NetworkInterface}s that has been configured.
      *
      * @return
      */
-    List<? extends NetworkInterface> getNetworkInterfaces();
+    List<? extends NetworkInterface<T>> getNetworkInterfaces();
+
+    /**
+     * Get a list of {@link NetworkInterface}s that has support for the given
+     * {@link Transport}
+     *
+     */
+    List<? extends NetworkInterface<T>> getNetworkInterfaces(Transport transport);
 
     /**
      * Same as {@link NetworkLayer#getListeningPoint(String, Transport)} but we will

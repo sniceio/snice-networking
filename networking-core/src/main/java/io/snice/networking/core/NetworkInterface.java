@@ -47,4 +47,9 @@ public interface NetworkInterface<T> {
             throws IllegalTransportException;
 
     ListeningPoint getListeningPoint(Transport transport);
+
+    /**
+     * Check to see if this {@link NetworkInterface} supports the given {@link Transport}.
+     */
+    boolean isSupportingTransport(Transport transport);
 }

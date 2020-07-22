@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.Module;
 import io.hektor.fsm.Data;
 import io.snice.networking.app.Environment;
 import io.snice.networking.app.NetworkAppConfig;
+import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.app.NetworkStack;
 import io.snice.networking.app.impl.DefaultEnvironment;
 import io.snice.networking.common.Connection;
@@ -11,8 +12,11 @@ import io.snice.networking.common.fsm.FsmFactory;
 import io.snice.networking.common.fsm.NetworkContext;
 import io.snice.networking.netty.ProtocolHandler;
 
+import javax.annotation.processing.Completions;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 public interface ProtocolBundle<K extends Connection<T>, T, C extends NetworkAppConfig> {
 
@@ -65,10 +69,48 @@ public interface ProtocolBundle<K extends Connection<T>, T, C extends NetworkApp
      */
     K wrapConnection(Connection<T> connection);
 
-    default void start() {
+    /**
+     * The bundle will be asked to perform any initializing tasks after the {@link NetworkBootstrap} has
+     * been bootstrapped but before the underlying {@link NetworkStack} has been built and started.
+     * As such, the only thing available to the bundle at this stage is the actual configuration object.
+     *
+     * If curious, see {@link io.snice.networking.app.NetworkApplication#run(NetworkAppConfig, String...)} for
+     * how it's done.
+     *
+     * @param configuration
+     */
+    default void initialize(C configuration) {
         // default is to do nothing. Implementing bundles should override this.
     }
 
+    /**
+     * The bundle will be asked to start after it has been initialized and after
+     * the underlying {@link NetworkStack} has been started and all its interfaces
+     * have been created and bound to their configured listening points. Hence, when
+     * the bundle is asked to start, the full underlying network stack is up and running
+     * and is, and is allowed, to be used to its fullest. Also feel free to save the reference
+     * to the {@link NetworkStack}, it is threadsafe.
+     *
+     * If the {@link NetworkStack} is unable to start for any reason, the bundle will not
+     * be asked to start since we will bail out earlier (try to configure and bind to a non-existing local IP
+     * and you'll see).
+     *
+     * @param stack the initialized, started and fully operational {@link NetworkStack}.
+     */
+    default CompletionStage<ProtocolBundle<K, T, C>> start(final NetworkStack<K, T, C> stack) {
+        // default is to do nothing. Implementing bundles should override this.
+        return CompletableFuture.completedFuture(this);
+    }
+
+    /**
+     * The bundle will be asked to stop, typically, when the entire network stack is going down. However,
+     * there is nothing to prevent some random application logic to ask the bundle to stop but the thing to know
+     * is that if it is part of shutting down the entire stack, the actual {@link NetworkStack} will be asked to
+     * stop AFTER the bundles have been asked to stop. As such, the actual {@link NetworkStack} is still fully
+     * functioning but it is highly recommended to not ask the network stack to initiate new connections etc as part
+     * of the bundle being shut down. You can (perhaps you want to ping something as you go down?) but be careful
+     * since it will delay the stopping of the stack.
+     */
     default void stop() {
         // default is to do nothing. Implementing bundles should override this.
     }

@@ -9,6 +9,7 @@ import io.snice.networking.common.fsm.NetworkContext;
 import io.snice.networking.diameter.Peer;
 
 import java.util.List;
+import java.util.Optional;
 
 
 public interface PeerContext extends NetworkContext<DiameterMessage> {
@@ -26,7 +27,7 @@ public interface PeerContext extends NetworkContext<DiameterMessage> {
         return OriginRealm.of("epc.mnc001.mcc001.3gppnetwork.org");
     }
 
-    default ProductName getProductName() {
+    default Optional<ProductName> getProductName() {
         return getConfig().getProductName();
     }
 

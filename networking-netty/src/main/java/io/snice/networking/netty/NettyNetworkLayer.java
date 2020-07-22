@@ -30,6 +30,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static io.snice.preconditions.PreConditions.*;
 
@@ -57,14 +58,14 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
      */
     private final CountDownLatch latch;
 
-    private final List<NettyNetworkInterface> interfaces;
+    private final List<NettyNetworkInterface<T>> interfaces;
 
     private final NettyNetworkInterface defaultInterface;
 
     /**
-     * 
+     *
      */
-    private NettyNetworkLayer(final CountDownLatch latch, final List<NettyNetworkInterface> ifs) {
+    private NettyNetworkLayer(final CountDownLatch latch, final List<NettyNetworkInterface<T>> ifs) {
         this.latch = latch;
         this.interfaces = ifs;
 
@@ -101,20 +102,30 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
     }
 
     @Override
-    public NetworkInterface getDefaultNetworkInterface() {
+    public NetworkInterface<T> getDefaultNetworkInterface() {
         return this.defaultInterface;
     }
 
     @Override
-    public Optional<? extends NetworkInterface> getNetworkInterface(final String name) {
+    public Optional<? extends NetworkInterface<T>> getNetworkInterface(final String name) {
         return interfaces.stream()
-                .filter(i -> i.getName().equals(name))
+                .filter(i -> i.getName().equalsIgnoreCase(name))
                 .findFirst();
     }
 
     @Override
-    public List<? extends NetworkInterface> getNetworkInterfaces() {
+    public Optional<? extends NetworkInterface<T>> getNetworkInterface(final String interfaceName, final Transport transport) {
+        return getNetworkInterface(interfaceName).filter(i -> i.isSupportingTransport(transport));
+    }
+
+    @Override
+    public List<? extends NetworkInterface<T>> getNetworkInterfaces() {
         return interfaces;
+    }
+
+    @Override
+    public List<? extends NetworkInterface<T>> getNetworkInterfaces(final Transport transport) {
+        return interfaces.stream().filter(i -> i.isSupportingTransport(transport)).collect(Collectors.toList());
     }
 
     @Override

@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.mockito.Mock;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
@@ -50,7 +51,7 @@ public class PeerFsmTestBase extends DiameterTestBase {
     public void setUp() throws Exception {
         super.setUp();
         peerConfiguration = new PeerConfiguration();
-        peerConfiguration.setProductName(defaultProductName);
+        peerConfiguration.setProductName(Optional.of(defaultProductName));
 
         when(ctx.getChannelContext()).thenReturn(channelCtx);
         when(ctx.getHostIpAddresses()).thenReturn(List.of(LOCAL_PEER_IP_ADDRESS));
