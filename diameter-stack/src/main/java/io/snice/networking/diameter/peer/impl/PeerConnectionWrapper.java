@@ -7,6 +7,7 @@ import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
 import io.snice.networking.diameter.Peer;
+import io.snice.networking.diameter.peer.PeerConfiguration;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -25,6 +26,16 @@ public class PeerConnectionWrapper implements Peer {
 
     @Override
     public OriginHost getOriginHost() {
+        return null;
+    }
+
+    @Override
+    public PeerConfiguration getConfiguration() {
+        return null;
+    }
+
+    @Override
+    public MODE getMode() {
         return null;
     }
 

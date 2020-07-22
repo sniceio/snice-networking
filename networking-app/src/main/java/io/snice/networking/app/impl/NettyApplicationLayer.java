@@ -60,7 +60,6 @@ public class NettyApplicationLayer<K extends Connection<T>, T, C extends Network
     }
 
     private void completeConnectionFuture(final ConnectionAttemptCompletedIOEvent<T> evt) {
-        logger.info("CompleteConnectionFuture: " + evt);
         final var future = evt.getUserFuture();
         evt.getConnection().ifPresent(future::complete);
         evt.getCause().ifPresent(future::completeExceptionally);

@@ -4,25 +4,14 @@ import io.hektor.fsm.Definition;
 import io.hektor.fsm.FSM;
 import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.DiameterRequest;
-import io.snice.codecs.codec.diameter.avp.api.AcctApplicationId;
-import io.snice.codecs.codec.diameter.avp.api.AuthApplicationId;
-import io.snice.codecs.codec.diameter.avp.api.DisconnectCause;
-import io.snice.codecs.codec.diameter.avp.api.ResultCode;
-import io.snice.codecs.codec.diameter.avp.api.VendorId;
-import io.snice.codecs.codec.diameter.avp.api.VendorSpecificApplicationId;
+import io.snice.codecs.codec.diameter.avp.api.*;
 import io.snice.networking.common.event.ConnectionActiveIOEvent;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
 import io.snice.networking.common.event.ConnectionConnectAttemptIOEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.snice.networking.diameter.peer.PeerState.CLOSED;
-import static io.snice.networking.diameter.peer.PeerState.CLOSING;
-import static io.snice.networking.diameter.peer.PeerState.OPEN;
-import static io.snice.networking.diameter.peer.PeerState.TERMINATED;
-import static io.snice.networking.diameter.peer.PeerState.WAIT_CEA;
-import static io.snice.networking.diameter.peer.PeerState.WAIT_CER;
-import static io.snice.networking.diameter.peer.PeerState.WAIT_CONNECT_ACK;
+import static io.snice.networking.diameter.peer.PeerState.*;
 
 public class PeerFsm {
 
@@ -205,7 +194,7 @@ public class PeerFsm {
 
         final var builder = cer.createAnswer(ResultCode.DiameterSuccess2001);
         ctx.getHostIpAddresses().forEach(builder::withAvp);
-        builder.withAvp(ctx.getConfig().getProductName());
+        ctx.getConfig().getProductName().ifPresent(builder::withAvp);
         ctx.getChannelContext().sendDownstream(builder.build());
 
         // should we perhaps create "PeerConnection" here?
@@ -218,9 +207,9 @@ public class PeerFsm {
      */
     private static final void sendCer(final ConnectionActiveIOEvent event, final PeerContext ctx, final PeerData data) {
         final var cer = DiameterRequest.createCER()
-                .withAvp(ctx.getProductName())
                 .withOriginRealm(ctx.getOriginRealm())
                 .withOriginHost(ctx.getOriginHost());
+        ctx.getProductName().ifPresent(cer::withAvp);
         ctx.getHostIpAddresses().forEach(ip -> cer.withAvp(ip));
 
         final var vendorId = VendorId.of(10415L);

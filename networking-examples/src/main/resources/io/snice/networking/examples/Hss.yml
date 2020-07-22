@@ -5,11 +5,32 @@ networkInterfaces:
 
 diameter:
   productName: "whatever"
-  # productVersion: 1.0
-  # vendorId: 12345
+  productVersion: 1.0 # During the Capability Exchange, the product version will be conveyed. Each peer can
+  # specify a different product version but if none is specified, this default one will be
+  # used.
+  #  vendorId: 12345
+
   peers:
-    - name: local
+    - name: local  # Just a human friendly name of the peer. It is used in two main ways, one is for logging
+      # purposes and the other is that you can look-up peers based on these friendly names.
+      # Hence, the name of a peer has to be unique
+
+      nic: default # the local network interface this peer will be using. The underlying stack can
+      # listen to many different ip:port pairs and a peer needs to be bound to one of them.
+
+      mode: ACTIVE # an active peer will try and establish a session with the remote address.
+      # A passive peer will wait for the remote party to initiate the capability exchange
+
+      uri: aaa://10.36.10.77:3869
+
       hostIpAddresses:
-        - 10.11.12.13
+        - 10.11.12.13 # This is the IP address(es) that will be used in the Capability Exchange handshake
+          # and is what this peer is reachable across. Note: no checking is done that this is
+          # an actual IP address you can be reached across. If you don't want to specify, then
+          # simply leave it black and the Ip address of the specified NIC will be used.
+          # Note: you typically want to change this when e.g. you have a local private IP
+          # but is behind a NAT. This is true for all of AWS where your EC2 instance will have
+          # a private IP that the stack will bind to but the public EIP is what others outside
+        # your VPC can reach you on and that is what you want to specify here.
 
 

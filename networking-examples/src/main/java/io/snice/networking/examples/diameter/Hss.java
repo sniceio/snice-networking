@@ -26,35 +26,43 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
 
     @Override
     public void run(final HssConfig configuration, final DiameterEnvironment<HssConfig> environment) {
-        if (true) return;
-        final var future = environment.connect(Transport.tcp, "10.36.10.74", 3868);
+        // if (true) return;
+        environment.send(createULR());
+        final var future = environment.connect(Transport.tcp, "10.36.10.77", 3869);
         // final var future = environment.connect(Transport.tcp, "127.0.0.1", 3869);
         future.whenComplete((c, t) -> {
             if (c != null) {
                 try {
-                    final WritableBuffer b = WritableBuffer.of(4);
-                    b.fastForwardWriterIndex();
-                    b.setBit(3, 1, true);
-                    b.setBit(3, 2, true);
-                    final var ulr = DiameterRequest.createULR()
-                            .withSessionId("asedfasdfasdf")
-                            .withUserName("999992134354")
-                            .withDestinationHost("hss.epc.mnc001.mcc001.3gppnetwork.org")
-                            .withDestinationRealm("epc.mnc001.mcc001.3gppnetwork.org")
-                            .withOriginRealm("epc.mnc999.mcc999.3gppnetwork.org")
-                            .withOriginHost("snice.node.epc.mnc999.mcc999.3gppnetwork.org")
-                            .withAvp(VisitedPlmnId.of(Buffers.wrap("999001")))
-                            .withAvp(AuthSessionState.NoStateMaintained)
-                            .withAvp(RatType.Eutran)
-                            .withAvp(UlrFlags.of(b.build()))
-                            .build();
-                    c.send(ulr);
+                    c.send(createULR());
                 } catch (final Throwable e) {
                     e.printStackTrace();
                 }
+            } else {
+                t.printStackTrace();
             }
         });
     }
+
+    private DiameterRequest createULR() {
+        final WritableBuffer b = WritableBuffer.of(4);
+        b.fastForwardWriterIndex();
+        b.setBit(3, 1, true);
+        b.setBit(3, 2, true);
+        final var ulr = DiameterRequest.createULR()
+                .withSessionId("asedfasdfasdf")
+                .withUserName("999992134354")
+                .withDestinationHost("hss.epc.mnc001.mcc001.3gppnetwork.org")
+                .withDestinationRealm("epc.mnc001.mcc001.3gppnetwork.org")
+                .withOriginRealm("epc.mnc999.mcc999.3gppnetwork.org")
+                .withOriginHost("snice.node.epc.mnc999.mcc999.3gppnetwork.org")
+                .withAvp(VisitedPlmnId.of(Buffers.wrap("999001")))
+                .withAvp(AuthSessionState.NoStateMaintained)
+                .withAvp(RatType.Eutran)
+                .withAvp(UlrFlags.of(b.build()))
+                .build();
+        return ulr;
+    }
+
 
     @Override
     public void initialize(final NetworkBootstrap<Peer, DiameterMessage, HssConfig> bootstrap) {

@@ -78,6 +78,10 @@ public interface ConnectionId {
         ensureNotNull(remote);
 
         final byte[] rawLocal = local.getAddress().getAddress();
+        if (remote.getAddress() == null) {
+            System.err.println("What the fuck, remote address is null?");
+            System.err.println(remote.isUnresolved());
+        }
         final byte[] rawRemote = remote.getAddress().getAddress();
         final int localPort = local.getPort();
         final int remotePort = remote.getPort();

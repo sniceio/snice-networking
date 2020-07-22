@@ -6,6 +6,7 @@ import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
+import io.snice.networking.core.NetworkInterface;
 import io.snice.networking.netty.NettyNetworkLayer;
 import io.snice.time.Clock;
 import io.snice.time.SystemClock;
@@ -64,11 +65,7 @@ public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connect
 
     @Override
     public void start() {
-
-
         final var appLayer = new NettyApplicationLayer(protocolBundle);
-        // final var diameterConf = new DiameterConfig();
-        // final var fsmFactory = PeerFactory.createDefault(diameterConf);
 
         // TODO: the network bundle should probably be loaded by looking at the
         // TODO: schema of the listening addresses.
@@ -81,7 +78,6 @@ public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connect
         // TODO: config.getNetworkInterfaces().stream().groupBy(schema).collect();
         // TODO: and then
         final var builder = NettyNetworkLayer.with(config.getNetworkInterfaces())
-
                 .withHandler(protocolBundle.getProtocolEncoders())
                 .withHandler(protocolBundle.getProtocolDecoders())
                 .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, Optional.empty(), ctxs), Transport.udp)
@@ -105,7 +101,6 @@ public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connect
                 .build();
 
         network.start();
-        protocolBundle.start();
     }
 
     @Override
@@ -116,6 +111,26 @@ public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connect
     @Override
     public CompletionStage<Connection<T>> connect(final Transport transport, final InetSocketAddress remoteAddress) throws IllegalTransportException {
         return network.connect(transport, remoteAddress);
+    }
+
+    @Override
+    public NetworkInterface<T> getDefaultNetworkInterface() {
+        return network.getDefaultNetworkInterface();
+    }
+
+    @Override
+    public Optional<NetworkInterface<T>> getNetworkInterface(final String interfaceName, final Transport transport) {
+        return network.getNetworkInterface(interfaceName, transport);
+    }
+
+    @Override
+    public Optional<NetworkInterface<T>> getNetworkInterface(final String interfaceName) {
+        return network.getNetworkInterface(interfaceName);
+    }
+
+    @Override
+    public List<NetworkInterface<T>> getNetworkInterfaces(final Transport transport) {
+        return network.getNetworkInterfaces(transport);
     }
 
     @Override

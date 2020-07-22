@@ -114,6 +114,10 @@ public final class NettyNetworkInterface<T> implements NetworkInterface<T>, Chan
         return listeningPointsByTransport[transport.ordinal()];
     }
 
+    public boolean isSupportingTransport(Transport transport) {
+        return listeningPointsByTransport[transport.ordinal()] != null;
+    }
+
     /**
      * Use this {@link NettyNetworkInterface} to connect to a remote address using the supplied
      * {@link Transport}.

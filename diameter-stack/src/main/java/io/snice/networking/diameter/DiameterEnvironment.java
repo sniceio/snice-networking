@@ -7,25 +7,29 @@ import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-public class DiameterEnvironment<C extends DiameterAppConfig> implements Environment<Peer, DiameterMessage, C> {
+public interface DiameterEnvironment<C extends DiameterAppConfig> extends Environment<Peer, DiameterMessage, C> {
 
-    private final NetworkStack<Peer, DiameterMessage, C> stack;
-    private final C config;
+    C getConfig();
 
-    public DiameterEnvironment(final NetworkStack<Peer, DiameterMessage, C> stack, final C config) {
-        this.stack = stack;
-        this.config = config;
-    }
+    /**
+     * Ask the diameter stack to send the given message and allow the stack to pick the
+     * appropriate {@link Peer} to use.
+     *
+     * @param msg the message to send.
+     */
+    void send(final DiameterMessage msg);
 
-    @Override
-    public C getConfig() {
-        return config;
-    }
+    /**
+     * Get all peers that the underlying diameter stack is managing.
+     *
+     * Note: some of these may not currently be connected.
+     *
+     * @return a list of all known {@link Peer}s, irrespective of their status
+     */
+    List<Peer> getPeers();
 
-    @Override
-    public CompletionStage<Peer> connect(final Transport transport, final InetSocketAddress remoteAddress) throws IllegalTransportException {
-        return stack.connect(transport, remoteAddress).thenApply(Peer::of);
-    }
+    CompletionStage<Peer> connect(final Transport transport, final InetSocketAddress remoteAddress) throws IllegalTransportException;
 }
