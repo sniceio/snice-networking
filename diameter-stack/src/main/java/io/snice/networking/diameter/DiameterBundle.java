@@ -14,7 +14,10 @@ import io.snice.networking.common.Transport;
 import io.snice.networking.common.fsm.FsmFactory;
 import io.snice.networking.diameter.handler.DiameterMessageStreamDecoder2;
 import io.snice.networking.diameter.handler.DiameterStreamEncoder;
-import io.snice.networking.diameter.peer.*;
+import io.snice.networking.diameter.peer.PeerContext;
+import io.snice.networking.diameter.peer.PeerData;
+import io.snice.networking.diameter.peer.PeerState;
+import io.snice.networking.diameter.peer.PeerTable;
 import io.snice.networking.diameter.peer.impl.DefaultDiameterEnvironment;
 import io.snice.networking.diameter.peer.impl.DefaultRoutingEngine;
 import io.snice.networking.diameter.yaml.StandardAvpDeserializer;
@@ -24,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import static io.snice.preconditions.PreConditions.ensureNotNull;
@@ -33,14 +35,13 @@ import static io.snice.preconditions.PreConditions.ensureNotNull;
  * Note that this class is accessed in a multi-threaded environment and as such, everything has to
  * be thread safe.
  */
-public class DiameterBundle<C extends DiameterAppConfig> implements ProtocolBundle<Peer, DiameterMessage, C> {
+public class DiameterBundle<C extends DiameterAppConfig> implements ProtocolBundle<PeerConnection, DiameterMessage, C> {
 
     private static final Logger logger = LoggerFactory.getLogger(DiameterBundle.class);
 
     private final ProtocolHandler encoder;
     private final ProtocolHandler decoder;
     private PeerTable peerTable;
-    private RoutingEngine routingEngine;
     private C configuration;
 
     public DiameterBundle() {
@@ -66,16 +67,14 @@ public class DiameterBundle<C extends DiameterAppConfig> implements ProtocolBund
         logger.info("Initializing Diameter Stack");
         ensureNotNull(config, "The configuration object for the \"" + getBundleName() + "\" cannot be null");
         this.configuration = config;
-        peerTable = PeerTable.create(configuration.getConfig());
-        routingEngine = new DefaultRoutingEngine();
+        final var routingEngine = new DefaultRoutingEngine();
+        peerTable = PeerTable.create(configuration.getConfig(), routingEngine);
     }
 
     @Override
-    public CompletionStage<ProtocolBundle<Peer, DiameterMessage, C>> start(final NetworkStack<Peer, DiameterMessage, C> stack) {
+    public CompletionStage<ProtocolBundle<PeerConnection, DiameterMessage, C>> start(final NetworkStack<PeerConnection, DiameterMessage, C> stack) {
         logger.info("Starting Diameter Stack");
-        peerTable.start(stack);
-        configuration.getConfig().getPeers().forEach(peerTable::addPeer);
-        return CompletableFuture.completedFuture(this);
+        return peerTable.start(stack);
     }
 
     @Override
@@ -107,14 +106,14 @@ public class DiameterBundle<C extends DiameterAppConfig> implements ProtocolBund
     }
 
     @Override
-    public Peer wrapConnection(final Connection<DiameterMessage> connection) {
+    public PeerConnection wrapConnection(final Connection<DiameterMessage> connection) {
         // TODO:
-        return Peer.of(connection);
+        return PeerConnection.of(connection);
     }
 
     @Override
-    public <E extends Environment<Peer, DiameterMessage, C>> E createEnvironment(final NetworkStack<Peer, DiameterMessage, C> stack, final C configuration) {
-        return (E) new DefaultDiameterEnvironment(stack, peerTable, routingEngine, configuration);
+    public <E extends Environment<PeerConnection, DiameterMessage, C>> E createEnvironment(final NetworkStack<PeerConnection, DiameterMessage, C> stack, final C configuration) {
+        return (E) new DefaultDiameterEnvironment(stack, peerTable, configuration);
     }
 
     @Override

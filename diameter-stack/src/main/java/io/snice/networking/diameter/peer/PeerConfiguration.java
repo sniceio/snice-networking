@@ -5,7 +5,7 @@ import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
 import io.snice.codecs.codec.diameter.avp.api.ProductName;
 import io.snice.networking.common.Transport;
 import io.snice.networking.core.NetworkInterface;
-import io.snice.networking.diameter.Peer;
+import io.snice.networking.diameter.PeerConnection;
 
 import java.net.URI;
 import java.util.List;
@@ -23,6 +23,8 @@ import java.util.Optional;
  * Which then also means that the LocalPeer should reference an Snice Networking Network Interface
  * config. That would, however tie it to the Snice implmentation so perhaps we don't want to do that?
  * Just use ip:port and match it to an interface instead?
+ *
+ * TODO: convert to builder pattern and make it immutable once built.
  */
 public class PeerConfiguration {
 
@@ -35,14 +37,14 @@ public class PeerConfiguration {
 
     /**
      * The {@link ProductName} of your product (make something up), which will be conveyed by
-     * the {@link Peer} during its CER/CEA handshake (see specification for Capability Exchange Request/Answer
+     * the {@link PeerConnection} during its CER/CEA handshake (see specification for Capability Exchange Request/Answer
      * for full details. RFC 6733 section 5)
      */
-    private Optional<ProductName> productName;
+    private Optional<ProductName> productName = Optional.empty();
 
     /**
      * A list of IP addresses that this peer can be reached across. This is also part of the CER/CEA exchange
-     * procedure. When a {@link Peer} runs over SCTP it may in fact be able to be reached across multiple
+     * procedure. When a {@link PeerConnection} runs over SCTP it may in fact be able to be reached across multiple
      * interfaces and as such, IP addresses.
      */
     @JsonProperty("hostIpAddresses")
@@ -139,7 +141,7 @@ public class PeerConfiguration {
         return transport;
     }
 
-    public void setTransport(Optional<Transport> transport) {
+    public void setTransport(final Optional<Transport> transport) {
         this.transport = transport;
     }
 
@@ -147,14 +149,15 @@ public class PeerConfiguration {
         return uri;
     }
 
-    public void setUri(URI uri) {
+    public void setUri(final URI uri) {
         this.uri = uri;
     }
 
     @Override
     public String toString() {
         return "Name: \"" + name + "\"" +
-                " ProductName: " + productName +
-                " NIC: " + nic;
+                " Mode: " + mode +
+                " ProductName: " + productName.map(ProductName::toString).orElse("N/A") +
+                " NIC: " + nic.orElse("N/A");
     }
 }

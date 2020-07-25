@@ -6,7 +6,7 @@ import io.snice.codecs.codec.diameter.avp.api.OriginHost;
 import io.snice.codecs.codec.diameter.avp.api.OriginRealm;
 import io.snice.codecs.codec.diameter.avp.api.ProductName;
 import io.snice.networking.common.fsm.NetworkContext;
-import io.snice.networking.diameter.Peer;
+import io.snice.networking.diameter.PeerConnection;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +15,7 @@ import java.util.Optional;
 public interface PeerContext extends NetworkContext<DiameterMessage> {
 
     /**
-     * Get the configuration for this {@link Peer}.
+     * Get the configuration for this {@link PeerConnection}.
      */
     PeerConfiguration getConfig();
 
@@ -32,8 +32,8 @@ public interface PeerContext extends NetworkContext<DiameterMessage> {
     }
 
     /**
-     * The local IP address(s) that this {@link Peer} is reachable over. Every
-     * {@link Peer} must have at least one defined. If this {@link Peer}
+     * The local IP address(s) that this {@link PeerConnection} is reachable over. Every
+     * {@link PeerConnection} must have at least one defined. If this {@link PeerConnection}
      * is using an underlying protocol that allows the use of multiple
      * interfaces and multiple IPs, such as SCTP, then there may be
      * may be more than one address in the list (duh).
