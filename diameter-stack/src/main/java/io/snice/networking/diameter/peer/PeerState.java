@@ -1,6 +1,6 @@
 package io.snice.networking.diameter.peer;
 
-import io.snice.networking.diameter.Peer;
+import io.snice.networking.diameter.PeerConnection;
 
 /**
  * See RFC6733 5.6. Peer State Machine for the various states and their definition.
@@ -14,9 +14,9 @@ public enum PeerState {
     CLOSED,
 
     /**
-     * The stable state for which the {@link Peer} will accept normal diameter messages
+     * The stable state for which the {@link PeerConnection} will accept normal diameter messages
      * and if accepted, will pass it up to the application for further processing.
-     *
+     * <p>
      * This is one of two stable states for the Peer FSM, the other beeing {@link PeerState#CLOSED}
      */
     OPEN,

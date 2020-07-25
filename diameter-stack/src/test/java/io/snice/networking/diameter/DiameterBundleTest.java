@@ -5,7 +5,6 @@ import io.snice.codecs.codec.diameter.DiameterRequest;
 import io.snice.networking.app.NetworkStack;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -15,7 +14,7 @@ public class DiameterBundleTest {
 
     private DiameterBundle<DiameterAppConfig> bundle;
     private DiameterAppConfig config;
-    private NetworkStack<Peer, DiameterMessage, DiameterAppConfig> stack;
+    private NetworkStack<PeerConnection, DiameterMessage, DiameterAppConfig> stack;
     private DiameterRequest ulr;
 
     @Before

@@ -13,14 +13,19 @@ import io.snice.networking.common.fsm.FsmSupport;
 import io.snice.networking.core.NetworkInterface;
 import io.snice.networking.diameter.DiameterAppConfig;
 import io.snice.networking.diameter.DiameterConfig;
-import io.snice.networking.diameter.Peer;
+import io.snice.networking.diameter.PeerConnection;
 import io.snice.networking.diameter.peer.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static io.snice.networking.common.Transport.tcp;
 
@@ -34,15 +39,46 @@ public class DefaultPeerTable<C extends DiameterAppConfig> implements PeerTable<
 
     private final PeerConfiguration peerConfiguration = new PeerConfiguration();
     private final DiameterConfig config;
-    private NetworkStack<Peer, DiameterMessage, C> stack;
+    private NetworkStack<PeerConnection, DiameterMessage, C> stack;
+    private final RoutingEngine routingEngine;
 
-    public DefaultPeerTable(final DiameterConfig config) {
+    /**
+     * TOOD: make the peer table configurable.
+     */
+    private final ConcurrentHashMap<PeerId, Peer> peers = new ConcurrentHashMap<>();
+
+    public DefaultPeerTable(final DiameterConfig config, final RoutingEngine routingEngine) {
         this.config = config;
+        this.routingEngine = routingEngine;
     }
 
     @Override
-    public void start(final NetworkStack<Peer, DiameterMessage, C> stack) {
+    public CompletionStage<PeerTable<C>> start(final NetworkStack<PeerConnection, DiameterMessage, C> stack) {
         this.stack = stack;
+        config.getPeers().forEach(this::addPeer);
+        return CompletableFuture.completedFuture(this);
+    }
+
+    @Override
+    public void send(final DiameterMessage msg) {
+        routingEngine.findRoute(this, msg).or(() -> getDefaultPeer(msg)).orElseThrow(() -> {
+            // TODO: need special exception. No peer found or something.
+            throw new RuntimeException("Unable to find Peer for the given message");
+        }).send(msg);
+    }
+
+    @Override
+    public List<Peer> getPeers() {
+        return peers.values().stream().collect(Collectors.toUnmodifiableList());
+    }
+
+    /**
+     * If the {@link RoutingEngine} doesn't find an appropriate route for the given message, let's
+     * pick a default route if we are configured/allowed to do so.
+     */
+    private Optional<Peer> getDefaultPeer(final DiameterMessage msg) {
+        // for now, we'll just find any...
+        return peers.entrySet().stream().findAny().map(Map.Entry::getValue);
     }
 
     @Override
@@ -67,13 +103,11 @@ public class DefaultPeerTable<C extends DiameterAppConfig> implements PeerTable<
     @Override
     public FSM<PeerState, PeerContext, PeerData> createNewFsm(final FsmKey key, final PeerContext ctx, final PeerData data) {
         final var fsm = PeerFsm.definition.newInstance(key, ctx, data, loggingSupport::unhandledEvent, loggingSupport::onTransition);
-        // TODO: I guess this truly where we actually add a real peer. Or rather, save a representation of this FSM
         return fsm;
     }
 
-
     @Override
-    public CompletionStage<Peer> addPeer(final PeerConfiguration config) {
+    public Peer addPeer(final PeerConfiguration config) {
         // TODO: I guess we need to actually start a connection attempt here if need be?
         // or should the PeerFsm always be created here and it'll take care of it
         // based on its configuration options.
@@ -93,14 +127,17 @@ public class DefaultPeerTable<C extends DiameterAppConfig> implements PeerTable<
             nic = stack.getDefaultNetworkInterface();
         }
 
+        final var peer = DefaultPeer.of(config);
+        peers.put(peer.getId(), peer);
+
         if (config.getMode() == Peer.MODE.ACTIVE) {
-            return activatePeer(config, nic);
+            activatePeer(config, nic).thenAccept(peer::setConnection);
         }
 
-        return null;
+        return peer;
     }
 
-    private CompletionStage<Peer> activatePeer(final PeerConfiguration config, final NetworkInterface nic) {
+    private CompletionStage<PeerConnection> activatePeer(final PeerConfiguration config, final NetworkInterface nic) {
         logger.info("Activating Peer {}", config);
 
         final Transport transport;
@@ -126,8 +163,13 @@ public class DefaultPeerTable<C extends DiameterAppConfig> implements PeerTable<
         final var uri = config.getUri();
         final var host = uri.getHost();
         final var port = uri.getPort() == -1 ? getDefaultPort(transport) : uri.getPort();
-        final var remoteAddress = InetSocketAddress.createUnresolved(host, port);
-        return stack.connect(transport, remoteAddress).thenApply(Peer::of);
+
+        // final var remoteAddress = InetSocketAddress.createUnresolved(host, port);
+        // really do want to create a unresolved address here and only if need be we'll
+        // do a DNS lookup but we need to control that ourselves.
+        // See comment in ConnectionId.decode about this.
+        final var remoteAddress = new InetSocketAddress(host, port);
+        return stack.connect(transport, remoteAddress).thenApply(PeerConnection::of);
     }
 
     private static int getDefaultPort(final Transport transport) {
@@ -138,7 +180,6 @@ public class DefaultPeerTable<C extends DiameterAppConfig> implements PeerTable<
                 return 3868;
         }
     }
-
 
     @Override
     public CompletionStage<Peer> removePeer(final Peer peer, final boolean now) {

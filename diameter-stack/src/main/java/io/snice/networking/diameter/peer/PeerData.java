@@ -5,8 +5,7 @@ import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.TransactionIdentifier;
 import io.snice.networking.common.event.ConnectionActiveIOEvent;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
-import io.snice.networking.common.event.ConnectionIOEvent;
-import io.snice.networking.diameter.Peer;
+import io.snice.networking.diameter.PeerConnection;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -59,7 +58,7 @@ public class PeerData implements Data {
     }
 
     /**
-     * When a user asks to open a new connection we will attempt to create a {@link Peer}
+     * When a user asks to open a new connection we will attempt to create a {@link PeerConnection}
      * (this is diameter after all) and even though we may e.g. manage to establish the underlying
      * transport channel (tcp, sctp etc) we may fail in the Capability Exchange negotiation.
      * Therefore, we cannot actually claim that the connection was successfully made until

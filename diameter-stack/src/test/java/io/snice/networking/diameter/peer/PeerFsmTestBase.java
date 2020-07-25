@@ -5,7 +5,7 @@ import io.hektor.fsm.TransitionListener;
 import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
 import io.snice.codecs.codec.diameter.avp.type.IpAddress;
 import io.snice.networking.common.ChannelContext;
-import io.snice.networking.diameter.Peer;
+import io.snice.networking.diameter.PeerConnection;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mock;
@@ -29,7 +29,7 @@ public class PeerFsmTestBase extends DiameterTestBase {
     protected TransitionListener<PeerState> transitionListener;
 
     /**
-     * A {@link Peer} must have a local IP associated with it.
+     * A {@link PeerConnection} must have a local IP associated with it.
      */
     protected final HostIpAddress LOCAL_PEER_IP_ADDRESS = HostIpAddress.of(IpAddress.createIpv4Address("10.36.10.10"));
 

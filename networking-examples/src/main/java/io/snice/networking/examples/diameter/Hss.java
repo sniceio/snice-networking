@@ -7,16 +7,15 @@ import io.snice.codecs.codec.diameter.DiameterRequest;
 import io.snice.codecs.codec.diameter.avp.api.*;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
-import io.snice.networking.common.Transport;
 import io.snice.networking.diameter.DiameterBundle;
 import io.snice.networking.diameter.DiameterEnvironment;
-import io.snice.networking.diameter.Peer;
+import io.snice.networking.diameter.PeerConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.snice.networking.app.NetworkBootstrap.ACCEPT_ALL;
 
-public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer, DiameterMessage, HssConfig> {
+public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, PeerConnection, DiameterMessage, HssConfig> {
 
     private static final Logger logger = LoggerFactory.getLogger(Hss.class);
 
@@ -24,12 +23,32 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
         super(bundle);
     }
 
+    private void sleepy(final int ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (final Exception e) { }
+    }
     @Override
     public void run(final HssConfig configuration, final DiameterEnvironment<HssConfig> environment) {
-        // if (true) return;
-        environment.send(createULR());
+        final var t = new Thread(null, new Runnable() {
+            @Override
+            public void run() {
+                System.err.println("About to send ULR but will sleep first");
+                sleepy(1000);
+                System.err.println("Ok, sending");
+                environment.send(createULR());
+
+                for (int i = 0; i < 2; ++i) {
+                    sleepy(100);
+                    System.err.println("Ok, sending via the peer");
+                    environment.getPeers().stream().findAny().ifPresent(peer -> peer.send(createULR()));
+                }
+            }
+        }, "kicking off something");
+        t.start();
+
+        /*
         final var future = environment.connect(Transport.tcp, "10.36.10.77", 3869);
-        // final var future = environment.connect(Transport.tcp, "127.0.0.1", 3869);
         future.whenComplete((c, t) -> {
             if (c != null) {
                 try {
@@ -41,6 +60,7 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
                 t.printStackTrace();
             }
         });
+         */
     }
 
     private DiameterRequest createULR() {
@@ -65,7 +85,7 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
 
 
     @Override
-    public void initialize(final NetworkBootstrap<Peer, DiameterMessage, HssConfig> bootstrap) {
+    public void initialize(final NetworkBootstrap<PeerConnection, DiameterMessage, HssConfig> bootstrap) {
         bootstrap.onConnection(ACCEPT_ALL).accept(b -> {
             b.match(DiameterMessage::isULR).consume(Hss::processULR);
             b.match(DiameterMessage::isULA).consume(Hss::processULA);
@@ -73,13 +93,13 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
 
     }
 
-    private static final void processULR(final Peer peer, final DiameterMessage ulr) {
+    private static final void processULR(final PeerConnection peerConnection, final DiameterMessage ulr) {
         final var ula = ulr.createAnswer(ResultCode.DiameterErrorUserUnknown5032)
                 .withAvp(ExperimentalResultCode.DiameterErrorUserUnknown5001);
-        peer.send(ula);
+        peerConnection.send(ula);
     }
 
-    private static final void processULA(final Peer peer, final DiameterMessage ula) {
+    private static final void processULA(final PeerConnection peerConnection, final DiameterMessage ula) {
         logger.info("yay, we got a ULA back!");
     }
 

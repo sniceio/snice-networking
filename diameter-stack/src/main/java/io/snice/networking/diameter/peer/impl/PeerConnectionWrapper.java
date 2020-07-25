@@ -6,8 +6,8 @@ import io.snice.codecs.codec.diameter.avp.api.OriginHost;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
-import io.snice.networking.diameter.Peer;
-import io.snice.networking.diameter.peer.PeerConfiguration;
+import io.snice.networking.diameter.PeerConnection;
+import io.snice.networking.diameter.peer.Peer;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -16,10 +16,10 @@ import java.util.Optional;
 import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
 
-public class PeerConnectionWrapper implements Peer {
+public class PeerConnectionWrapper implements PeerConnection {
     private final Connection<DiameterMessage> actualConnection;
 
-    public static Peer of(final Connection<DiameterMessage> actualConnection) {
+    public static PeerConnection of(final Connection<DiameterMessage> actualConnection) {
         assertNotNull(actualConnection, "The underlying connection cannot be null");
         return new PeerConnectionWrapper(actualConnection);
     }
@@ -30,21 +30,16 @@ public class PeerConnectionWrapper implements Peer {
     }
 
     @Override
-    public PeerConfiguration getConfiguration() {
-        return null;
-    }
-
-    @Override
-    public MODE getMode() {
-        return null;
-    }
-
-    @Override
     public void send(final DiameterMessage.Builder msg) {
         ensureNotNull(msg, "You cannot send a null message");
         // TODO: check if we are to add the origin host and realm
         // to this message
         send(msg.build());
+    }
+
+    @Override
+    public Peer getPeer() {
+        throw new RuntimeException("Not implemented just yet");
     }
 
     private PeerConnectionWrapper(final Connection<DiameterMessage> actualConnection) {
