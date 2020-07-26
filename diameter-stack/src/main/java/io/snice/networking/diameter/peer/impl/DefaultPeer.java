@@ -1,37 +1,62 @@
 package io.snice.networking.diameter.peer.impl;
 
 import io.snice.codecs.codec.diameter.DiameterMessage;
+import io.snice.networking.common.Transport;
 import io.snice.networking.diameter.PeerConnection;
 import io.snice.networking.diameter.peer.Peer;
-import io.snice.networking.diameter.peer.PeerConfiguration;
 import io.snice.networking.diameter.peer.PeerId;
 import io.snice.networking.diameter.peer.PeerSettings;
 
+import java.net.InetSocketAddress;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static io.snice.preconditions.PreConditions.assertNotNull;
 
 public class DefaultPeer implements Peer {
 
+    private final DefaultPeerTable peerTable;
     private final PeerSettings settings;
     private final PeerId id;
 
-    private final AtomicReference<PeerConnection> connection = new AtomicReference<>();
+    private final AtomicReference<CompletionStage<PeerConnection>> connection = new AtomicReference<>();
 
-    public static DefaultPeer of(final PeerConfiguration config) {
-        final var settings = PeerSettings.from(config);
+    public static DefaultPeer of(final DefaultPeerTable peerTable, final PeerSettings settings) {
+        assertNotNull(peerTable, "The Peer Table cannot be null");
+        assertNotNull(settings, "The Peer settings cannot be null");
         final var id = new PeerIdImpl(UUID.randomUUID());
-        return new DefaultPeer(id, settings);
+        return new DefaultPeer(id, peerTable, settings);
     }
 
-    private DefaultPeer(final PeerId id, final PeerSettings settings) {
+    private DefaultPeer(final PeerId id, final DefaultPeerTable peerTable, final PeerSettings settings) {
         this.id = id;
         this.settings = settings;
+        this.peerTable = peerTable;
     }
 
-    void setConnection(final PeerConnection peerConnection) {
-        this.connection.set(peerConnection);
+    PeerSettings getSettings() {
+        return settings;
+    }
+
+    public Transport getTransport() {
+        return settings.getTransport();
+    }
+
+    CompletionStage<InetSocketAddress> resolveRemoteHost() {
+        return settings.getResolver().resolve(settings.getUri());
+    }
+
+    @Override
+    public CompletionStage<Peer> establishPeer() {
+        // this is dumb.
+        final var maybe = connection.compareAndExchangeAcquire(null, peerTable.activatePeer(this));
+        if (maybe != null) {
+            return maybe.thenApply(c -> this);
+        }
+
+        return connection.get().thenApply(c -> this);
     }
 
     @Override
@@ -40,22 +65,27 @@ public class DefaultPeer implements Peer {
     }
 
     @Override
-    public void send(DiameterMessage.Builder msg) {
+    public MODE getMode() {
+        return settings.getMode();
+    }
+
+    @Override
+    public String getName() {
+        return settings.getName();
+    }
+
+    @Override
+    public void send(final DiameterMessage.Builder msg) {
         System.err.println("need to send or buffer");
     }
 
     @Override
-    public void send(DiameterMessage msg) {
-        final var peer = connection.get();
-        if (peer != null) {
+    public void send(final DiameterMessage msg) {
+        final var f = connection.get();
+        if (f != null) {
             System.err.println("Got an active peer, sending!");
-            peer.send(msg);
+            f.thenAccept(c -> c.send(msg));
         }
-    }
-
-    @Override
-    public Optional<PeerConnection> getPeer() {
-        return Optional.ofNullable(connection.get());
     }
 
     @Override

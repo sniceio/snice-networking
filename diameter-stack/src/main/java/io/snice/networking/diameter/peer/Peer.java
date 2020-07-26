@@ -1,9 +1,10 @@
 package io.snice.networking.diameter.peer;
 
 import io.snice.codecs.codec.diameter.DiameterMessage;
+import io.snice.functional.Either;
 import io.snice.networking.diameter.PeerConnection;
 
-import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 
 /**
  * The underlying {@link PeerConnection} only gets created once an attempt to connect to the
@@ -25,18 +26,35 @@ public interface Peer {
    }
 
    /**
-    * Not until a {@link PeerConnection} is connected to it's remote endpoint it actually gets created.
-    * Hence, if this method returns an empty {@link Optional}, the underlying {@link PeerConnection} currently
-    * doesn't exist.
+    * A {@link Peer} may have been created as a {@link MODE#PASSIVE} peer, which means that no
+    * attempt to establish a connection to its remote party has been made. If you wish to ensure that the
+    * peer is indeed established, and as such, successfully connected to the remote party, call this method.
+    * If the {@link Peer} already was established, calling this method is essentially a no-op and a successful
+    * {@link CompletionStage} with a reference to this {@link Peer} will be returned.
+    * <p>
+    * TODO: perhaps return an {@link Either}
     *
-    * @return
+    * @return a {@link CompletionStage} with a reference to this {@link Peer} if a connection to the remote endpoint
+    * was made successfully. If establishing the peer fails, this {@link CompletionStage} will fail exceptionally.
     */
-   Optional<PeerConnection> getPeer();
+   CompletionStage<Peer> establishPeer();
 
    PeerId getId();
+
+   /**
+    * Get the {@link MODE} of this {@link Peer}.
+    * <p>
+    * Note that if the mode is {@link MODE#PASSIVE} it only means that the {@link Peer} wasn't
+    * automatically established when it was created and added to the stack. However, something/someone could
+    * have asked to {@link #establishPeer()} at a later point.
+    */
+   MODE getMode();
+
+   String getName();
 
    void send(DiameterMessage.Builder msg);
 
    void send(DiameterMessage msg);
+
 
 }

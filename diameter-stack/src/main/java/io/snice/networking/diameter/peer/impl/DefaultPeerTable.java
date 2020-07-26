@@ -18,7 +18,6 @@ import io.snice.networking.diameter.peer.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -108,13 +107,24 @@ public class DefaultPeerTable<C extends DiameterAppConfig> implements PeerTable<
 
     @Override
     public Peer addPeer(final PeerConfiguration config) {
-        // TODO: I guess we need to actually start a connection attempt here if need be?
-        // or should the PeerFsm always be created here and it'll take care of it
-        // based on its configuration options.
-        // but I guess for e.g. passive peers, we may not have the connection endpoint id
-        // yet and as such, we can't create the PeerFsmKey...
         logger.info("Adding Peer {}", config);
-        // TODO: we should actually error out if the given network interface name doesn't exist.
+        final var nic = findNic(config);
+        final var transport = ensureTransport(config.getTransport(), config.getName(), nic);
+        final var settings = PeerSettings.of(config).withNetworkInterface(nic).withTransport(transport).build();
+        final var peer = DefaultPeer.of(this, settings);
+        peers.put(peer.getId(), peer);
+
+        if (peer.getMode() == Peer.MODE.ACTIVE) {
+            peer.establishPeer();
+        }
+
+        return peer;
+    }
+
+    /**
+     * Try to find the configured {@link NetworkInterface} based on its friendly name.
+     */
+    private NetworkInterface findNic(final PeerConfiguration config) {
         final var interfaceName = config.getNic();
         final NetworkInterface nic;
         if (interfaceName.isPresent()) {
@@ -127,58 +137,41 @@ public class DefaultPeerTable<C extends DiameterAppConfig> implements PeerTable<
             nic = stack.getDefaultNetworkInterface();
         }
 
-        final var peer = DefaultPeer.of(config);
-        peers.put(peer.getId(), peer);
-
-        if (config.getMode() == Peer.MODE.ACTIVE) {
-            activatePeer(config, nic).thenAccept(peer::setConnection);
-        }
-
-        return peer;
+        return nic;
     }
 
-    private CompletionStage<PeerConnection> activatePeer(final PeerConfiguration config, final NetworkInterface nic) {
-        logger.info("Activating Peer {}", config);
-
-        final Transport transport;
-        if (config.getTransport().isPresent()) {
-            final var t = config.getTransport().get();
+    /**
+     * Ensure that the configured {@link Transport} for the {@link Peer} is indeed supported by the given
+     * {@link NetworkInterface}. If  the transport is not configured, try to find one that is supported by
+     * the NIC.
+     */
+    private Transport ensureTransport(final Optional<Transport> transport, final String peerName, final NetworkInterface<DiameterMessage> nic) {
+        if (transport.isPresent()) {
+            final var t = transport.get();
             if (!nic.isSupportingTransport(t)) {
                 throw new IllegalArgumentException("The configured transport \"" + t +
-                        "\" for Peer \"" + config.getName() + "\" is not supported by the specified NIC \"" +
+                        "\" for Peer \"" + peerName + "\" is not supported by the specified NIC \"" +
                         nic.getName() + "\"");
             }
-            transport = t;
+            return t;
         } else if (nic.isSupportingTransport(tcp)) {
-            transport = tcp;
+            return tcp;
         } else if (nic.isSupportingTransport(Transport.sctp)) {
-            transport = Transport.sctp;
+            return Transport.sctp;
         } else {
-            throw new IllegalArgumentException("No configured transport for Peer \"" + config.getName() +
+            throw new IllegalArgumentException("No configured transport for Peer \"" + peerName +
                     "\" and the specified NIC \"" + nic.getName() +
                     "\" does not support TCP nor SCTP. Unable to create the Peer");
         }
-
-        // TODO: figure out the remote Address
-        final var uri = config.getUri();
-        final var host = uri.getHost();
-        final var port = uri.getPort() == -1 ? getDefaultPort(transport) : uri.getPort();
-
-        // final var remoteAddress = InetSocketAddress.createUnresolved(host, port);
-        // really do want to create a unresolved address here and only if need be we'll
-        // do a DNS lookup but we need to control that ourselves.
-        // See comment in ConnectionId.decode about this.
-        final var remoteAddress = new InetSocketAddress(host, port);
-        return stack.connect(transport, remoteAddress).thenApply(PeerConnection::of);
     }
 
-    private static int getDefaultPort(final Transport transport) {
-        switch (transport) {
-            case tcp:
-                return 3869;
-            default:
-                return 3868;
-        }
+    CompletionStage<PeerConnection> activatePeer(final DefaultPeer peer) {
+        logger.info("Activating Peer {}", config);
+        // TODO: lots of error handling here!
+        final var f = peer.resolveRemoteHost()
+                .thenCompose(remoteAddress -> stack.connect(peer.getTransport(), remoteAddress))
+                .thenApply(PeerConnection::of);
+        return f;
     }
 
     @Override

@@ -5,6 +5,7 @@ import io.snice.networking.app.Environment;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
 import io.snice.networking.diameter.peer.Peer;
+import io.snice.networking.diameter.peer.PeerConfiguration;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -26,12 +27,14 @@ public interface DiameterEnvironment<C extends DiameterAppConfig> extends Enviro
     /**
      * Get all available {@link Peer}s, which is the complete list of all known peers, irrespective
      * of if they are currently connected to their remote party or not.
-     *
+     * <p>
      * Note: the list is a snapshot of the state right now and as {@link Peer}s is added/removed, it will
      * NOT be reflected in this list. The list is immutable. As such, no applications should really rely
      * on this list.
      */
     List<Peer> getPeers();
+
+    Peer addPeer(final PeerConfiguration config);
 
     @Override
     CompletionStage<PeerConnection> connect(final Transport transport, final InetSocketAddress remoteAddress) throws IllegalTransportException;
