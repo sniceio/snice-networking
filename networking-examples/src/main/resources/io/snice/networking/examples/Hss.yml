@@ -18,7 +18,7 @@ diameter:
       nic: default # the local network interface this peer will be using. The underlying stack can
       # listen to many different ip:port pairs and a peer needs to be bound to one of them.
 
-      mode: ACTIVE # an active peer will try and establish a session with the remote address.
+      mode: PASSIVE # an active peer will try and establish a session with the remote address.
       # A passive peer will wait for the remote party to initiate the capability exchange
 
       uri: aaa://10.36.10.77:3869

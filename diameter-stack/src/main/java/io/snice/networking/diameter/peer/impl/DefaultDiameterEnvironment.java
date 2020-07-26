@@ -8,6 +8,7 @@ import io.snice.networking.diameter.DiameterAppConfig;
 import io.snice.networking.diameter.DiameterEnvironment;
 import io.snice.networking.diameter.PeerConnection;
 import io.snice.networking.diameter.peer.Peer;
+import io.snice.networking.diameter.peer.PeerConfiguration;
 import io.snice.networking.diameter.peer.PeerTable;
 
 import java.net.InetSocketAddress;
@@ -41,6 +42,11 @@ public class DefaultDiameterEnvironment<C extends DiameterAppConfig> implements 
     @Override
     public void send(final DiameterMessage msg) {
         peerTable.send(msg);
+    }
+
+    @Override
+    public Peer addPeer(final PeerConfiguration config) {
+        return peerTable.addPeer(config);
     }
 
     /**

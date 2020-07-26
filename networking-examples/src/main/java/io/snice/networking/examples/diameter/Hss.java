@@ -10,8 +10,13 @@ import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.diameter.DiameterBundle;
 import io.snice.networking.diameter.DiameterEnvironment;
 import io.snice.networking.diameter.PeerConnection;
+import io.snice.networking.diameter.peer.Peer;
+import io.snice.networking.diameter.peer.PeerConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import static io.snice.networking.app.NetworkBootstrap.ACCEPT_ALL;
 
@@ -26,22 +31,49 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
     private void sleepy(final int ms) {
         try {
             Thread.sleep(ms);
-        } catch (final Exception e) { }
+        } catch (final Exception e) {
+        }
     }
+
+    private PeerConfiguration createPeerConf() {
+        final var c = new PeerConfiguration();
+        try {
+            c.setUri(new URI("aaa://10.36.10.77:3869"));
+        } catch (final URISyntaxException e) {
+            // ignore
+        }
+        return c;
+    }
+
     @Override
     public void run(final HssConfig configuration, final DiameterEnvironment<HssConfig> environment) {
+
+        final var c = createPeerConf();
+        final var peer = environment.addPeer(c);
+        // peer.establishPeer();
+
         final var t = new Thread(null, new Runnable() {
             @Override
             public void run() {
                 System.err.println("About to send ULR but will sleep first");
                 sleepy(1000);
                 System.err.println("Ok, sending");
-                environment.send(createULR());
+                // environment.send(createULR());
+                peer.establishPeer().thenAccept(p -> p.send(createULR()));
+                // peer.send(createULR());
 
                 for (int i = 0; i < 2; ++i) {
                     sleepy(100);
-                    System.err.println("Ok, sending via the peer");
-                    environment.getPeers().stream().findAny().ifPresent(peer -> peer.send(createULR()));
+                    System.err.println("Ok, sending via Peer.send");
+                    // environment.getPeers().stream().findAny().ifPresent(peer -> peer.send(createULR()));
+                    peer.send(createULR());
+                }
+
+                for (int i = 0; i < 2; ++i) {
+                    sleepy(100);
+                    System.err.println("Ok, sending via Peer.establishPeer().thenAccept");
+                    // environment.getPeers().stream().findAny().ifPresent(peer -> peer.send(createULR()));
+                    peer.establishPeer().thenAccept(p -> p.send(createULR()));
                 }
             }
         }, "kicking off something");

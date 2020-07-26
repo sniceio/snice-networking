@@ -58,7 +58,7 @@ public class PeerConfiguration {
      * don't, the default one of the underlying network stack will be used.
      */
     @JsonProperty("nic")
-    private Optional<String> nic;
+    private Optional<String> nic = Optional.empty();
 
     /**
      * A {@link NetworkInterface} can be configured to use multiple {@link Transport}s and as such,
@@ -113,6 +113,11 @@ public class PeerConfiguration {
         this.hostIpAddresses = hostIpAddresses;
     }
 
+    /**
+     * Human friendly name of the {@link Peer}. This name is primarily used for logging purposes
+     * and no particular business logic is using this name. However, the name must be unique
+     * for all known {@link Peer}s.
+     */
     public String getName() {
         return name;
     }

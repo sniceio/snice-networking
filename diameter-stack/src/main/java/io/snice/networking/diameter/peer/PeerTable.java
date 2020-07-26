@@ -66,4 +66,5 @@ public interface PeerTable<C extends DiameterAppConfig> extends FsmFactory<Diame
      * so do not not not rely on that).
      */
     CompletionStage<Peer> removePeer(Peer peer, boolean now);
+
 }
