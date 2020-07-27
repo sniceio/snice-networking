@@ -1,6 +1,4 @@
-package io.snice.networking.diameter;
-
-import io.snice.networking.diameter.peer.Peer;
+package io.snice.networking.diameter.peer;
 
 public class UnknownPeerException extends PeerException {
 
