@@ -10,13 +10,13 @@ import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.diameter.DiameterBundle;
 import io.snice.networking.diameter.DiameterEnvironment;
 import io.snice.networking.diameter.PeerConnection;
-import io.snice.networking.diameter.peer.Peer;
 import io.snice.networking.diameter.peer.PeerConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Random;
 
 import static io.snice.networking.app.NetworkBootstrap.ACCEPT_ALL;
 
@@ -35,10 +35,10 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
         }
     }
 
-    private PeerConfiguration createPeerConf() {
+    private PeerConfiguration createPeerConf(final int port) {
         final var c = new PeerConfiguration();
         try {
-            c.setUri(new URI("aaa://10.36.10.77:3869"));
+            c.setUri(new URI("aaa://10.36.10.77:" + port));
         } catch (final URISyntaxException e) {
             // ignore
         }
@@ -48,51 +48,76 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
     @Override
     public void run(final HssConfig configuration, final DiameterEnvironment<HssConfig> environment) {
 
-        final var c = createPeerConf();
-        final var peer = environment.addPeer(c);
         // peer.establishPeer();
 
-        final var t = new Thread(null, new Runnable() {
-            @Override
-            public void run() {
-                System.err.println("About to send ULR but will sleep first");
-                sleepy(1000);
-                System.err.println("Ok, sending");
-                // environment.send(createULR());
+        final var t = new Thread(null, () -> {
+            final var c1 = createPeerConf(3869);
+            final var c2 = createPeerConf(3870);
+            final var peer = environment.addPeer(c1);
+            final var peer2 = environment.addPeer(c2);
+
+            System.err.println("About to send ULR but will sleep first");
+            sleepy(1000);
+            System.err.println("Ok, sending");
+            peer.establishPeer().thenAccept(p -> p.send(createULR()));
+            peer2.establishPeer().thenAccept(p -> System.err.println("Peer2 estabalished"));
+
+            for (int i = 0; i < 2; ++i) {
+                sleepy(100);
+                System.err.println("Ok, sending via Peer.send");
+                // environment.getPeers().stream().findAny().ifPresent(peer -> peer.send(createULR()));
+                peer.send(createULR());
+            }
+
+            System.err.println("Ok, sending to both peers now.");
+            sleepy(1000);
+            for (int i = 0; i < 2; ++i) {
+                sleepy(100);
+                System.err.println("Ok, sending via Peer.establishPeer().thenAccept");
+                // environment.getPeers().stream().findAny().ifPresent(peer -> peer.send(createULR()));
                 peer.establishPeer().thenAccept(p -> p.send(createULR()));
-                // peer.send(createULR());
-
-                for (int i = 0; i < 2; ++i) {
-                    sleepy(100);
-                    System.err.println("Ok, sending via Peer.send");
-                    // environment.getPeers().stream().findAny().ifPresent(peer -> peer.send(createULR()));
-                    peer.send(createULR());
-                }
-
-                for (int i = 0; i < 2; ++i) {
-                    sleepy(100);
-                    System.err.println("Ok, sending via Peer.establishPeer().thenAccept");
-                    // environment.getPeers().stream().findAny().ifPresent(peer -> peer.send(createULR()));
-                    peer.establishPeer().thenAccept(p -> p.send(createULR()));
-                }
+                peer2.send(createULR());
             }
         }, "kicking off something");
-        t.start();
+        // t.start();
 
-        /*
-        final var future = environment.connect(Transport.tcp, "10.36.10.77", 3869);
-        future.whenComplete((c, t) -> {
-            if (c != null) {
-                try {
-                    c.send(createULR());
-                } catch (final Throwable e) {
-                    e.printStackTrace();
-                }
-            } else {
-                t.printStackTrace();
-            }
+        environment.getPeers().forEach(p -> {
+            logger.info("Establishing peer: " + p);
+            p.establishPeer().thenAccept(established -> {
+                logger.info("Peer Established: " + p);
+                final var myPeer = established;
+                new Thread(null, () -> {
+                    logger.info("Starting new Peer Thread for peer: " + myPeer);
+                    myPeer.send(createULR());
+                    final var random = new Random();
+                    int max = random.nextInt(50);
+                    logger.info("Sleeping 5 seconds then issuing " + max + " no of ULRs for Peer " + myPeer);
+                    sleepy(5000);
+                    for (int i = 0; i < max; ++i) {
+                        myPeer.send(createULR());
+                        sleepy(5);
+                    }
+                    int sleepy = random.nextInt(30) + 10;
+                    /*
+                    max = random.nextInt(50);
+                    logger.info("Sleeping " + sleepy + " seconds then issuing " + max + " no of ULRs for Peer " + myPeer);
+                    sleepy(sleepy * 1000);
+                    for (int i = 0; i < max; ++i) {
+                        myPeer.send(createULR());
+                        sleepy(5);
+                    }
+                     */
+                    sleepy = 4;
+                    max = 10000;
+                    logger.info("Performance: Sleeping " + sleepy + " seconds then issuing " + max + " no of ULRs for Peer " + myPeer);
+                    for (int i = 0; i < max; ++i) {
+                        myPeer.send(createULR());
+                        sleepy(2);
+                    }
+                }).start();
+            });
         });
-         */
+
     }
 
     private DiameterRequest createULR() {
@@ -132,7 +157,7 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
     }
 
     private static final void processULA(final PeerConnection peerConnection, final DiameterMessage ula) {
-        logger.info("yay, we got a ULA back!");
+        // logger.info("yay, we got a ULA back!");
     }
 
     public static void main(final String... args) throws Exception {

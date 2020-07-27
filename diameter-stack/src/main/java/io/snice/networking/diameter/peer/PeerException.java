@@ -1,6 +1,4 @@
-package io.snice.networking.diameter;
-
-import io.snice.networking.diameter.peer.Peer;
+package io.snice.networking.diameter.peer;
 
 import java.util.Optional;
 

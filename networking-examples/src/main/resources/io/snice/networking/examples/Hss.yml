@@ -33,4 +33,10 @@ diameter:
           # a private IP that the stack will bind to but the public EIP is what others outside
         # your VPC can reach you on and that is what you want to specify here.
 
+    - name: peer2
+      nic: default
+      mode: PASSIVE
+      uri: aaa://10.36.10.77:3870
+      hostIpAddresses:
+        - 10.11.12.13
 

@@ -1,7 +1,9 @@
 package io.snice.networking.diameter.peer;
 
 import io.snice.codecs.codec.diameter.DiameterMessage;
+import io.snice.codecs.codec.diameter.avp.api.OriginHost;
 import io.snice.functional.Either;
+import io.snice.networking.diameter.DiameterEnvironment;
 import io.snice.networking.diameter.PeerConnection;
 
 import java.util.concurrent.CompletionStage;
@@ -52,9 +54,32 @@ public interface Peer {
 
    String getName();
 
-   void send(DiameterMessage.Builder msg);
+   /**
+    * Ask the {@link Peer} to finalize building the message by adding mandatory AVPs, such as {@link OriginHost},
+    * and then send the final message.
+    * <p>
+    * If you do not wish to have any AVPs automatically added, you can just use the overload {@link #send(DiameterMessage)}
+    * method instead.
+    * <p>
+    * If the {@link Peer} has not been asked to establish a connection to the remote party, either by setting the mode to
+    * {@link MODE#ACTIVE} before adding it to the {@link DiameterEnvironment#addPeer(PeerConfiguration)} or by
+    * "manually" calling {@link Peer#establishPeer()}, a {@link PeerIllegalStateException} will be thrown.
+    *
+    * @throws PeerIllegalStateException in case the {@link Peer} has never made an attempt to be established
+    * towards the remote endpoint.
+    */
+   void send(DiameterMessage.Builder msg) throws PeerIllegalStateException;
 
-   void send(DiameterMessage msg);
-
-
+   /**
+    * Ask the {@link Peer} to send the given message. Since the message has been fully constructed, the peer will
+    * not add any new AVPs to the message but rather send it as is.
+    * <p>
+    * If the {@link Peer} has not been asked to establish a connection to the remote party, either by setting the mode to
+    * {@link MODE#ACTIVE} before adding it to the {@link DiameterEnvironment#addPeer(PeerConfiguration)} or by
+    * "manually" calling {@link Peer#establishPeer()}, a {@link PeerIllegalStateException} will be thrown.
+    *
+    * @throws PeerIllegalStateException in case the {@link Peer} has never made an attempt to be established
+    * towards the remote endpoint.
+    */
+   void send(DiameterMessage msg) throws PeerIllegalStateException;
 }

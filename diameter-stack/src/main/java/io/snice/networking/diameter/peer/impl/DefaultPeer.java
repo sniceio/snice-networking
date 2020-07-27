@@ -5,6 +5,7 @@ import io.snice.networking.common.Transport;
 import io.snice.networking.diameter.PeerConnection;
 import io.snice.networking.diameter.peer.Peer;
 import io.snice.networking.diameter.peer.PeerId;
+import io.snice.networking.diameter.peer.PeerIllegalStateException;
 import io.snice.networking.diameter.peer.PeerSettings;
 
 import java.net.InetSocketAddress;
@@ -76,16 +77,25 @@ public class DefaultPeer implements Peer {
 
     @Override
     public void send(final DiameterMessage.Builder msg) {
-        System.err.println("need to send or buffer");
+        ensureConnection().thenAccept(c -> c.send(msg));
     }
 
     @Override
     public void send(final DiameterMessage msg) {
+        ensureConnection().thenAccept(c -> c.send(msg));
+    }
+
+    @Override
+    public String toString() {
+        return settings.toString();
+    }
+
+    private CompletionStage<PeerConnection> ensureConnection() {
         final var f = connection.get();
-        if (f != null) {
-            System.err.println("Got an active peer, sending!");
-            f.thenAccept(c -> c.send(msg));
+        if (f == null) {
+            throw new PeerIllegalStateException(this, "Peer has never been established");
         }
+        return f;
     }
 
     @Override

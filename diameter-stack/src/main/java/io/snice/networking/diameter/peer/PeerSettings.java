@@ -63,6 +63,16 @@ public class PeerSettings {
         return nic;
     }
 
+    @Override
+    public String toString() {
+        return "{" +
+                "Name: " + getName() + ", " +
+                "Mode: " + getMode() + ", " +
+                "NIC: " + getNic().getName() + ", " +
+                "URI: " + getUri() +
+                "}";
+    }
+
     public static class Builder {
 
         private final PeerConfiguration config;
