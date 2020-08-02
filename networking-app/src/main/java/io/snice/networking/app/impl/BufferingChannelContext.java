@@ -3,6 +3,7 @@ package io.snice.networking.app.impl;
 import io.netty.channel.ChannelHandlerContext;
 import io.snice.networking.common.ChannelContext;
 import io.snice.networking.common.ConnectionId;
+import io.snice.networking.common.event.ApplicationEvent;
 import io.snice.networking.common.event.IOEvent;
 import io.snice.networking.common.event.MessageIOEvent;
 
@@ -28,7 +29,7 @@ public class BufferingChannelContext<T> implements ChannelContext<T> {
     private T downstream;
     private T upstream;
     private IOEvent<T> userEvent;
-
+    private Object applicationEvent;
 
     /**
      * If the user wish to send multiple up or downstream messages then we'll
@@ -43,6 +44,8 @@ public class BufferingChannelContext<T> implements ChannelContext<T> {
     private final List<T> downstreams = new ArrayList<>(4); // TODO: should be configurable
     private final List<T> upstreams = new ArrayList<>(4);
     private final List<IOEvent<T>> userEvents = new ArrayList<>(4);
+
+    private final List<Object> applicationEvents = new ArrayList<>(4);
 
     public BufferingChannelContext(final ConnectionId connectionId) {
         this.connectionId = connectionId;
@@ -72,11 +75,20 @@ public class BufferingChannelContext<T> implements ChannelContext<T> {
     }
 
     @Override
-    public void fireUserEvent(IOEvent<T> evt) {
+    public void fireUserEvent(final IOEvent<T> evt) {
         if (userEvent == null) {
             userEvent = evt;
         } else {
             userEvents.add(evt);
+        }
+    }
+
+    @Override
+    public void fireApplicationEvent(final Object evt) {
+        if (applicationEvent == null) {
+            applicationEvent = evt;
+        } else {
+            applicationEvents.add(evt);
         }
     }
 
@@ -114,6 +126,19 @@ public class BufferingChannelContext<T> implements ChannelContext<T> {
 
         userEvents.forEach(ctx::fireUserEventTriggered);
         userEvents.clear();
+    }
+
+    public void processApplicationEvents(final ChannelHandlerContext ctx, final IOEvent<T> originalEvent) {
+        if (applicationEvent == null) {
+            return;
+        }
+
+        final var appEvent = ApplicationEvent.create(originalEvent.channelContext(), applicationEvent, 0);
+        ctx.fireUserEventTriggered(appEvent);
+        applicationEvent = null;
+
+        applicationEvents.forEach(evt -> ctx.fireUserEventTriggered(ApplicationEvent.create(originalEvent.channelContext(), evt, 0)));
+        applicationEvents.clear();
     }
 
     /**

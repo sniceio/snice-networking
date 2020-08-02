@@ -65,15 +65,18 @@ public class NettyBootstrap<K extends Connection<T>, T, C extends NetworkAppConf
 
         public ConnectionContext<K, T> build() {
             final List<MessagePipe<K, T, ?>> rules;
+            final List<MessagePipe<K, Object, ?>> eventRules;
             if (confBuilderConsumer != null) {
                 final ConfBuilder b = new ConfBuilder();
                 confBuilderConsumer.accept(b);
                 rules = b.getRules();
+                eventRules = b.getEventRules();
             } else {
                 rules = List.of();
+                eventRules = List.of();
             }
 
-            return new NettyConnectionContext<K, T>(condition, dropFunction, rules);
+            return new NettyConnectionContext<K, T>(condition, dropFunction, rules, eventRules);
         }
 
         @Override
@@ -102,6 +105,8 @@ public class NettyBootstrap<K extends Connection<T>, T, C extends NetworkAppConf
 
             private final List<MessageProcessingBuilderImpl<K, T, T>> rules = new ArrayList<>();
 
+            private final List<EventProcessingBuilderImpl<Object, ?>> eventRules = new ArrayList<>();
+
             @Override
             public ConnectionContext.ConfigurationBuilder<K, T, R> withDefaultStatisticsModule() {
                 return this;
@@ -109,6 +114,10 @@ public class NettyBootstrap<K extends Connection<T>, T, C extends NetworkAppConf
 
             private List<MessagePipe<K, T, ?>> getRules() {
                 return rules.stream().map(MessageProcessingBuilderImpl::getFinalPipe).collect(Collectors.toList());
+            }
+
+            private List<MessagePipe<K, Object, ?>> getEventRules() {
+                return eventRules.stream().map(EventProcessingBuilderImpl::getFinalPipe).collect(Collectors.toList());
             }
 
             @Override
@@ -119,6 +128,16 @@ public class NettyBootstrap<K extends Connection<T>, T, C extends NetworkAppConf
                 rules.add(builder);
                 return builder;
             }
+
+            @Override
+            public <T2, R2> ConnectionContext.EventProcessingBuilder<T2, R2> matchEvent(final Predicate<T2> filter) {
+                final BiPredicate<K, T2> filter2 = (c, t) -> filter.test(t);
+                final MessagePipe<K, T2, T2> initialPipe = MessagePipe.match(filter2);
+                final EventProcessingBuilderImpl builder = new EventProcessingBuilderImpl(initialPipe);
+                eventRules.add(builder);
+                return builder;
+            }
+
 
             @Override
             public void withPipe(final MessagePipe<K, T, ?> pipe) {
@@ -169,6 +188,39 @@ public class NettyBootstrap<K extends Connection<T>, T, C extends NetworkAppConf
             @Override
             public <NEW_R> MessageProcessingBuilder<K, T, NEW_R> map(final BiFunction<K, ? super R, ? extends NEW_R> f) {
                 final var builder = new MessageProcessingBuilderImpl(pipe.map(f));
+                child = builder;
+                return builder;
+            }
+
+            private MessagePipe<K, T, ?> getFinalPipe() {
+                if (child == null) {
+                    return pipe;
+                }
+
+                return child.getFinalPipe();
+            }
+        }
+
+        private class EventProcessingBuilderImpl<T, R> implements ConnectionContext.EventProcessingBuilder<T, R> {
+
+            private final MessagePipe<K, T, R> pipe;
+
+            private EventProcessingBuilderImpl<T, ?> child;
+
+            private EventProcessingBuilderImpl(final MessagePipe<K, T, R> pipe) {
+                this.pipe = pipe;
+            }
+
+            @Override
+            public ConnectionContext.EventProcessingBuilder<T, R> consume(final Consumer<R> consumer) {
+                final var builder = new EventProcessingBuilderImpl(pipe.consume(consumer));
+                child = builder;
+                return builder;
+            }
+
+            @Override
+            public <NEW_R> ConnectionContext.EventProcessingBuilder<T, NEW_R> map(final Function<? super R, ? extends NEW_R> f) {
+                final var builder = new EventProcessingBuilderImpl(pipe.map(f));
                 child = builder;
                 return builder;
             }

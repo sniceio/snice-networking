@@ -84,6 +84,7 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
     @Override
     public void stop() {
         try {
+            this.interfaces.forEach(NetworkInterface::down);
             latch.await();
             shutdownStage.complete(null);
         } catch (final InterruptedException e) {

@@ -29,5 +29,5 @@ public interface ChannelContext<T> {
      */
     void fireUserEvent(IOEvent<T> evt);
 
-
+    void fireApplicationEvent(Object evt);
 }

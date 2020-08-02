@@ -14,6 +14,10 @@ public class PeerException extends RuntimeException {
         this.peer = Optional.ofNullable(peer);
     }
 
+    public PeerException(final String msg) {
+        this(null, msg);
+    }
+
     /**
      * If available, return the given {@link Peer} that is the cause of this
      * exception.

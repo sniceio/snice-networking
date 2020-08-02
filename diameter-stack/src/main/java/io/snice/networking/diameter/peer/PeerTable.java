@@ -5,6 +5,7 @@ import io.snice.networking.app.NetworkStack;
 import io.snice.networking.common.fsm.FsmFactory;
 import io.snice.networking.diameter.DiameterAppConfig;
 import io.snice.networking.diameter.DiameterConfig;
+import io.snice.networking.diameter.DiameterRoutingException;
 import io.snice.networking.diameter.PeerConnection;
 import io.snice.networking.diameter.peer.impl.DefaultPeerTable;
 
@@ -25,7 +26,14 @@ public interface PeerTable<C extends DiameterAppConfig> extends FsmFactory<Diame
 
     CompletionStage<PeerTable<C>> start(final NetworkStack<PeerConnection, DiameterMessage, C> stack);
 
-    void send(DiameterMessage msg);
+    /**
+     * Ask the {@link PeerTable} to send the given message.
+     *
+     * @param msg
+     * @throws DiameterRoutingException in case the message cannot be sent for any routing reasons, such as
+     * unable to find an appropriate {@link Peer} to send the message over.
+     */
+    void send(DiameterMessage msg) throws DiameterRoutingException;
 
     /**
      * Get all available {@link Peer}s, which is the complete list of all known peers, irrespective

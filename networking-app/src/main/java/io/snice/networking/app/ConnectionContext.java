@@ -3,11 +3,7 @@ package io.snice.networking.app;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 public interface ConnectionContext<C extends Connection<T>, T> extends Predicate<ConnectionId> {
 
@@ -15,6 +11,8 @@ public interface ConnectionContext<C extends Connection<T>, T> extends Predicate
 
 
     MessagePipe<C, T, ?> match(C connection, T data);
+
+    <U extends Object> MessagePipe<C, U, ?> matchEvent(C connection, U event);
 
     interface Builder<C extends Connection<T>, T, R> {
         /**
@@ -38,9 +36,24 @@ public interface ConnectionContext<C extends Connection<T>, T> extends Predicate
 
         MessageProcessingBuilder<C, T, R> match(Predicate<T> filter);
 
+        <T2, R2> EventProcessingBuilder<T2, R2> matchEvent(Predicate<T2> filter);
+
         void withPipe(MessagePipe<C, T, ?> pipe);
 
         void withPipe(SingleMessagePipe<T, ?> pipe);
+    }
+
+    interface EventProcessingBuilder<T, R> {
+
+        // <NEW_R> EventProcessingBuilder<T, NEW_R> withPipe(MessagePipe<C, ? super R, ? extends NEW_R> f);
+
+        EventProcessingBuilder<T, R> consume(Consumer<R> consumer);
+
+        // EventProcessingBuilder<T, R> consume(BiConsumer<C, R> consumer);
+
+        <NEW_R> EventProcessingBuilder<T, NEW_R> map(Function<? super R, ? extends NEW_R> f);
+
+        // <NEW_R> EventProcessingBuilder<T, NEW_R> map(BiFunction<C, ? super R, ? extends NEW_R> f);
     }
 
     interface MessageProcessingBuilder<C extends Connection<T>, T, R> {

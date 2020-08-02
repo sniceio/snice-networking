@@ -22,16 +22,21 @@ public class InitialChannelContext<T> implements ChannelContext<T> {
 
     @Override
     public void sendDownstream(final T msg) {
-        throw new IllegalStateException("This ChannelConext has not been fully established yet");
+        throw new IllegalStateException("This ChannelContext has not been fully established yet");
     }
 
     @Override
     public void sendUpstream(final T msg) {
-        throw new IllegalStateException("This ChannelConext has not been fully established yet");
+        throw new IllegalStateException("This ChannelContext has not been fully established yet");
     }
 
     @Override
     public void fireUserEvent(final IOEvent<T> evt) {
-        throw new IllegalStateException("This ChannelConext has not been fully established yet");
+        throw new IllegalStateException("This ChannelContext has not been fully established yet");
+    }
+
+    @Override
+    public void fireApplicationEvent(final Object evt) {
+        throw new IllegalStateException("This ChannelContext has not been fully established yet");
     }
 }

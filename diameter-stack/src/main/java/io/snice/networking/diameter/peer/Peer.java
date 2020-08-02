@@ -5,6 +5,7 @@ import io.snice.codecs.codec.diameter.avp.api.OriginHost;
 import io.snice.functional.Either;
 import io.snice.networking.diameter.DiameterEnvironment;
 import io.snice.networking.diameter.PeerConnection;
+import io.snice.networking.diameter.tx.Transaction;
 
 import java.util.concurrent.CompletionStage;
 
@@ -74,12 +75,15 @@ public interface Peer {
     * Ask the {@link Peer} to send the given message. Since the message has been fully constructed, the peer will
     * not add any new AVPs to the message but rather send it as is.
     * <p>
+    * The {@link Transaction} created will be a default {@link Transaction} where all responses are still
+    * delivered via
+    * <p>
     * If the {@link Peer} has not been asked to establish a connection to the remote party, either by setting the mode to
     * {@link MODE#ACTIVE} before adding it to the {@link DiameterEnvironment#addPeer(PeerConfiguration)} or by
     * "manually" calling {@link Peer#establishPeer()}, a {@link PeerIllegalStateException} will be thrown.
     *
     * @throws PeerIllegalStateException in case the {@link Peer} has never made an attempt to be established
-    * towards the remote endpoint.
+    *                                   towards the remote endpoint.
     */
-   void send(DiameterMessage msg) throws PeerIllegalStateException;
+   Transaction send(DiameterMessage msg) throws PeerIllegalStateException;
 }
