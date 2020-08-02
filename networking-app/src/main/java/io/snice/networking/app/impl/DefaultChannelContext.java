@@ -39,4 +39,9 @@ public class DefaultChannelContext<T> implements ChannelContext<T> {
     public void fireUserEvent(final IOEvent<T> evt) {
         throw new RuntimeException("Sorry, not implemented yet but I really wanted to send fire this event" + evt);
     }
+
+    @Override
+    public void fireApplicationEvent(final Object evt) {
+        throw new RuntimeException("Sorry, not implemented yet but I really wanted to send fire this event" + evt);
+    }
 }

@@ -21,7 +21,7 @@ public interface MessagePipe<C, T, R> extends BiFunction<C, T, R>, BiPredicate<C
 	}
 
 	/**
-	 * Create a new {@link MessagePipe} that consumes values of the given stype.
+	 * Create a new {@link MessagePipe} that consumes values of the given type.
 	 *
 	 * @param inType the type this {@link MessagePipe} will consume.
 	 * @param <T>    the type

@@ -22,6 +22,7 @@ public abstract class NetworkApplication<E extends Environment<K, T, C>, K exten
 
     private E env;
     private final ProtocolBundle<K, T, C> bundle;
+    private NetworkStack<K, T, C> network;
 
     public NetworkApplication(final ProtocolBundle<K, T, C> bundle) {
         assertNotNull(bundle, "The app bundle cannot be null");
@@ -63,7 +64,7 @@ public abstract class NetworkApplication<E extends Environment<K, T, C>, K exten
         builder.withApplication(this);
         builder.withAppBundle(bundle);
 
-        final var network = builder.build();
+        network = builder.build();
         env = bundle.createEnvironment(network, bootstrap.getConfiguration());
         ensureNotNull(env, "Bundle \"" + bundle.getBundleName()
                 + "\" produced a null value for the Environment. Stack is shutting down");
@@ -72,7 +73,6 @@ public abstract class NetworkApplication<E extends Environment<K, T, C>, K exten
 
         // call application
         run(config, env); // TODO: app can throw exception. Handle it.
-        network.sync();
     }
 
     /**
@@ -85,6 +85,11 @@ public abstract class NetworkApplication<E extends Environment<K, T, C>, K exten
 
         final C config = loadConfiguration(args[1]);
         run(config, args);
+    }
+
+    public final void stop() {
+        network.stop();
+        // return network.sync();
     }
 
     protected Class<C> getConfigurationClass() {

@@ -333,6 +333,9 @@ public class PeerFsm {
     private static final void acceptAction(final DiameterMessage msg, final PeerContext ctx, final PeerData data) {
         data.storeTransaction(msg);
         ctx.getChannelContext().sendUpstream(msg);
+        System.err.println("Firing off a user event here just because");
+        ctx.getChannelContext().fireApplicationEvent("hello world");
+        ctx.getChannelContext().fireApplicationEvent(123);
     }
 
 }

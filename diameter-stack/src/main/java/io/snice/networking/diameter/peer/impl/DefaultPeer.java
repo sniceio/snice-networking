@@ -7,6 +7,7 @@ import io.snice.networking.diameter.peer.Peer;
 import io.snice.networking.diameter.peer.PeerId;
 import io.snice.networking.diameter.peer.PeerIllegalStateException;
 import io.snice.networking.diameter.peer.PeerSettings;
+import io.snice.networking.diameter.tx.Transaction;
 
 import java.net.InetSocketAddress;
 import java.util.Objects;
@@ -81,8 +82,9 @@ public class DefaultPeer implements Peer {
     }
 
     @Override
-    public void send(final DiameterMessage msg) {
+    public Transaction send(final DiameterMessage msg) {
         ensureConnection().thenAccept(c -> c.send(msg));
+        return null;
     }
 
     @Override

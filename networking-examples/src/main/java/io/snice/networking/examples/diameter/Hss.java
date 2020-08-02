@@ -86,7 +86,7 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
             p.establishPeer().thenAccept(established -> {
                 logger.info("Peer Established: " + p);
                 final var myPeer = established;
-                new Thread(null, () -> {
+                final var th = new Thread(null, () -> {
                     logger.info("Starting new Peer Thread for peer: " + myPeer);
                     myPeer.send(createULR());
                     final var random = new Random();
@@ -114,7 +114,9 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
                         myPeer.send(createULR());
                         sleepy(2);
                     }
-                }).start();
+                });
+
+                // th.start();
             });
         });
 
@@ -146,6 +148,12 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
         bootstrap.onConnection(ACCEPT_ALL).accept(b -> {
             b.match(DiameterMessage::isULR).consume(Hss::processULR);
             b.match(DiameterMessage::isULA).consume(Hss::processULA);
+            b.matchEvent(o -> o instanceof String).map(o -> (String) o).consume(s -> {
+                System.out.println("I got the String " + s + " which is of length " + s.length());
+            });
+            b.matchEvent(o -> o instanceof Integer).map(o -> (Integer) o).consume(i -> {
+                System.out.println("I got the Integer " + i);
+            });
         });
 
     }

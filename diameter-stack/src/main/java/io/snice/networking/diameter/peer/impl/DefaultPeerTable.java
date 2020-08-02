@@ -13,6 +13,7 @@ import io.snice.networking.common.fsm.FsmSupport;
 import io.snice.networking.core.NetworkInterface;
 import io.snice.networking.diameter.DiameterAppConfig;
 import io.snice.networking.diameter.DiameterConfig;
+import io.snice.networking.diameter.DiameterRoutingException;
 import io.snice.networking.diameter.PeerConnection;
 import io.snice.networking.diameter.peer.*;
 import org.slf4j.Logger;
@@ -59,10 +60,10 @@ public class DefaultPeerTable<C extends DiameterAppConfig> implements PeerTable<
     }
 
     @Override
-    public void send(final DiameterMessage msg) {
+    public void send(final DiameterMessage msg) throws DiameterRoutingException {
         routingEngine.findRoute(this, msg).or(() -> getDefaultPeer(msg)).orElseThrow(() -> {
             // TODO: need special exception. No peer found or something.
-            throw new RuntimeException("Unable to find Peer for the given message");
+            throw new NoMatchingPeerException(msg);
         }).send(msg);
     }
 

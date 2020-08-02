@@ -74,6 +74,10 @@ public interface IOEvent<T> {
         return false;
     }
 
+    default boolean isApplicationEvent() {
+        return false;
+    }
+
     default boolean isConnectionAttemptCompletedIOEvent() {
         return false;
     }
@@ -82,9 +86,14 @@ public interface IOEvent<T> {
         throw new ClassCastException("Cannot cast " + getClass().getName() + " into a " + ConnectionIOEvent.class.getName());
     }
 
+    default ApplicationEvent<T> toApplicationEvent() {
+        throw new ClassCastException("Cannot cast " + getClass().getName() + " into a " + ApplicationEvent.class.getName());
+    }
+
     default ConnectionConnectAttemptIOEvent toConnectionConnectAttemptIOEvent() {
         throw new ClassCastException("Cannot cast " + getClass().getName() + " into a " + ConnectionConnectAttemptIOEvent.class.getName());
     }
+
     default MessageIOEvent<T> toMessageIOEvent() {
         throw new ClassCastException("Cannot cast " + getClass().getName() + " into a " + MessageIOEvent.class.getName());
     }

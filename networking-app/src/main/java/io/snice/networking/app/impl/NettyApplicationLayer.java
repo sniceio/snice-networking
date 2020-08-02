@@ -40,18 +40,33 @@ public class NettyApplicationLayer<K extends Connection<T>, T, C extends Network
         bufferingConnection.processMessage(ctx);
     }
 
+    private void invokeApplicationForEvent(final Object event, final ChannelHandlerContext ctx, final ConnectionContext<Connection<T>, T> appRules) {
+        // TODO: this needs to take place in a different thread pool!
+        final var bufferingConnection = new BufferingConnection<T>(null);
+        final var appConnection = bundle.wrapConnection(bufferingConnection);
+        appRules.matchEvent(appConnection, event).apply(appConnection, event);
+        bufferingConnection.processMessage(ctx);
+    }
+
     @Override
     public void userEventTriggered(final ChannelHandlerContext ctx, final Object evt) throws Exception {
         logger.info("UserEventTriggered: " + evt);
         try {
-            final IOEvent<T> ioEvent = (IOEvent<T>)evt;
+            final IOEvent<T> ioEvent = (IOEvent<T>) evt;
             if (ioEvent.isConnectionAttemptCompletedIOEvent()) {
                 completeConnectionFuture(ioEvent.toConnectionAttemptCompletedIOEvent());
+            } else if (ioEvent.isApplicationEvent()) {
+                final var appEvent = ioEvent.toApplicationEvent();
+                final var channelContext = (DefaultChannelContext<T>) ioEvent.channelContext();
+                invokeApplicationForEvent(appEvent.getApplicationEvent(), ctx, channelContext.getConnectionContext());
+
             } else if (ioEvent.isConnectionActiveIOEvent()) {
                 logger.info("ConnectionActiveIOEvent - turn into a Peer connection here?");
             } else {
                 // TODO: log warn with an AlertCode etc...
                 logger.warn("Unhandled IOEvent " + ioEvent);
+                final var channelContext = (DefaultChannelContext<T>) ioEvent.channelContext();
+                invokeApplicationForEvent(evt, ctx, channelContext.getConnectionContext());
             }
         } catch (final ClassCastException e) {
             // TODO: log warn...

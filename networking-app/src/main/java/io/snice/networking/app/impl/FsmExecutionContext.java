@@ -42,6 +42,7 @@ public class FsmExecutionContext<T, S extends Enum<S>, C extends NetworkContext<
 
     public void onDownstreamMessage(final IOEvent<T> msg) {
         logger.warn("need to take care of the downstream message: {} ", msg);
+        throw new RuntimeException("Not implemented yet");
     }
 
     private void invokeFSM(final IOEvent<T> event) {
@@ -53,6 +54,7 @@ public class FsmExecutionContext<T, S extends Enum<S>, C extends NetworkContext<
         }
         ctx.processDownstream(nettyCtx, event);
         ctx.processEvents(nettyCtx, event);
+        ctx.processApplicationEvents(nettyCtx, event);
         ctx.processUpstream(nettyCtx, event);
     }
 
