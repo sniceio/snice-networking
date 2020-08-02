@@ -91,7 +91,7 @@ public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D 
 
         final var channelCtx = event.channelContext();
         final var connectionId = channelCtx.getConnectionId();
-        final var bufferingCtx = new BufferingChannelContext<T>(connectionId);
+        final var bufferingCtx = new BufferingChannelContext<T>(connectionId, event.channelContext());
 
         final Optional<T> optionalMsg = event.isMessageIOEvent() ? Optional.of(event.toMessageIOEvent().getMessage()) : Optional.empty();
         final var fsmKey = fsmFactory.calculateKey(connectionId, optionalMsg);

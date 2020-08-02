@@ -26,6 +26,8 @@ import java.util.List;
 public class BufferingChannelContext<T> implements ChannelContext<T> {
 
     private final ConnectionId connectionId;
+    private final ChannelContext<T> actualChannelContext;
+
     private T downstream;
     private T upstream;
     private IOEvent<T> userEvent;
@@ -45,10 +47,12 @@ public class BufferingChannelContext<T> implements ChannelContext<T> {
     private final List<T> upstreams = new ArrayList<>(4);
     private final List<IOEvent<T>> userEvents = new ArrayList<>(4);
 
+    // TODO: merge with userEvents
     private final List<Object> applicationEvents = new ArrayList<>(4);
 
-    public BufferingChannelContext(final ConnectionId connectionId) {
+    public BufferingChannelContext(final ConnectionId connectionId, final ChannelContext<T> channelContext) {
         this.connectionId = connectionId;
+        this.actualChannelContext = channelContext;
     }
 
     @Override
@@ -85,11 +89,10 @@ public class BufferingChannelContext<T> implements ChannelContext<T> {
 
     @Override
     public void fireApplicationEvent(final Object evt) {
-        if (applicationEvent == null) {
-            applicationEvent = evt;
-        } else {
-            applicationEvents.add(evt);
-        }
+        // TODO: wrong arrival time. use the clock stuff...
+        final long arrivalTime = 0;
+        final var appEvent = ApplicationEvent.create(actualChannelContext, evt, arrivalTime);
+        fireUserEvent(appEvent);
     }
 
     public void processDownstream(final ChannelHandlerContext ctx, final IOEvent<T> originalEvent) {
@@ -126,19 +129,6 @@ public class BufferingChannelContext<T> implements ChannelContext<T> {
 
         userEvents.forEach(ctx::fireUserEventTriggered);
         userEvents.clear();
-    }
-
-    public void processApplicationEvents(final ChannelHandlerContext ctx, final IOEvent<T> originalEvent) {
-        if (applicationEvent == null) {
-            return;
-        }
-
-        final var appEvent = ApplicationEvent.create(originalEvent.channelContext(), applicationEvent, 0);
-        ctx.fireUserEventTriggered(appEvent);
-        applicationEvent = null;
-
-        applicationEvents.forEach(evt -> ctx.fireUserEventTriggered(ApplicationEvent.create(originalEvent.channelContext(), evt, 0)));
-        applicationEvents.clear();
     }
 
     /**
