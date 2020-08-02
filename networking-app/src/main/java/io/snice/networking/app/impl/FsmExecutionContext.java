@@ -54,7 +54,6 @@ public class FsmExecutionContext<T, S extends Enum<S>, C extends NetworkContext<
         }
         ctx.processDownstream(nettyCtx, event);
         ctx.processEvents(nettyCtx, event);
-        ctx.processApplicationEvents(nettyCtx, event);
         ctx.processUpstream(nettyCtx, event);
     }
 
