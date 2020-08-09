@@ -148,6 +148,10 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
         bootstrap.onConnection(ACCEPT_ALL).accept(b -> {
             b.match(DiameterMessage::isULR).consume(Hss::processULR);
             b.match(DiameterMessage::isULA).consume(Hss::processULA);
+            b.matchEvent(o -> o instanceof Double).consume((c, d) -> {
+                System.out.println("I got the Double " + d + " firing off a ULR out of the blue, which should confuse the shit out of seagull");
+                c.send(createULR());
+            });
             b.matchEvent(o -> o instanceof String).map(o -> (String) o).consume(s -> {
                 System.out.println("I got the String " + s + " which is of length " + s.length());
             });
