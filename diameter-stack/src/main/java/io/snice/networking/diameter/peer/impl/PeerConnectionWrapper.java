@@ -7,6 +7,8 @@ import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
 import io.snice.networking.diameter.PeerConnection;
+import io.snice.networking.diameter.event.DiameterEvent;
+import io.snice.networking.diameter.event.DiameterMessageEvent;
 import io.snice.networking.diameter.peer.Peer;
 
 import java.net.InetSocketAddress;
@@ -17,9 +19,9 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
 
 public class PeerConnectionWrapper implements PeerConnection {
-    private final Connection<DiameterMessage> actualConnection;
+    private final Connection<DiameterEvent> actualConnection;
 
-    public static PeerConnection of(final Connection<DiameterMessage> actualConnection) {
+    public static PeerConnection of(final Connection<DiameterEvent> actualConnection) {
         assertNotNull(actualConnection, "The underlying connection cannot be null");
         return new PeerConnectionWrapper(actualConnection);
     }
@@ -42,7 +44,7 @@ public class PeerConnectionWrapper implements PeerConnection {
         throw new RuntimeException("Not implemented just yet");
     }
 
-    private PeerConnectionWrapper(final Connection<DiameterMessage> actualConnection) {
+    private PeerConnectionWrapper(final Connection<DiameterEvent> actualConnection) {
         this.actualConnection = actualConnection;
     }
 
@@ -117,8 +119,13 @@ public class PeerConnectionWrapper implements PeerConnection {
     }
 
     @Override
-    public void send(final DiameterMessage msg) {
+    public void send(final DiameterEvent msg) {
         actualConnection.send(msg);
+    }
+
+    @Override
+    public void send(final DiameterMessage msg) {
+        actualConnection.send(DiameterMessageEvent.of(msg));
     }
 
     @Override

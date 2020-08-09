@@ -1,8 +1,8 @@
 package io.snice.networking.diameter;
 
-import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.DiameterRequest;
 import io.snice.networking.app.NetworkStack;
+import io.snice.networking.diameter.event.DiameterEvent;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,7 +14,7 @@ public class DiameterBundleTest {
 
     private DiameterBundle<DiameterAppConfig> bundle;
     private DiameterAppConfig config;
-    private NetworkStack<PeerConnection, DiameterMessage, DiameterAppConfig> stack;
+    private NetworkStack<PeerConnection, DiameterEvent, DiameterAppConfig> stack;
     private DiameterRequest ulr;
 
     @Before

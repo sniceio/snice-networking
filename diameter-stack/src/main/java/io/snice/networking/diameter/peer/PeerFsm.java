@@ -195,7 +195,7 @@ public class PeerFsm {
         final var builder = cer.getRequest().createAnswer(ResultCode.DiameterSuccess2001);
         ctx.getHostIpAddresses().forEach(builder::withAvp);
         ctx.getConfig().getProductName().ifPresent(builder::withAvp);
-        ctx.getChannelContext().sendDownstream(builder.build());
+        ctx.sendDownstream(builder.build());
 
         // should we perhaps create "PeerConnection" here?
         data.consumeConnectionActiveEvent().ifPresent(evt -> ctx.getChannelContext().fireUserEvent(evt));
@@ -220,7 +220,7 @@ public class PeerFsm {
 
         // get the support apps from the peer context
         final var c = cer.build();
-        ctx.getChannelContext().sendDownstream(c);
+        ctx.sendDownstream(c);
     }
 
     // ----------------------------------------------------------------------
@@ -239,7 +239,7 @@ public class PeerFsm {
                 .withOriginHost(ctx.getOriginHost())
                 .build();
 
-        ctx.getChannelContext().sendDownstream(dwa);
+        ctx.sendDownstream(dwa);
     }
 
     /**
@@ -275,7 +275,7 @@ public class PeerFsm {
                 break;
         }
 
-        ctx.getChannelContext().sendDownstream(dpa);
+        ctx.sendDownstream(dpa);
     }
 
     // ----------------------------------------------------------------------
@@ -335,7 +335,7 @@ public class PeerFsm {
         data.storeTransaction(evt.getMessage());
 
         // System.err.println("TODO: here is where we should probably keep the DiameterMessageEvent");
-        ctx.getChannelContext().sendUpstream(evt.getMessage());
+        ctx.getChannelContext().sendUpstream(evt);
         // ctx.getChannelContext().sendUpstream(evt);
     }
 

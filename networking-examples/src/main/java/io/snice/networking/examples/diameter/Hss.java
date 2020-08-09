@@ -10,6 +10,7 @@ import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.diameter.DiameterBundle;
 import io.snice.networking.diameter.DiameterEnvironment;
 import io.snice.networking.diameter.PeerConnection;
+import io.snice.networking.diameter.event.DiameterEvent;
 import io.snice.networking.diameter.peer.PeerConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,7 @@ import java.util.Random;
 
 import static io.snice.networking.app.NetworkBootstrap.ACCEPT_ALL;
 
-public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, PeerConnection, DiameterMessage, HssConfig> {
+public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, PeerConnection, DiameterEvent, HssConfig> {
 
     private static final Logger logger = LoggerFactory.getLogger(Hss.class);
 
@@ -90,7 +91,7 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
                     logger.info("Starting new Peer Thread for peer: " + myPeer);
                     myPeer.send(createULR());
                     final var random = new Random();
-                    int max = random.nextInt(50);
+                    int max = random.nextInt(5);
                     logger.info("Sleeping 5 seconds then issuing " + max + " no of ULRs for Peer " + myPeer);
                     sleepy(5000);
                     for (int i = 0; i < max; ++i) {
@@ -108,7 +109,7 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
                     }
                      */
                     sleepy = 4;
-                    max = 10000;
+                    max = 3;
                     logger.info("Performance: Sleeping " + sleepy + " seconds then issuing " + max + " no of ULRs for Peer " + myPeer);
                     for (int i = 0; i < max; ++i) {
                         myPeer.send(createULR());
@@ -144,10 +145,10 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
 
 
     @Override
-    public void initialize(final NetworkBootstrap<PeerConnection, DiameterMessage, HssConfig> bootstrap) {
+    public void initialize(final NetworkBootstrap<PeerConnection, DiameterEvent, HssConfig> bootstrap) {
         bootstrap.onConnection(ACCEPT_ALL).accept(b -> {
-            b.match(DiameterMessage::isULR).consume(Hss::processULR);
-            b.match(DiameterMessage::isULA).consume(Hss::processULA);
+            b.match(DiameterEvent::isULR).map(DiameterEvent::getRequest).consume(Hss::processULR);
+            b.match(DiameterEvent::isULA).map(DiameterEvent::getAnswer).consume(Hss::processULA);
             b.matchEvent(o -> o instanceof Double).consume((c, d) -> {
                 System.out.println("I got the Double " + d + " firing off a ULR out of the blue, which should confuse the shit out of seagull");
                 c.send(createULR());

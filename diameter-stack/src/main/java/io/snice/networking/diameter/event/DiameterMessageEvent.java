@@ -11,32 +11,6 @@ public interface DiameterMessageEvent extends DiameterEvent {
         return DefaultDiameterMessageEvent.of(msg);
     }
 
-    DiameterMessage getMessage();
-
-    DiameterRequest getRequest();
-
-    DiameterAnswer getAnswer();
-
-    boolean isRequest();
-
-    boolean isAnswer();
-
-    boolean isULR();
-
-    boolean isULA();
-
-    boolean isDWR();
-
-    boolean isDWA();
-
-    boolean isDPR();
-
-    boolean isDPA();
-
-    boolean isCER();
-
-    boolean isCEA();
-
     @Override
     default boolean isMessageEvent() {
         return true;

@@ -7,6 +7,7 @@ import io.snice.networking.diameter.DiameterAppConfig;
 import io.snice.networking.diameter.DiameterConfig;
 import io.snice.networking.diameter.DiameterRoutingException;
 import io.snice.networking.diameter.PeerConnection;
+import io.snice.networking.diameter.event.DiameterEvent;
 import io.snice.networking.diameter.peer.impl.DefaultPeerTable;
 
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.concurrent.CompletionStage;
 
 import static io.snice.preconditions.PreConditions.ensureNotNull;
 
-public interface PeerTable<C extends DiameterAppConfig> extends FsmFactory<DiameterMessage, PeerState, PeerContext, PeerData> {
+public interface PeerTable<C extends DiameterAppConfig> extends FsmFactory<DiameterEvent, PeerState, PeerContext, PeerData> {
 
     /**
      * Create a new {@link PeerTable} based on the {@link DiameterConfig} settings.
@@ -24,7 +25,7 @@ public interface PeerTable<C extends DiameterAppConfig> extends FsmFactory<Diame
         return new DefaultPeerTable(conf, routingEngine);
     }
 
-    CompletionStage<PeerTable<C>> start(final NetworkStack<PeerConnection, DiameterMessage, C> stack);
+    CompletionStage<PeerTable<C>> start(final NetworkStack<PeerConnection, DiameterEvent, C> stack);
 
     /**
      * Ask the {@link PeerTable} to send the given message.
