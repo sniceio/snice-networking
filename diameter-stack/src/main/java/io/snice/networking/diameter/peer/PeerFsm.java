@@ -2,12 +2,12 @@ package io.snice.networking.diameter.peer;
 
 import io.hektor.fsm.Definition;
 import io.hektor.fsm.FSM;
-import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.DiameterRequest;
 import io.snice.codecs.codec.diameter.avp.api.*;
 import io.snice.networking.common.event.ConnectionActiveIOEvent;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
 import io.snice.networking.common.event.ConnectionConnectAttemptIOEvent;
+import io.snice.networking.diameter.event.DiameterMessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,10 +95,10 @@ public class PeerFsm {
          *                  R-Rcv-DPR        R-Snd-DPA        Closing           x
          *                  R-Peer-Disc      R-Disc           Closed
          */
-        open.transitionTo(OPEN).onEvent(DiameterMessage.class).withGuard(PeerFsm::isRetransmission).withAction(PeerFsm::handleRetransmission);
-        open.transitionTo(OPEN).onEvent(DiameterMessage.class).withGuard(DiameterMessage::isDWR).withAction(PeerFsm::processDWR);
-        open.transitionTo(CLOSING).onEvent(DiameterMessage.class).withGuard(DiameterMessage::isDPR).withAction(PeerFsm::processDPR);
-        open.transitionTo(OPEN).onEvent(DiameterMessage.class).withAction(PeerFsm::acceptAction);
+        open.transitionTo(OPEN).onEvent(DiameterMessageEvent.class).withGuard(PeerFsm::isRetransmission).withAction(PeerFsm::handleRetransmission);
+        open.transitionTo(OPEN).onEvent(DiameterMessageEvent.class).withGuard(DiameterMessageEvent::isDWR).withAction(PeerFsm::processDWR);
+        open.transitionTo(CLOSING).onEvent(DiameterMessageEvent.class).withGuard(DiameterMessageEvent::isDPR).withAction(PeerFsm::processDPR);
+        open.transitionTo(OPEN).onEvent(DiameterMessageEvent.class).withAction(PeerFsm::acceptAction);
         open.transitionTo(CLOSED).onEvent(String.class).withGuard("Disconnect"::equals);
 
         /**
@@ -120,7 +120,7 @@ public class PeerFsm {
          *                                   R-Snd-CEA
          *                  Timeout          Kill-Conn        Terminated
          */
-        waitCer.transitionTo(OPEN).onEvent(DiameterMessage.class).withGuard(DiameterMessage::isCER).withAction(PeerFsm::processCER);
+        waitCer.transitionTo(OPEN).onEvent(DiameterMessageEvent.class).withGuard(DiameterMessageEvent::isCER).withAction(PeerFsm::processCER);
         // TODO: setup the timeout
 
         /**
@@ -134,7 +134,7 @@ public class PeerFsm {
          *                  I-Rcv-Non-CEA    Error            Closed
          *                  Timeout          Error            Closed
          */
-        waitCea.transitionTo(OPEN).onEvent(DiameterMessage.class).withGuard(DiameterMessage::isCEA).withAction(PeerFsm::processCEA);
+        waitCea.transitionTo(OPEN).onEvent(DiameterMessageEvent.class).withGuard(DiameterMessageEvent::isCEA).withAction(PeerFsm::processCEA);
         waitCea.transitionTo(WAIT_CEA).onEvent(ConnectionAttemptCompletedIOEvent.class).withAction((evt, ctx, data) -> data.storeConnectionAttemptEvent(evt));
 
         /**
@@ -151,11 +151,11 @@ public class PeerFsm {
         definition = builder.build();
     }
 
-    private static final boolean isRetransmission(final DiameterMessage msg, final PeerContext ctx, final PeerData data) {
-        return data.hasOutstandingTransaction(msg);
+    private static final boolean isRetransmission(final DiameterMessageEvent evt, final PeerContext ctx, final PeerData data) {
+        return data.hasOutstandingTransaction(evt.getMessage());
     }
 
-    private static final void handleRetransmission(final DiameterMessage msg, final PeerContext ctx, final PeerData data) {
+    private static final void handleRetransmission(final DiameterMessageEvent evt, final PeerContext ctx, final PeerData data) {
         // TODO:
     }
 
@@ -188,11 +188,11 @@ public class PeerFsm {
      * which is the responsibility of this method (well, accepting the CER I guess was done
      * as part of just calling this method!)
      */
-    private static final void processCER(final DiameterMessage cer, final PeerContext ctx, final PeerData data) {
+    private static final void processCER(final DiameterMessageEvent cer, final PeerContext ctx, final PeerData data) {
         // TODO: check if we want to accept traffic from the other peer.
         // TODO: check if we should check the applications and find the intersection of what we support or just accept all.
 
-        final var builder = cer.createAnswer(ResultCode.DiameterSuccess2001);
+        final var builder = cer.getRequest().createAnswer(ResultCode.DiameterSuccess2001);
         ctx.getHostIpAddresses().forEach(builder::withAvp);
         ctx.getConfig().getProductName().ifPresent(builder::withAvp);
         ctx.getChannelContext().sendDownstream(builder.build());
@@ -232,8 +232,8 @@ public class PeerFsm {
     /**
      * On a watch-dog message, simply create an answer.
      */
-    private static final void processDWR(final DiameterMessage msg, final PeerContext ctx, final PeerData data) {
-        final var dwr = msg.toRequest();
+    private static final void processDWR(final DiameterMessageEvent evt, final PeerContext ctx, final PeerData data) {
+        final var dwr = evt.getRequest();
         final var dwa = dwr.createAnswer(ResultCode.DiameterSuccess2001)
                 .withOriginRealm(ctx.getOriginRealm())
                 .withOriginHost(ctx.getOriginHost())
@@ -254,15 +254,15 @@ public class PeerFsm {
      * Note that we are missing the "connection disconnected" event from the NettyTcpInboundAdapter
      * so that needs to get done...
      */
-    private static final void processDPR(final DiameterMessage msg, final PeerContext ctx, final PeerData data) {
-        final var dpr = msg.toRequest();
+    private static final void processDPR(final DiameterMessageEvent evt, final PeerContext ctx, final PeerData data) {
+        final var dpr = evt.getRequest();
         final var dpa = dpr.createAnswer(ResultCode.DiameterSuccess2001)
                 .withOriginRealm(ctx.getOriginRealm())
                 .withOriginHost(ctx.getOriginHost())
                 .build();
 
         final var cause = dpr.getAvp(DisconnectCause.CODE)
-                .map(c -> ((DisconnectCause)c.ensure()))
+                .map(c -> ((DisconnectCause) c.ensure()))
                 .orElse(DisconnectCause.DoNotWantToTalkToYou) // if not present, should we complain?
                 .getAsEnum().get();
 
@@ -298,24 +298,25 @@ public class PeerFsm {
     // ----------------------------------------------------------------------
     // ----------------------------------------------------------------------
 
-    private static final void processCEA(final DiameterMessage cea, final PeerContext ctx, final PeerData data) {
+    private static final void processCEA(final DiameterMessageEvent evt, final PeerContext ctx, final PeerData data) {
         // TODO: ensure that the CEA is success.
         // TODO: handle e.g. 5010 - Diameter no common application etc.
-        final var result = cea.toAnswer().getResultCode().getRight().toResultCode();
+        final var cea = evt.getAnswer();
+        final var result = cea.getResultCode().getRight().toResultCode();
         final var code = result.getAsEnum().get();
 
         // if this was a peer that was established by the user, then there may be
         // a waiting event stating that the underlying connection was successfully established
         // and now the peer is also happy so finally, let's tell the user that all things
         // are well and the peer is ready for use.
-        final var connectionAttemptEvt = data.consumeConnectionAttemptEvent().map(evt -> {
+        final var connectionAttemptEvt = data.consumeConnectionAttemptEvent().map(e -> {
             if (code == ResultCode.Code.DIAMETER_NO_COMMON_APPLICATION_5010) {
-                return evt.fail(new RuntimeException("No Common Diameter Application with remote peer"));
+                return e.fail(new RuntimeException("No Common Diameter Application with remote peer"));
             }
-            return evt;
+            return e;
         });
 
-        connectionAttemptEvt.ifPresent(evt -> ctx.getChannelContext().fireUserEvent(evt));
+        connectionAttemptEvt.ifPresent(e -> ctx.getChannelContext().fireUserEvent(e));
     }
 
     // ----------------------------------------------------------------------
@@ -330,13 +331,12 @@ public class PeerFsm {
      * <p>
      * Quite simple, just push the message up the handler chain and eventually to the app.
      */
-    private static final void acceptAction(final DiameterMessage msg, final PeerContext ctx, final PeerData data) {
-        data.storeTransaction(msg);
-        ctx.getChannelContext().sendUpstream(msg);
-        System.err.println("Firing off a user event here just because");
-        ctx.getChannelContext().fireApplicationEvent("hello world");
-        ctx.getChannelContext().fireApplicationEvent(123);
-        ctx.getChannelContext().fireApplicationEvent(3.33d);
+    private static final void acceptAction(final DiameterMessageEvent evt, final PeerContext ctx, final PeerData data) {
+        data.storeTransaction(evt.getMessage());
+
+        // System.err.println("TODO: here is where we should probably keep the DiameterMessageEvent");
+        ctx.getChannelContext().sendUpstream(evt.getMessage());
+        // ctx.getChannelContext().sendUpstream(evt);
     }
 
 }
