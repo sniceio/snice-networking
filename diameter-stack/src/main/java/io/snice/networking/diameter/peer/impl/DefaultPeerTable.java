@@ -15,6 +15,7 @@ import io.snice.networking.diameter.DiameterAppConfig;
 import io.snice.networking.diameter.DiameterConfig;
 import io.snice.networking.diameter.DiameterRoutingException;
 import io.snice.networking.diameter.PeerConnection;
+import io.snice.networking.diameter.event.DiameterEvent;
 import io.snice.networking.diameter.peer.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +40,7 @@ public class DefaultPeerTable<C extends DiameterAppConfig> implements PeerTable<
 
     private final PeerConfiguration peerConfiguration = new PeerConfiguration();
     private final DiameterConfig config;
-    private NetworkStack<PeerConnection, DiameterMessage, C> stack;
+    private NetworkStack<PeerConnection, DiameterEvent, C> stack;
     private final RoutingEngine routingEngine;
 
     /**
@@ -53,7 +54,7 @@ public class DefaultPeerTable<C extends DiameterAppConfig> implements PeerTable<
     }
 
     @Override
-    public CompletionStage<PeerTable<C>> start(final NetworkStack<PeerConnection, DiameterMessage, C> stack) {
+    public CompletionStage<PeerTable<C>> start(final NetworkStack<PeerConnection, DiameterEvent, C> stack) {
         this.stack = stack;
         config.getPeers().forEach(this::addPeer);
         return CompletableFuture.completedFuture(this);
@@ -82,8 +83,8 @@ public class DefaultPeerTable<C extends DiameterAppConfig> implements PeerTable<
     }
 
     @Override
-    public FsmKey calculateKey(final ConnectionId connectionId, final Optional<DiameterMessage> msg) {
-        final var originHost = msg.map(DiameterMessage::getOriginHost);
+    public FsmKey calculateKey(final ConnectionId connectionId, final Optional<DiameterEvent> evt) {
+        final var originHost = evt.map(e -> e.toMessageEvent().getMessage()).map(DiameterMessage::getOriginHost);
         final var connectionEndpointId = connectionId.getRemoteConnectionEndpointId();
         return new PeerFsmKey(originHost, connectionEndpointId);
     }
@@ -94,7 +95,7 @@ public class DefaultPeerTable<C extends DiameterAppConfig> implements PeerTable<
     }
 
     @Override
-    public PeerContext createNewContext(final FsmKey key, final ChannelContext<DiameterMessage> ctx) {
+    public PeerContext createNewContext(final FsmKey key, final ChannelContext<DiameterEvent> ctx) {
         final var peerCfg = peerConfiguration;
         final var peerCtx = new DefaultPeerContext(peerCfg, ctx, null);
         return peerCtx;

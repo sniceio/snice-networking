@@ -7,17 +7,22 @@ import io.snice.codecs.codec.diameter.avp.api.OriginRealm;
 import io.snice.codecs.codec.diameter.avp.api.ProductName;
 import io.snice.networking.common.fsm.NetworkContext;
 import io.snice.networking.diameter.PeerConnection;
+import io.snice.networking.diameter.event.DiameterEvent;
 
 import java.util.List;
 import java.util.Optional;
 
 
-public interface PeerContext extends NetworkContext<DiameterMessage> {
+public interface PeerContext extends NetworkContext<DiameterEvent> {
 
     /**
      * Get the configuration for this {@link PeerConnection}.
      */
     PeerConfiguration getConfig();
+
+    void sendDownstream(DiameterMessage msg);
+
+    void sendUpstream(DiameterMessage msg);
 
     default OriginHost getOriginHost() {
         return OriginHost.of("snice.node.epc.mnc001.mcc001.3gppnetwork.org");

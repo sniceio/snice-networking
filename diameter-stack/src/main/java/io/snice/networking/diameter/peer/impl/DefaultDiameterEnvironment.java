@@ -7,6 +7,7 @@ import io.snice.networking.common.Transport;
 import io.snice.networking.diameter.DiameterAppConfig;
 import io.snice.networking.diameter.DiameterEnvironment;
 import io.snice.networking.diameter.PeerConnection;
+import io.snice.networking.diameter.event.DiameterEvent;
 import io.snice.networking.diameter.peer.Peer;
 import io.snice.networking.diameter.peer.PeerConfiguration;
 import io.snice.networking.diameter.peer.PeerTable;
@@ -17,11 +18,11 @@ import java.util.concurrent.CompletionStage;
 
 public class DefaultDiameterEnvironment<C extends DiameterAppConfig> implements DiameterEnvironment<C> {
 
-    private final NetworkStack<PeerConnection, DiameterMessage, C> stack;
+    private final NetworkStack<PeerConnection, DiameterEvent, C> stack;
     private final C config;
     private final PeerTable peerTable;
 
-    public DefaultDiameterEnvironment(final NetworkStack<PeerConnection, DiameterMessage, C> stack,
+    public DefaultDiameterEnvironment(final NetworkStack<PeerConnection, DiameterEvent, C> stack,
                                       final PeerTable peerTable, final C config) {
         this.stack = stack;
         this.config = config;

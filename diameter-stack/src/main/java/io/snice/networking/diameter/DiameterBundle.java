@@ -2,7 +2,6 @@ package io.snice.networking.diameter;
 
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
 import io.snice.codecs.codec.diameter.avp.api.ProductName;
 import io.snice.codecs.codec.diameter.avp.type.IpAddress;
@@ -12,6 +11,7 @@ import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
 import io.snice.networking.common.fsm.FsmFactory;
+import io.snice.networking.diameter.event.DiameterEvent;
 import io.snice.networking.diameter.handler.DiameterMessageStreamDecoder2;
 import io.snice.networking.diameter.handler.DiameterStreamEncoder;
 import io.snice.networking.diameter.peer.PeerContext;
@@ -35,7 +35,7 @@ import static io.snice.preconditions.PreConditions.ensureNotNull;
  * Note that this class is accessed in a multi-threaded environment and as such, everything has to
  * be thread safe.
  */
-public class DiameterBundle<C extends DiameterAppConfig> implements ProtocolBundle<PeerConnection, DiameterMessage, C> {
+public class DiameterBundle<C extends DiameterAppConfig> implements ProtocolBundle<PeerConnection, DiameterEvent, C> {
 
     private static final Logger logger = LoggerFactory.getLogger(DiameterBundle.class);
 
@@ -72,7 +72,7 @@ public class DiameterBundle<C extends DiameterAppConfig> implements ProtocolBund
     }
 
     @Override
-    public CompletionStage<ProtocolBundle<PeerConnection, DiameterMessage, C>> start(final NetworkStack<PeerConnection, DiameterMessage, C> stack) {
+    public CompletionStage<ProtocolBundle<PeerConnection, DiameterEvent, C>> start(final NetworkStack<PeerConnection, DiameterEvent, C> stack) {
         logger.info("Starting Diameter Stack");
         return peerTable.start(stack);
     }
@@ -83,8 +83,8 @@ public class DiameterBundle<C extends DiameterAppConfig> implements ProtocolBund
     }
 
     @Override
-    public Class<DiameterMessage> getType() {
-        return DiameterMessage.class;
+    public Class<DiameterEvent> getType() {
+        return DiameterEvent.class;
     }
 
     @Override
@@ -106,18 +106,18 @@ public class DiameterBundle<C extends DiameterAppConfig> implements ProtocolBund
     }
 
     @Override
-    public PeerConnection wrapConnection(final Connection<DiameterMessage> connection) {
+    public PeerConnection wrapConnection(final Connection<DiameterEvent> connection) {
         // TODO:
         return PeerConnection.of(connection);
     }
 
     @Override
-    public <E extends Environment<PeerConnection, DiameterMessage, C>> E createEnvironment(final NetworkStack<PeerConnection, DiameterMessage, C> stack, final C configuration) {
+    public <E extends Environment<PeerConnection, DiameterEvent, C>> E createEnvironment(final NetworkStack<PeerConnection, DiameterEvent, C> stack, final C configuration) {
         return (E) new DefaultDiameterEnvironment(stack, peerTable, configuration);
     }
 
     @Override
-    public Optional<FsmFactory<DiameterMessage, PeerState, PeerContext, PeerData>> getFsmFactory() {
+    public Optional<FsmFactory<DiameterEvent, PeerState, PeerContext, PeerData>> getFsmFactory() {
         return Optional.of(peerTable);
     }
 }

@@ -4,13 +4,13 @@ import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.avp.api.OriginHost;
 import io.snice.codecs.codec.diameter.avp.api.OriginRealm;
 import io.snice.networking.common.Connection;
+import io.snice.networking.diameter.event.DiameterEvent;
 import io.snice.networking.diameter.peer.Peer;
-import io.snice.networking.diameter.peer.PeerConfiguration;
 import io.snice.networking.diameter.peer.impl.PeerConnectionWrapper;
 
-public interface PeerConnection extends Connection<DiameterMessage> {
+public interface PeerConnection extends Connection<DiameterEvent> {
 
-    static PeerConnection of(final Connection<DiameterMessage> actualConnection) {
+    static PeerConnection of(final Connection<DiameterEvent> actualConnection) {
         return PeerConnectionWrapper.of(actualConnection);
     }
 
@@ -35,11 +35,12 @@ public interface PeerConnection extends Connection<DiameterMessage> {
      */
     void send(DiameterMessage.Builder msg);
 
+    void send(DiameterMessage msg);
+
     /**
      * Get the {@link Peer} associated with this connection. At the end of the day, the connection
      * is just that, a transport connection (tcp, sctp, udp, tls etc). However, in Diameter, the {@link Peer}
      * represents a higher-level concept of the underlying connection.
-     *
      */
     Peer getPeer();
 

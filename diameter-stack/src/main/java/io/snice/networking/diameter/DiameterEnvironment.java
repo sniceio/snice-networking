@@ -4,6 +4,7 @@ import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.networking.app.Environment;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
+import io.snice.networking.diameter.event.DiameterEvent;
 import io.snice.networking.diameter.peer.Peer;
 import io.snice.networking.diameter.peer.PeerConfiguration;
 
@@ -11,7 +12,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-public interface DiameterEnvironment<C extends DiameterAppConfig> extends Environment<PeerConnection, DiameterMessage, C> {
+public interface DiameterEnvironment<C extends DiameterAppConfig> extends Environment<PeerConnection, DiameterEvent, C> {
 
     @Override
     C getConfig();
