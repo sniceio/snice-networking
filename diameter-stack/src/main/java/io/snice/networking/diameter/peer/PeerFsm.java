@@ -336,6 +336,7 @@ public class PeerFsm {
         System.err.println("Firing off a user event here just because");
         ctx.getChannelContext().fireApplicationEvent("hello world");
         ctx.getChannelContext().fireApplicationEvent(123);
+        ctx.getChannelContext().fireApplicationEvent(3.33d);
     }
 
 }

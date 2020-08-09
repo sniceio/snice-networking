@@ -9,7 +9,6 @@ public interface ConnectionContext<C extends Connection<T>, T> extends Predicate
 
     boolean isDrop();
 
-
     MessagePipe<C, T, ?> match(C connection, T data);
 
     <U extends Object> MessagePipe<C, U, ?> matchEvent(C connection, U event);
@@ -36,22 +35,22 @@ public interface ConnectionContext<C extends Connection<T>, T> extends Predicate
 
         MessageProcessingBuilder<C, T, R> match(Predicate<T> filter);
 
-        <T2, R2> EventProcessingBuilder<T2, R2> matchEvent(Predicate<T2> filter);
+        <T2, R2> EventProcessingBuilder<C, T, T2, R2> matchEvent(Predicate<T2> filter);
 
         void withPipe(MessagePipe<C, T, ?> pipe);
 
         void withPipe(SingleMessagePipe<T, ?> pipe);
     }
 
-    interface EventProcessingBuilder<T, R> {
+    interface EventProcessingBuilder<C extends Connection<T2>, T2, T, R> {
 
         // <NEW_R> EventProcessingBuilder<T, NEW_R> withPipe(MessagePipe<C, ? super R, ? extends NEW_R> f);
 
-        EventProcessingBuilder<T, R> consume(Consumer<R> consumer);
+        EventProcessingBuilder<C, T2, T, R> consume(Consumer<R> consumer);
 
-        // EventProcessingBuilder<T, R> consume(BiConsumer<C, R> consumer);
+        EventProcessingBuilder<C, T2, T, R> consume(BiConsumer<C, R> consumer);
 
-        <NEW_R> EventProcessingBuilder<T, NEW_R> map(Function<? super R, ? extends NEW_R> f);
+        <NEW_R> EventProcessingBuilder<C, T2, T, NEW_R> map(Function<? super R, ? extends NEW_R> f);
 
         // <NEW_R> EventProcessingBuilder<T, NEW_R> map(BiFunction<C, ? super R, ? extends NEW_R> f);
     }

@@ -105,7 +105,7 @@ public class NettyBootstrap<K extends Connection<T>, T, C extends NetworkAppConf
 
             private final List<MessageProcessingBuilderImpl<K, T, T>> rules = new ArrayList<>();
 
-            private final List<EventProcessingBuilderImpl<Object, ?>> eventRules = new ArrayList<>();
+            private final List<EventProcessingBuilderImpl<K, T, Object, ?>> eventRules = new ArrayList<>();
 
             @Override
             public ConnectionContext.ConfigurationBuilder<K, T, R> withDefaultStatisticsModule() {
@@ -130,7 +130,7 @@ public class NettyBootstrap<K extends Connection<T>, T, C extends NetworkAppConf
             }
 
             @Override
-            public <T2, R2> ConnectionContext.EventProcessingBuilder<T2, R2> matchEvent(final Predicate<T2> filter) {
+            public <T2, R2> ConnectionContext.EventProcessingBuilder<K, T, T2, R2> matchEvent(final Predicate<T2> filter) {
                 final BiPredicate<K, T2> filter2 = (c, t) -> filter.test(t);
                 final MessagePipe<K, T2, T2> initialPipe = MessagePipe.match(filter2);
                 final EventProcessingBuilderImpl builder = new EventProcessingBuilderImpl(initialPipe);
@@ -201,25 +201,32 @@ public class NettyBootstrap<K extends Connection<T>, T, C extends NetworkAppConf
             }
         }
 
-        private class EventProcessingBuilderImpl<T, R> implements ConnectionContext.EventProcessingBuilder<T, R> {
+        private class EventProcessingBuilderImpl<K extends Connection<T2>, T2, T, R> implements ConnectionContext.EventProcessingBuilder<K, T2, T, R> {
 
             private final MessagePipe<K, T, R> pipe;
 
-            private EventProcessingBuilderImpl<T, ?> child;
+            private EventProcessingBuilderImpl<K, T2, T, ?> child;
 
             private EventProcessingBuilderImpl(final MessagePipe<K, T, R> pipe) {
                 this.pipe = pipe;
             }
 
             @Override
-            public ConnectionContext.EventProcessingBuilder<T, R> consume(final Consumer<R> consumer) {
+            public ConnectionContext.EventProcessingBuilder<K, T2, T, R> consume(final Consumer<R> consumer) {
                 final var builder = new EventProcessingBuilderImpl(pipe.consume(consumer));
                 child = builder;
                 return builder;
             }
 
             @Override
-            public <NEW_R> ConnectionContext.EventProcessingBuilder<T, NEW_R> map(final Function<? super R, ? extends NEW_R> f) {
+            public ConnectionContext.EventProcessingBuilder<K, T2, T, R> consume(final BiConsumer<K, R> consumer) {
+                final var builder = new EventProcessingBuilderImpl(pipe.consume(consumer));
+                child = builder;
+                return builder;
+            }
+
+            @Override
+            public <NEW_R> ConnectionContext.EventProcessingBuilder<K, T2, T, NEW_R> map(final Function<? super R, ? extends NEW_R> f) {
                 final var builder = new EventProcessingBuilderImpl(pipe.map(f));
                 child = builder;
                 return builder;
