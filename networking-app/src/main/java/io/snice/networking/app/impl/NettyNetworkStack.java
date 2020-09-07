@@ -142,7 +142,7 @@ public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connect
 
         private final C config;
         private NetworkApplication<E, K, T, C> application;
-        private List<ConnectionContext> ctxs;
+        private List<ConnectionContext<K, T>> ctxs;
         private ProtocolBundle<K, T, C> protocolBundle;
 
         private Builder(final C config) {
@@ -164,7 +164,7 @@ public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connect
         }
 
         @Override
-        public NetworkStack.Builder<E, K, T, C> withConnectionContexts(final List<ConnectionContext> ctxs) {
+        public NetworkStack.Builder<E, K, T, C> withConnectionContexts(final List<ConnectionContext<K, T>> ctxs) {
             assertArgument(ctxs != null && !ctxs.isEmpty(), "You cannot have a null or empty list of " + ConnectionContext.class.getSimpleName());
             this.ctxs = ctxs;
             return this;

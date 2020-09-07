@@ -10,6 +10,7 @@ import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
 import io.snice.networking.common.event.ConnectionConnectAttemptIOEvent;
 import io.snice.networking.diameter.event.DiameterMessageEvent;
 import io.snice.networking.diameter.event.DiameterMessageReadEvent;
+import io.snice.networking.diameter.event.DiameterMessageWriteEvent;
 import io.snice.networking.diameter.tx.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,12 +102,8 @@ public class PeerFsm {
         open.transitionTo(OPEN).onEvent(DiameterMessageEvent.class).withGuard(PeerFsm::isRetransmission).withAction(PeerFsm::handleRetransmission);
         open.transitionTo(OPEN).onEvent(DiameterMessageEvent.class).withGuard(DiameterMessageEvent::isDWR).withAction(PeerFsm::processDWR);
         open.transitionTo(CLOSING).onEvent(DiameterMessageEvent.class).withGuard(DiameterMessageEvent::isDPR).withAction(PeerFsm::processDPR);
-        open.transitionTo(OPEN).onEvent(DiameterMessageEvent.class)
-                .withGuard(DiameterMessageEvent::isMessageReadEvent)
-                .withAction(PeerFsm::processRead);
-        open.transitionTo(OPEN).onEvent(DiameterMessageEvent.class)
-                .withGuard(DiameterMessageEvent::isMessageWriteEvent)
-                .withAction(PeerFsm::processWrite);
+        open.transitionTo(OPEN).onEvent(DiameterMessageReadEvent.class).withAction(PeerFsm::processRead);
+        open.transitionTo(OPEN).onEvent(DiameterMessageWriteEvent.class).withAction(PeerFsm::processWrite);
         open.transitionTo(CLOSED).onEvent(String.class).withGuard("Disconnect"::equals);
 
         /**
@@ -161,6 +158,10 @@ public class PeerFsm {
 
     private static final boolean isRetransmission(final DiameterMessageEvent evt, final PeerContext ctx, final PeerData data) {
         final var msg = evt.getMessage();
+        if (evt.isMessageWriteEvent() && msg.isAnswer()) {
+            return false;
+        }
+
         final var transaction = data.getTransaction(msg);
 
         // If we receive an answer and we are the ones that initiated the transaction
@@ -218,6 +219,8 @@ public class PeerFsm {
         final var builder = cer.getRequest().createAnswer(ResultCode.DiameterSuccess2001);
         ctx.getHostIpAddresses().forEach(builder::withAvp);
         ctx.getConfig().getProductName().ifPresent(builder::withAvp);
+        builder.withOriginRealm(ctx.getOriginRealm());
+        builder.withOriginHost(ctx.getOriginHost());
         ctx.sendDownstream(builder.build());
 
         // should we perhaps create "PeerConnection" here?

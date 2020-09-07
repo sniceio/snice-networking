@@ -46,10 +46,14 @@ public class FsmExecutionContext<T, S extends Enum<S>, C extends NetworkContext<
 
     public void onDownstreamMessage(final T msg) {
         final var event = MessageIOEvent.create(ctx, clock.getCurrentTimeMillis(), msg);
-        fsm.onEvent(msg);
-        ctx.processDownstream(nettyCtx, event);
-        ctx.processEvents(nettyCtx, event);
-        ctx.processUpstream(nettyCtx, event);
+        try {
+            fsm.onEvent(msg);
+            ctx.processDownstream(nettyCtx, event);
+            ctx.processEvents(nettyCtx, event);
+            ctx.processUpstream(nettyCtx, event);
+        } catch (final Throwable t) {
+            t.printStackTrace();
+        }
     }
 
     private void invokeFSM(final IOEvent<T> event) {

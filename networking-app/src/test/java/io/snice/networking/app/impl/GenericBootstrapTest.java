@@ -11,15 +11,15 @@ import org.junit.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-public class NettyBootstrapTest {
+public class GenericBootstrapTest {
 
     private NetworkAppConfig conf;
-    private NettyBootstrap<Connection<Buffer>, Buffer, NetworkAppConfig> bootstrap;
+    private GenericBootstrap<Connection<Buffer>, Buffer, NetworkAppConfig> bootstrap;
 
     @Before
     public void setup() throws Exception {
         conf = new NetworkAppConfig();
-        bootstrap = new NettyBootstrap(conf);
+        bootstrap = new GenericBootstrap(conf);
 
     }
 

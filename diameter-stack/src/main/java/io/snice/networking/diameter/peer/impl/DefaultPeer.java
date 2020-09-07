@@ -13,6 +13,7 @@ import io.snice.networking.diameter.peer.PeerId;
 import io.snice.networking.diameter.peer.PeerIllegalStateException;
 import io.snice.networking.diameter.peer.PeerSettings;
 import io.snice.networking.diameter.tx.Transaction;
+import io.snice.preconditions.PreConditions;
 
 import java.net.InetSocketAddress;
 import java.util.Objects;
@@ -24,6 +25,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
+import static io.snice.preconditions.PreConditions.assertNull;
 
 public class DefaultPeer implements Peer {
 
@@ -168,11 +170,15 @@ public class DefaultPeer implements Peer {
         private final DiameterRequest req;
         private final TransactionIdentifier id;
         private final Optional<Object> appData;
+        private final BiConsumer<Transaction, DiameterAnswer> onAnswer;
 
-        private DefaultTransaction(final DefaultPeer peer, final DiameterRequest req, final Optional<Object> appData) {
+        private DefaultTransaction(final DefaultPeer peer, final DiameterRequest req,
+                                   final BiConsumer<Transaction, DiameterAnswer> onAnswer,
+                                   final Optional<Object> appData) {
             this.peer = peer;
             this.req = req;
             this.appData = appData;
+            this.onAnswer = onAnswer;
             this.id = TransactionIdentifier.from(req);
         }
 
@@ -191,12 +197,18 @@ public class DefaultPeer implements Peer {
             return appData;
         }
 
+        @Override
+        public BiConsumer<Transaction, DiameterAnswer> getOnAnswer() {
+            return onAnswer;
+        }
+
         private static class DefaultBuilder implements Transaction.Builder {
 
             private final DefaultPeer peer;
             private final DiameterRequest req;
             private final DiameterRequest.Builder builder;
             private Object appData;
+            private BiConsumer<Transaction, DiameterAnswer> onAnswer;
 
             private DefaultBuilder(final DefaultPeer peer, final DiameterRequest req) {
                 this.peer = peer;
@@ -223,6 +235,9 @@ public class DefaultPeer implements Peer {
 
             @Override
             public Transaction.Builder onAnswer(final BiConsumer<Transaction, DiameterAnswer> f) {
+                assertNotNull(f);
+                assertNull(onAnswer, "You have already specified a onAnswer function. You cannot overwrite it.");
+                this.onAnswer = f;
                 return this;
             }
 
@@ -238,7 +253,7 @@ public class DefaultPeer implements Peer {
 
             @Override
             public Transaction start() {
-                final var t = new DefaultTransaction(peer, req, Optional.ofNullable(appData));
+                final var t = new DefaultTransaction(peer, req, onAnswer, Optional.ofNullable(appData));
                 final var evt = DiameterMessageWriteEvent.of(t);
                 peer.send(evt);
                 return t;

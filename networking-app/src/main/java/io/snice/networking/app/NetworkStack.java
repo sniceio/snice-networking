@@ -126,7 +126,7 @@ public interface NetworkStack<K extends Connection<T>, T, C extends NetworkAppCo
 
         Builder<E, K, T, C> withAppBundle(ProtocolBundle<K, T, C> bundle);
 
-        Builder<E, K, T, C> withConnectionContexts(List<ConnectionContext> ctxs);
+        Builder<E, K, T, C> withConnectionContexts(List<ConnectionContext<K, T>> ctxs);
 
         NetworkStack<K, T, C> build();
     }

@@ -1,7 +1,6 @@
 package io.snice.networking.examples.gtp;
 
 import io.snice.codecs.codec.gtp.GtpMessage;
-import io.snice.codecs.codec.gtp.GtpSerializationFactory;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.networking.app.BasicNetworkApplication;
 import io.snice.networking.app.Environment;
@@ -49,7 +48,8 @@ public class Pgw extends BasicNetworkApplication<GtpMessage, GtpConfig> {
     @Override
     public void initialize(final NetworkBootstrap<Connection<GtpMessage>, GtpMessage, GtpConfig> bootstrap) {
 
-        bootstrap.registerSerializationFactory(new GtpSerializationFactory());
+        // TODO: done via bundles now...
+        // bootstrap.registerSerializationFactory(new GtpSerializationFactory());
 
         // only accept traffic from localhost, drop the rest.
         bootstrap.onConnection(id -> true).accept(builder -> {

@@ -94,7 +94,7 @@ public class DefaultDiameterMessageEvent implements DiameterMessageEvent {
 
     @Override
     public boolean isAnswer() {
-        return isAnswer();
+        return msg.isAnswer();
     }
 
     @Override
@@ -139,6 +139,11 @@ public class DefaultDiameterMessageEvent implements DiameterMessageEvent {
 
     private static class MessageWriteEvent extends DefaultDiameterMessageEvent implements DiameterMessageWriteEvent {
 
+        @Override
+        public boolean isMessageWriteEvent() {
+            return true;
+        }
+
         private MessageWriteEvent(final DiameterMessage msg) {
             super(msg);
         }
@@ -149,6 +154,11 @@ public class DefaultDiameterMessageEvent implements DiameterMessageEvent {
     }
 
     private static class MessageReadEvent extends DefaultDiameterMessageEvent implements DiameterMessageReadEvent {
+
+        @Override
+        public boolean isMessageReadEvent() {
+            return true;
+        }
 
         private MessageReadEvent(final DiameterMessage msg, final Transaction transaction) {
             super(msg, transaction);

@@ -1,25 +1,22 @@
 package io.snice.networking.examples.diameter;
 
-import io.snice.buffer.Buffers;
-import io.snice.buffer.WritableBuffer;
 import io.snice.codecs.codec.diameter.DiameterMessage;
-import io.snice.codecs.codec.diameter.DiameterRequest;
-import io.snice.codecs.codec.diameter.avp.api.*;
+import io.snice.codecs.codec.diameter.avp.api.ExperimentalResultCode;
+import io.snice.codecs.codec.diameter.avp.api.ResultCode;
 import io.snice.networking.app.NetworkApplication;
 import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.diameter.DiameterBundle;
 import io.snice.networking.diameter.DiameterEnvironment;
 import io.snice.networking.diameter.PeerConnection;
 import io.snice.networking.diameter.event.DiameterEvent;
-import io.snice.networking.diameter.peer.PeerConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Random;
 
 import static io.snice.networking.app.NetworkBootstrap.ACCEPT_ALL;
+import static io.snice.networking.examples.diameter.HssHelpers.createULR;
+import static io.snice.networking.examples.diameter.HssHelpers.sleepy;
 
 public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, PeerConnection, DiameterEvent, HssConfig> {
 
@@ -29,31 +26,14 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
         super(bundle);
     }
 
-    private void sleepy(final int ms) {
-        try {
-            Thread.sleep(ms);
-        } catch (final Exception e) {
-        }
-    }
-
-    private PeerConfiguration createPeerConf(final int port) {
-        final var c = new PeerConfiguration();
-        try {
-            c.setUri(new URI("aaa://10.36.10.77:" + port));
-        } catch (final URISyntaxException e) {
-            // ignore
-        }
-        return c;
-    }
-
     @Override
     public void run(final HssConfig configuration, final DiameterEnvironment<HssConfig> environment) {
 
         // peer.establishPeer();
 
         final var t = new Thread(null, () -> {
-            final var c1 = createPeerConf(3869);
-            final var c2 = createPeerConf(3870);
+            final var c1 = HssHelpers.createPeerConf(3869);
+            final var c2 = HssHelpers.createPeerConf(3870);
             final var peer = environment.addPeer(c1);
             // final var peer2 = environment.addPeer(c2);
 
@@ -88,7 +68,7 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
                 // peer2.send(createULR());
             }
         }, "kicking off something");
-        t.start();
+        // t.start();
 
         environment.getPeers().forEach(p -> {
             logger.info("Establishing peer: " + p);
@@ -131,25 +111,6 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
 
     }
 
-    private DiameterRequest createULR() {
-        final WritableBuffer b = WritableBuffer.of(4);
-        b.fastForwardWriterIndex();
-        b.setBit(3, 1, true);
-        b.setBit(3, 2, true);
-        final var ulr = DiameterRequest.createULR()
-                .withSessionId("asedfasdfasdf")
-                .withUserName("999992134354")
-                .withDestinationHost("hss.epc.mnc001.mcc001.3gppnetwork.org")
-                .withDestinationRealm("epc.mnc001.mcc001.3gppnetwork.org")
-                .withOriginRealm("epc.mnc999.mcc999.3gppnetwork.org")
-                .withOriginHost("snice.node.epc.mnc999.mcc999.3gppnetwork.org")
-                .withAvp(VisitedPlmnId.of(Buffers.wrap("999001")))
-                .withAvp(AuthSessionState.NoStateMaintained)
-                .withAvp(RatType.Eutran)
-                .withAvp(UlrFlags.of(b.build()))
-                .build();
-        return ulr;
-    }
 
 
     @Override

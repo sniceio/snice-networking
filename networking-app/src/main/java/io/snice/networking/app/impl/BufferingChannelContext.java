@@ -112,9 +112,12 @@ public class BufferingChannelContext<T> implements ChannelContext<T> {
             return;
         }
 
-        ctx.fireChannelRead(wrap(upstream, originalEvent));
+        final var evt = wrap(upstream, originalEvent);
         upstream = null;
+        ctx.fireChannelRead(evt);
 
+        // TODO: may have to clear the upstream list before invoking because
+        // it can interfer it seems like. Will have to think some more...
         upstreams.forEach(msg -> ctx.fireChannelRead(wrap(msg, originalEvent)));
         upstreams.clear();
     }

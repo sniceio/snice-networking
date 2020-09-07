@@ -37,7 +37,7 @@ public interface NetworkBootstrap<K extends Connection<T>, T, C extends NetworkA
      *
      * @param serializationFactory
      */
-    void registerSerializationFactory(SerializationFactory<T> serializationFactory);
+    // void registerSerializationFactory(SerializationFactory<T> serializationFactory);
 
     /**
      * Every new incoming connection will be evaluated and configured for, if accepted,

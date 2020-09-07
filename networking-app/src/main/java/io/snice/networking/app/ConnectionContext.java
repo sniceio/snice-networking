@@ -3,11 +3,18 @@ package io.snice.networking.app;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 
+import java.util.Optional;
 import java.util.function.*;
 
 public interface ConnectionContext<C extends Connection<T>, T> extends Predicate<ConnectionId> {
 
-    boolean isDrop();
+    Predicate<ConnectionId> getPredicate();
+
+    Optional<Function<C, T>> getDropFunction();
+
+    default boolean isDrop() {
+        return getDropFunction().isPresent();
+    }
 
     MessagePipe<C, T, ?> match(C connection, T data);
 
@@ -26,6 +33,7 @@ public interface ConnectionContext<C extends Connection<T>, T> extends Predicate
          */
         void drop();
 
+        // TODO: wrong. It's not a function, it's just a consumer!
         void drop(Function<C, T> f);
     }
 

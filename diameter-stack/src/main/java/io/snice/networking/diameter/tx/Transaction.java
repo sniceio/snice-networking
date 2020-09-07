@@ -29,6 +29,8 @@ public interface Transaction {
      */
     Optional<Object> getApplicationData();
 
+    BiConsumer<Transaction, DiameterAnswer> getOnAnswer();
+
     interface Builder {
 
         /**

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.snice.generics.Generics;
-import io.snice.networking.app.impl.NettyBootstrap;
+import io.snice.networking.app.impl.GenericBootstrap;
 import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.config.NetworkInterfaceConfiguration;
@@ -53,9 +53,9 @@ public abstract class NetworkApplication<E extends Environment<K, T, C>, K exten
      * of your application.
      */
     public final void run(final C config, final String... args) throws Exception {
-        final NettyBootstrap<K, T, C> bootstrap = new NettyBootstrap<>(config);
+        final GenericBootstrap<K, T, C> bootstrap = new GenericBootstrap<>(config);
         initialize(bootstrap);
-        final List<ConnectionContext> connectionContexts = bootstrap.getConnectionContexts();
+        final List<ConnectionContext<K, T>> connectionContexts = bootstrap.getConnectionContexts();
 
         bundle.initialize(config);
 

@@ -6,23 +6,25 @@ import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class NettyConnectionContext<K extends Connection<T>, T> implements ConnectionContext<K, T> {
+public class DefaultConnectionContext<K extends Connection<T>, T> implements ConnectionContext<K, T> {
 
     private final Predicate<ConnectionId> condition;
-    private final Function<K, T> dropFunction;
+
+    private final Optional<Function<K, T>> dropFunction;
 
     final List<MessagePipe<K, T, ?>> rules;
 
     final List<MessagePipe<K, Object, ?>> eventRules;
 
-    public NettyConnectionContext(final Predicate<ConnectionId> condition, final Function<K, T> dropFunction,
-                                  final List<MessagePipe<K, T, ?>> rules,
-                                  final List<MessagePipe<K, Object, ?>> eventRules) {
+    public DefaultConnectionContext(final Predicate<ConnectionId> condition, final Function<K, T> dropFunction,
+                                    final List<MessagePipe<K, T, ?>> rules,
+                                    final List<MessagePipe<K, Object, ?>> eventRules) {
         this.condition = condition;
-        this.dropFunction = dropFunction;
+        this.dropFunction = Optional.ofNullable(dropFunction);
         this.rules = rules;
         this.eventRules = eventRules;
     }
@@ -40,8 +42,13 @@ public class NettyConnectionContext<K extends Connection<T>, T> implements Conne
     }
 
     @Override
-    public boolean isDrop() {
-        return dropFunction != null;
+    public Predicate<ConnectionId> getPredicate() {
+        return condition;
+    }
+
+    @Override
+    public Optional<Function<K, T>> getDropFunction() {
+        return dropFunction;
     }
 
     @Override

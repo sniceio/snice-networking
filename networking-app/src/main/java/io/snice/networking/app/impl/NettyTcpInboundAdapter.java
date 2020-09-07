@@ -4,7 +4,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
-import io.snice.codecs.codec.SerializationFactory;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
@@ -130,6 +129,9 @@ public class NettyTcpInboundAdapter<T> extends ChannelOutboundHandlerAdapter imp
         hasProcessedConnectionActiveIOEvent = true;
 
         if (connCtx.isDrop()) {
+            // TODO: need to actually call the potential drop function too!
+            // TODO: and the app may actually issue a message of some sort that needs to be written to
+            // TODO: the socket too...
             ctx.close();
             return;
         }
