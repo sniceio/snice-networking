@@ -4,7 +4,10 @@ import io.hektor.fsm.Data;
 import io.hektor.fsm.FSM;
 import io.netty.channel.ChannelHandlerContext;
 import io.snice.networking.common.event.IOEvent;
+import io.snice.networking.common.event.MessageIOEvent;
 import io.snice.networking.common.fsm.NetworkContext;
+import io.snice.time.Clock;
+import io.snice.time.SystemClock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +23,7 @@ public class FsmExecutionContext<T, S extends Enum<S>, C extends NetworkContext<
     private final BufferingChannelContext<T> ctx;
     private final FSM<S, C, D> fsm;
     private final ChannelHandlerContext nettyCtx;
+    private final Clock clock = new SystemClock();
 
     public FsmExecutionContext(final IOEvent<T> initialMsg,
                                final BufferingChannelContext<T> ctx,
@@ -40,9 +44,12 @@ public class FsmExecutionContext<T, S extends Enum<S>, C extends NetworkContext<
     }
 
 
-    public void onDownstreamMessage(final IOEvent<T> msg) {
-        logger.warn("need to take care of the downstream message: {} ", msg);
-        throw new RuntimeException("Not implemented yet");
+    public void onDownstreamMessage(final T msg) {
+        final var event = MessageIOEvent.create(ctx, clock.getCurrentTimeMillis(), msg);
+        fsm.onEvent(msg);
+        ctx.processDownstream(nettyCtx, event);
+        ctx.processEvents(nettyCtx, event);
+        ctx.processUpstream(nettyCtx, event);
     }
 
     private void invokeFSM(final IOEvent<T> event) {

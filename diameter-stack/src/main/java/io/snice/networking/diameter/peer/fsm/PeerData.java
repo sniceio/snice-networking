@@ -1,11 +1,13 @@
-package io.snice.networking.diameter.peer;
+package io.snice.networking.diameter.peer.fsm;
 
 import io.hektor.fsm.Data;
 import io.snice.codecs.codec.diameter.DiameterMessage;
+import io.snice.codecs.codec.diameter.DiameterRequest;
 import io.snice.codecs.codec.diameter.TransactionIdentifier;
 import io.snice.networking.common.event.ConnectionActiveIOEvent;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
 import io.snice.networking.diameter.PeerConnection;
+import io.snice.networking.diameter.peer.PeerConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +17,7 @@ import static io.snice.preconditions.PreConditions.assertNull;
 
 public class PeerData implements Data {
 
-    private final Map<TransactionIdentifier, DiameterMessage> oustandingTransactions;
+    private final Map<TransactionIdentifier, InternalTransaction> oustandingTransactions;
     private final PeerConfiguration config;
 
     private ConnectionAttemptCompletedIOEvent event;
@@ -34,12 +36,27 @@ public class PeerData implements Data {
         return oustandingTransactions.containsKey(id);
     }
 
-    public void storeTransaction(final DiameterMessage msg) {
-        final var id = TransactionIdentifier.from(msg);
-        final var previous = oustandingTransactions.put(id, msg);
+    /**
+     * Store a new transaction. Note that the FSM should already have checked that this isn't a
+     * re-transmission.
+     *
+     * @param req
+     * @param isClientTransaction whether or not we are the ones initiating the transaction, meaning, are we
+     *                            the ones sending the request (then we are a client) or are we the ones who
+     *                            received the request and as such, is processing it as a server.
+     * @return
+     */
+    public InternalTransaction storeTransaction(final DiameterRequest req, final boolean isClientTransaction) {
+        final var transaction = InternalTransaction.create(req, isClientTransaction);
+        final var previous = oustandingTransactions.put(transaction.getId(), transaction);
         // TODO: need to handle this in a better way. Also need to check
         // with the application id as a precaution for phishing.
         assertNull(previous, "We overwrote a previous transaction. Something is wrong.");
+        return transaction;
+    }
+
+    public InternalTransaction getTransaction(final DiameterMessage msg) {
+        return oustandingTransactions.get(TransactionIdentifier.from(msg));
     }
 
     /**
@@ -75,7 +92,5 @@ public class PeerData implements Data {
         event = null;
         return evt;
     }
-
-
 
 }

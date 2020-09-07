@@ -1,8 +1,13 @@
 package io.snice.networking.diameter.peer.impl;
 
+import io.snice.codecs.codec.diameter.DiameterAnswer;
 import io.snice.codecs.codec.diameter.DiameterMessage;
+import io.snice.codecs.codec.diameter.DiameterRequest;
+import io.snice.codecs.codec.diameter.TransactionIdentifier;
 import io.snice.networking.common.Transport;
 import io.snice.networking.diameter.PeerConnection;
+import io.snice.networking.diameter.event.DiameterMessageEvent;
+import io.snice.networking.diameter.event.DiameterMessageWriteEvent;
 import io.snice.networking.diameter.peer.Peer;
 import io.snice.networking.diameter.peer.PeerId;
 import io.snice.networking.diameter.peer.PeerIllegalStateException;
@@ -11,9 +16,12 @@ import io.snice.networking.diameter.tx.Transaction;
 
 import java.net.InetSocketAddress;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
@@ -82,9 +90,23 @@ public class DefaultPeer implements Peer {
     }
 
     @Override
-    public Transaction send(final DiameterMessage msg) {
+    public void send(final DiameterMessage msg) {
         ensureConnection().thenAccept(c -> c.send(msg));
+    }
+
+    private void send(final DiameterMessageEvent evt) {
+        ensureConnection().thenAccept(c -> c.send(evt));
+    }
+
+    @Override
+    public Transaction.Builder createNewTransaction(final DiameterRequest.Builder msg) throws PeerIllegalStateException {
         return null;
+    }
+
+    @Override
+    public Transaction.Builder createNewTransaction(final DiameterRequest req) throws PeerIllegalStateException {
+        assertNotNull(req, "The Diameter request cannot be null");
+        return new DefaultTransaction.DefaultBuilder(this, req);
     }
 
     @Override
@@ -137,6 +159,90 @@ public class DefaultPeer implements Peer {
         @Override
         public String toString() {
             return uuid.toString();
+        }
+    }
+
+    private static class DefaultTransaction implements Transaction {
+
+        private final DefaultPeer peer;
+        private final DiameterRequest req;
+        private final TransactionIdentifier id;
+        private final Optional<Object> appData;
+
+        private DefaultTransaction(final DefaultPeer peer, final DiameterRequest req, final Optional<Object> appData) {
+            this.peer = peer;
+            this.req = req;
+            this.appData = appData;
+            this.id = TransactionIdentifier.from(req);
+        }
+
+        @Override
+        public TransactionIdentifier getId() {
+            return id;
+        }
+
+        @Override
+        public DiameterRequest getRequest() {
+            return req;
+        }
+
+        @Override
+        public Optional<Object> getApplicationData() {
+            return appData;
+        }
+
+        private static class DefaultBuilder implements Transaction.Builder {
+
+            private final DefaultPeer peer;
+            private final DiameterRequest req;
+            private final DiameterRequest.Builder builder;
+            private Object appData;
+
+            private DefaultBuilder(final DefaultPeer peer, final DiameterRequest req) {
+                this.peer = peer;
+                this.req = req;
+                this.builder = null;
+            }
+
+            private DefaultBuilder(final DefaultPeer peer, final DiameterRequest.Builder builder) {
+                this.peer = peer;
+                this.req = null;
+                this.builder = builder;
+            }
+
+            @Override
+            public Transaction.Builder withApplicationData(final Object data) {
+                this.appData = data;
+                return this;
+            }
+
+            @Override
+            public Transaction.Builder onTransactionTerminated(final Consumer<Transaction> f) {
+                return this;
+            }
+
+            @Override
+            public Transaction.Builder onAnswer(final BiConsumer<Transaction, DiameterAnswer> f) {
+                return this;
+            }
+
+            @Override
+            public Transaction.Builder onRetransmission(final Consumer<Transaction> f) {
+                return this;
+            }
+
+            @Override
+            public Transaction.Builder onTransactionTimeout(final Consumer<Transaction> f) {
+                return this;
+            }
+
+            @Override
+            public Transaction start() {
+                final var t = new DefaultTransaction(peer, req, Optional.ofNullable(appData));
+                final var evt = DiameterMessageWriteEvent.of(t);
+                peer.send(evt);
+                return t;
+            }
         }
     }
 }

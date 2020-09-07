@@ -1,4 +1,4 @@
-package io.snice.networking.diameter.peer;
+package io.snice.networking.diameter.peer.fsm;
 
 import io.snice.networking.diameter.PeerConnection;
 

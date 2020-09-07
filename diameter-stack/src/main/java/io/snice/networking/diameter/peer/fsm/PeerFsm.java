@@ -1,17 +1,20 @@
-package io.snice.networking.diameter.peer;
+package io.snice.networking.diameter.peer.fsm;
 
 import io.hektor.fsm.Definition;
 import io.hektor.fsm.FSM;
+import io.snice.codecs.codec.diameter.DiameterAnswer;
 import io.snice.codecs.codec.diameter.DiameterRequest;
 import io.snice.codecs.codec.diameter.avp.api.*;
 import io.snice.networking.common.event.ConnectionActiveIOEvent;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
 import io.snice.networking.common.event.ConnectionConnectAttemptIOEvent;
 import io.snice.networking.diameter.event.DiameterMessageEvent;
+import io.snice.networking.diameter.event.DiameterMessageReadEvent;
+import io.snice.networking.diameter.tx.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.snice.networking.diameter.peer.PeerState.*;
+import static io.snice.networking.diameter.peer.fsm.PeerState.*;
 
 public class PeerFsm {
 
@@ -98,7 +101,12 @@ public class PeerFsm {
         open.transitionTo(OPEN).onEvent(DiameterMessageEvent.class).withGuard(PeerFsm::isRetransmission).withAction(PeerFsm::handleRetransmission);
         open.transitionTo(OPEN).onEvent(DiameterMessageEvent.class).withGuard(DiameterMessageEvent::isDWR).withAction(PeerFsm::processDWR);
         open.transitionTo(CLOSING).onEvent(DiameterMessageEvent.class).withGuard(DiameterMessageEvent::isDPR).withAction(PeerFsm::processDPR);
-        open.transitionTo(OPEN).onEvent(DiameterMessageEvent.class).withAction(PeerFsm::acceptAction);
+        open.transitionTo(OPEN).onEvent(DiameterMessageEvent.class)
+                .withGuard(DiameterMessageEvent::isMessageReadEvent)
+                .withAction(PeerFsm::processRead);
+        open.transitionTo(OPEN).onEvent(DiameterMessageEvent.class)
+                .withGuard(DiameterMessageEvent::isMessageWriteEvent)
+                .withAction(PeerFsm::processWrite);
         open.transitionTo(CLOSED).onEvent(String.class).withGuard("Disconnect"::equals);
 
         /**
@@ -152,7 +160,22 @@ public class PeerFsm {
     }
 
     private static final boolean isRetransmission(final DiameterMessageEvent evt, final PeerContext ctx, final PeerData data) {
-        return data.hasOutstandingTransaction(evt.getMessage());
+        final var msg = evt.getMessage();
+        final var transaction = data.getTransaction(msg);
+
+        // If we receive an answer and we are the ones that initiated the transaction
+        // by sending the request, then this is not a re-transmission but simply
+        // an answer to our outstanding transaction. Let it through.
+        // NOTE: this needs to be enhanced because we could receive the same Answer again
+        // and at that point, we shouldn't allow it up to the app. This could e.g. happen
+        // when we re-transmit the request and just as we did so, the answer shows up. Or
+        // if someone is mean and attacking us...
+        if (msg.isAnswer() && transaction.isClientTransaction()) {
+            return false;
+        }
+
+        // TODO: lots more to do here...
+        return transaction != null;
     }
 
     private static final void handleRetransmission(final DiameterMessageEvent evt, final PeerContext ctx, final PeerData data) {
@@ -329,14 +352,70 @@ public class PeerFsm {
      * Action: Process
      * Description: A message is serviced
      * <p>
-     * Quite simple, just push the message up the handler chain and eventually to the app.
+     * When a new message has been read off of the network there are two options. If it is a request
+     * it may be a re-transmission (already checked so can't actually be that here) or it is a new
+     * request.
+     *
+     * If a new request, then we'll create a "transaction holder" and pass it up to the application,
+     * who may later on choose to "care" about the transaction and therefore may end up creating a {@link Transaction}
+     * object (which really isn't the "real" transaction, it's simply a set of user defined callbacks and whatnot).
+     * That user defined transaction will then later show up in a "answer" event and will be dealt with in the write
+     * section.
+     *
+     * If it is an {@link DiameterAnswer} there must be an existing {@link InternalTransaction} or we simply
+     * did not initiate this transaction by sending a request. Currently being dropped as bogus. Should
+     * allow user to define what should happen. Ideas: Drop & log, special "StrayAnswerEvent" and let the application
+     * deal with it.
      */
-    private static final void acceptAction(final DiameterMessageEvent evt, final PeerContext ctx, final PeerData data) {
-        data.storeTransaction(evt.getMessage());
+    private static final void processRead(final DiameterMessageEvent evt, final PeerContext ctx, final PeerData data) {
+        final var msg = evt.getMessage();
+        if (msg.isRequest()) {
+            data.storeTransaction(msg.toRequest(), false);
+            ctx.getChannelContext().sendUpstream(evt);
+            return;
+        }
 
-        // System.err.println("TODO: here is where we should probably keep the DiameterMessageEvent");
-        ctx.getChannelContext().sendUpstream(evt);
-        // ctx.getChannelContext().sendUpstream(evt);
+        final var transaction = data.getTransaction(msg);
+        if (transaction == null) {
+            logger.info("Dropping stray Answer {}", msg);
+            return;
+        }
+
+        final var decoratedEventMaybe = transaction.getTransaction()
+                .map(t -> DiameterMessageReadEvent.of(msg, t))
+                .orElse(evt.toMessageReadEvent());
+        ctx.getChannelContext().sendUpstream(decoratedEventMaybe);
+    }
+
+    /**
+     * Action: Process
+     * Description: A message is serviced
+     * <p>
+     *
+     */
+    private static final void processWrite(final DiameterMessageEvent evt, final PeerContext ctx, final PeerData data) {
+        final var msg = evt.getMessage();
+        final var userTransaction = evt.getTransaction();
+
+        if (msg.isRequest()) {
+            final var transaction = data.storeTransaction(msg.toRequest(), true);
+            userTransaction.ifPresent(transaction::setTransaction);
+        } else {
+            final var transaction = data.getTransaction(msg);
+            if (transaction != null) {
+                userTransaction.ifPresent(transaction::setTransaction);
+            }
+            // TODO: if the application sends an answer and we have not transaction
+            // it means we didn't actually see a request for it. Should we allow
+            // the app to do so or not? For now, we'll allow it...
+            // Use case could be the app is a tester and tests other stacks and as such,
+            // we should allow it. (perhaps there is a mode: Tester? IgnoreRfc?)
+            // Issue though is if we do send the Answer due to us timing out and purging
+            // the transaction, the other side may think this is a re-transmission, re-transmits
+            // the original request, which we will not treat as a new request.
+        }
+
+        ctx.getChannelContext().sendDownstream(evt);
     }
 
 }

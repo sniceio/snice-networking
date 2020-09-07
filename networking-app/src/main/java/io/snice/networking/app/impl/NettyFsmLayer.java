@@ -3,6 +3,8 @@ package io.snice.networking.app.impl;
 import io.hektor.fsm.Data;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelOutboundHandler;
+import io.netty.channel.ChannelPromise;
 import io.snice.networking.common.event.IOEvent;
 import io.snice.networking.common.event.MessageIOEvent;
 import io.snice.networking.common.fsm.FsmFactory;
@@ -10,6 +12,7 @@ import io.snice.networking.common.fsm.NetworkContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.SocketAddress;
 import java.util.Optional;
 
 /**
@@ -43,7 +46,7 @@ import java.util.Optional;
  * that deals with so-called Flows (RFC5626)
  * </p>
  */
-public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D extends Data> extends ChannelInboundHandlerAdapter {
+public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D extends Data> extends ChannelInboundHandlerAdapter implements ChannelOutboundHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyFsmLayer.class);
 
@@ -66,6 +69,22 @@ public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D 
         final var event = (MessageIOEvent<T>) object;
         ensureExecutionContext(event, ctx).onUpstreamMessage(event);
     }
+
+    /**
+     * Invoked when the application writes something to the channel. As is, this is a message on its
+     * way out.
+     */
+    @Override
+    public void write(final ChannelHandlerContext ctx, final Object msg, final ChannelPromise promise) throws Exception {
+        // TODO: have to think about this one. Shouldn't be able to happen but we need to make sure.
+        if (fsmExecutionContext == null) {
+            logger.warn("Unable to write message because the execution context hasn't been created. Dropping write");
+            return;
+        }
+
+        fsmExecutionContext.onDownstreamMessage((T) msg);
+    }
+
 
     @Override
     public void userEventTriggered(final ChannelHandlerContext ctx, final Object evt) throws Exception {
@@ -104,4 +123,61 @@ public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D 
         return fsmExecutionContext;
     }
 
+    // TODO: combine the two inbound and outbound adapters so we can do the skip stuff...
+
+    /**
+     * From ChannelOutboundHandler
+     */
+    @Override
+    public void bind(final ChannelHandlerContext ctx, final SocketAddress localAddress, final ChannelPromise promise) throws Exception {
+        ctx.bind(localAddress, promise);
+    }
+
+    /**
+     * From ChannelOutboundHandler
+     */
+    @Override
+    public void connect(final ChannelHandlerContext ctx, final SocketAddress remoteAddress, final SocketAddress localAddress, final ChannelPromise promise) throws Exception {
+        ctx.connect(remoteAddress, localAddress, promise);
+    }
+
+    /**
+     * From ChannelOutboundHandler
+     */
+    @Override
+    public void disconnect(final ChannelHandlerContext ctx, final ChannelPromise promise) throws Exception {
+        ctx.disconnect(promise);
+    }
+
+    /**
+     * From ChannelOutboundHandler
+     */
+    @Override
+    public void close(final ChannelHandlerContext ctx, final ChannelPromise promise) throws Exception {
+        ctx.close(promise);
+    }
+
+    /**
+     * From ChannelOutboundHandler
+     */
+    @Override
+    public void deregister(final ChannelHandlerContext ctx, final ChannelPromise promise) throws Exception {
+        ctx.deregister(promise);
+    }
+
+    /**
+     * From ChannelOutboundHandler
+     */
+    @Override
+    public void read(final ChannelHandlerContext ctx) throws Exception {
+        ctx.read();
+    }
+
+    /**
+     * From ChannelOutboundHandler
+     */
+    @Override
+    public void flush(final ChannelHandlerContext ctx) throws Exception {
+        ctx.flush();
+    }
 }

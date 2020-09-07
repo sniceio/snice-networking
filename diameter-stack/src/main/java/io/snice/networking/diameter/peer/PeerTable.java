@@ -8,6 +8,9 @@ import io.snice.networking.diameter.DiameterConfig;
 import io.snice.networking.diameter.DiameterRoutingException;
 import io.snice.networking.diameter.PeerConnection;
 import io.snice.networking.diameter.event.DiameterEvent;
+import io.snice.networking.diameter.peer.fsm.PeerContext;
+import io.snice.networking.diameter.peer.fsm.PeerData;
+import io.snice.networking.diameter.peer.fsm.PeerState;
 import io.snice.networking.diameter.peer.impl.DefaultPeerTable;
 
 import java.util.List;

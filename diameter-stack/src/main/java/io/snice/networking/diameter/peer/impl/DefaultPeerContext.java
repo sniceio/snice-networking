@@ -5,9 +5,10 @@ import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
 import io.snice.networking.common.ChannelContext;
 import io.snice.networking.diameter.event.DiameterEvent;
-import io.snice.networking.diameter.event.DiameterMessageEvent;
+import io.snice.networking.diameter.event.DiameterMessageReadEvent;
+import io.snice.networking.diameter.event.DiameterMessageWriteEvent;
 import io.snice.networking.diameter.peer.PeerConfiguration;
-import io.snice.networking.diameter.peer.PeerContext;
+import io.snice.networking.diameter.peer.fsm.PeerContext;
 
 import java.util.List;
 
@@ -31,14 +32,14 @@ public class DefaultPeerContext implements PeerContext {
     }
 
     @Override
-    public void sendDownstream(DiameterMessage msg) {
-        final var evt = DiameterMessageEvent.of(msg);
+    public void sendDownstream(final DiameterMessage msg) {
+        final var evt = DiameterMessageWriteEvent.of(msg);
         channelContext.sendDownstream(evt);
     }
 
     @Override
-    public void sendUpstream(DiameterMessage msg) {
-        final var evt = DiameterMessageEvent.of(msg);
+    public void sendUpstream(final DiameterMessage msg) {
+        final var evt = DiameterMessageReadEvent.of(msg);
         channelContext.sendUpstream(evt);
     }
 

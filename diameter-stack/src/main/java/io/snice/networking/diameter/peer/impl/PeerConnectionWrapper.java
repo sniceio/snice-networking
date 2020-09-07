@@ -8,7 +8,7 @@ import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
 import io.snice.networking.diameter.PeerConnection;
 import io.snice.networking.diameter.event.DiameterEvent;
-import io.snice.networking.diameter.event.DiameterMessageEvent;
+import io.snice.networking.diameter.event.DiameterMessageWriteEvent;
 import io.snice.networking.diameter.peer.Peer;
 
 import java.net.InetSocketAddress;
@@ -125,7 +125,7 @@ public class PeerConnectionWrapper implements PeerConnection {
 
     @Override
     public void send(final DiameterMessage msg) {
-        actualConnection.send(DiameterMessageEvent.of(msg));
+        actualConnection.send(DiameterMessageWriteEvent.of(msg));
     }
 
     @Override

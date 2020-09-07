@@ -1,6 +1,7 @@
 package io.snice.networking.diameter.peer;
 
 import io.snice.codecs.codec.diameter.DiameterMessage;
+import io.snice.codecs.codec.diameter.DiameterRequest;
 import io.snice.codecs.codec.diameter.avp.api.OriginHost;
 import io.snice.functional.Either;
 import io.snice.networking.diameter.DiameterEnvironment;
@@ -85,5 +86,10 @@ public interface Peer {
     * @throws PeerIllegalStateException in case the {@link Peer} has never made an attempt to be established
     *                                   towards the remote endpoint.
     */
-   Transaction send(DiameterMessage msg) throws PeerIllegalStateException;
+   void send(DiameterMessage msg) throws PeerIllegalStateException;
+
+   Transaction.Builder createNewTransaction(DiameterRequest.Builder req) throws PeerIllegalStateException;
+
+   Transaction.Builder createNewTransaction(DiameterRequest req) throws PeerIllegalStateException;
+
 }

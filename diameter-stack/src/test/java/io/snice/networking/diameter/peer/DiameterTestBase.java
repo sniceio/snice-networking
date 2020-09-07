@@ -1,13 +1,11 @@
 package io.snice.networking.diameter.peer;
 
+import io.snice.buffer.Buffers;
+import io.snice.buffer.WritableBuffer;
 import io.snice.codecs.codec.diameter.DiameterAnswer;
 import io.snice.codecs.codec.diameter.DiameterHeader;
 import io.snice.codecs.codec.diameter.DiameterRequest;
-import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
-import io.snice.codecs.codec.diameter.avp.api.OriginHost;
-import io.snice.codecs.codec.diameter.avp.api.OriginRealm;
-import io.snice.codecs.codec.diameter.avp.api.ProductName;
-import io.snice.codecs.codec.diameter.avp.api.ResultCode;
+import io.snice.codecs.codec.diameter.avp.api.*;
 import io.snice.codecs.codec.diameter.avp.type.IpAddress;
 import org.junit.After;
 import org.junit.Before;
@@ -16,6 +14,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DiameterTestBase {
+
+    protected static DestinationRealm defaultDestinationRealm = DestinationRealm.of("hss.epc.mnc001.mcc001.3gppnetwork.org");
+    protected static DestinationHost defaultDestinationHost = DestinationHost.of("epc.mnc001.mcc001.3gppnetwork.org");
 
     protected static OriginRealm defaultOriginRealm = OriginRealm.of("epc.mnc001.mcc001.3gppnetwork.org");
     protected static OriginHost defaultOriginHost = OriginHost.of("unit.test.node.epc.mnc001.mcc001.3gppnetwork.org");
@@ -29,6 +30,26 @@ public class DiameterTestBase {
 
     @After
     public void tearDown() throws Exception {
+    }
+
+    public static DiameterRequest someUlr() {
+        final WritableBuffer b = WritableBuffer.of(4);
+        b.fastForwardWriterIndex();
+        b.setBit(3, 1, true);
+        b.setBit(3, 2, true);
+        return DiameterRequest.createULR()
+                .withAvp(defaultHostIpAddress)
+                .withSessionId("asedfasdfasdf")
+                .withUserName("999992134354")
+                .withDestinationHost(defaultDestinationHost)
+                .withDestinationRealm(defaultDestinationRealm)
+                .withOriginRealm(defaultOriginRealm)
+                .withOriginHost(defaultOriginHost)
+                .withAvp(VisitedPlmnId.of(Buffers.wrap("999001")))
+                .withAvp(AuthSessionState.NoStateMaintained)
+                .withAvp(RatType.Eutran)
+                .withAvp(UlrFlags.of(b.build()))
+                .build();
     }
 
     public static DiameterRequest someCer() {

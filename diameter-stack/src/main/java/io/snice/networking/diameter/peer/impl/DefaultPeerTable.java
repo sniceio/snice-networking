@@ -17,6 +17,10 @@ import io.snice.networking.diameter.DiameterRoutingException;
 import io.snice.networking.diameter.PeerConnection;
 import io.snice.networking.diameter.event.DiameterEvent;
 import io.snice.networking.diameter.peer.*;
+import io.snice.networking.diameter.peer.fsm.PeerContext;
+import io.snice.networking.diameter.peer.fsm.PeerData;
+import io.snice.networking.diameter.peer.fsm.PeerFsm;
+import io.snice.networking.diameter.peer.fsm.PeerState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

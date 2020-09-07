@@ -60,6 +60,22 @@ public interface DiameterEvent {
     }
 
 
+    default boolean isMessageReadEvent() {
+        return false;
+    }
+
+    default DiameterMessageReadEvent toMessageReadEvent() {
+        throw new ClassCastException("Cannot cast " + getClass().getName() + " into a " + DiameterMessageReadEvent.class.getName());
+    }
+
+    default boolean isMessageWriteEvent() {
+        return false;
+    }
+
+    default DiameterMessageWriteEvent toMessageWriteEvent() {
+        throw new ClassCastException("Cannot cast " + getClass().getName() + " into a " + DiameterMessageWriteEvent.class.getName());
+    }
+
     default boolean isMessageEvent() {
         return false;
     }

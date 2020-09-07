@@ -55,32 +55,40 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
             final var c1 = createPeerConf(3869);
             final var c2 = createPeerConf(3870);
             final var peer = environment.addPeer(c1);
-            final var peer2 = environment.addPeer(c2);
+            // final var peer2 = environment.addPeer(c2);
 
             System.err.println("About to send ULR but will sleep first");
-            sleepy(1000);
+            // sleepy(1000);
             System.err.println("Ok, sending");
-            peer.establishPeer().thenAccept(p -> p.send(createULR()));
-            peer2.establishPeer().thenAccept(p -> System.err.println("Peer2 estabalished"));
+            peer.establishPeer().thenAccept(p -> {
+                final var ulr = createULR();
+                System.out.println("Sending via a Transaction");
+                final var transaction = p.createNewTransaction(ulr)
+                        .onAnswer((t2, answer) -> {
+                            System.out.println("Got back an Answer in the transaction callback!");
+                        })
+                        .start();
+            });
+            // peer2.establishPeer().thenAccept(p -> System.err.println("Peer2 estabalished"));
 
             for (int i = 0; i < 2; ++i) {
                 sleepy(100);
-                System.err.println("Ok, sending via Peer.send");
+                // System.err.println("Ok, sending via Peer.send");
                 // environment.getPeers().stream().findAny().ifPresent(peer -> peer.send(createULR()));
-                peer.send(createULR());
+                // peer.send(createULR());
             }
 
-            System.err.println("Ok, sending to both peers now.");
+            // System.err.println("Ok, sending to both peers now.");
             sleepy(1000);
             for (int i = 0; i < 2; ++i) {
                 sleepy(100);
-                System.err.println("Ok, sending via Peer.establishPeer().thenAccept");
+                // System.err.println("Ok, sending via Peer.establishPeer().thenAccept");
                 // environment.getPeers().stream().findAny().ifPresent(peer -> peer.send(createULR()));
-                peer.establishPeer().thenAccept(p -> p.send(createULR()));
-                peer2.send(createULR());
+                // peer.establishPeer().thenAccept(p -> p.send(createULR()));
+                // peer2.send(createULR());
             }
         }, "kicking off something");
-        // t.start();
+        t.start();
 
         environment.getPeers().forEach(p -> {
             logger.info("Establishing peer: " + p);
@@ -170,7 +178,7 @@ public class Hss extends NetworkApplication<DiameterEnvironment<HssConfig>, Peer
     }
 
     private static final void processULA(final PeerConnection peerConnection, final DiameterMessage ula) {
-        // logger.info("yay, we got a ULA back!");
+        logger.info("yay, we got a ULA back!");
     }
 
     public static void main(final String... args) throws Exception {

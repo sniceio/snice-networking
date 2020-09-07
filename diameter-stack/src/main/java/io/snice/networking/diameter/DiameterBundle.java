@@ -14,10 +14,10 @@ import io.snice.networking.common.fsm.FsmFactory;
 import io.snice.networking.diameter.event.DiameterEvent;
 import io.snice.networking.diameter.handler.DiameterMessageStreamDecoder2;
 import io.snice.networking.diameter.handler.DiameterStreamEncoder;
-import io.snice.networking.diameter.peer.PeerContext;
-import io.snice.networking.diameter.peer.PeerData;
-import io.snice.networking.diameter.peer.PeerState;
 import io.snice.networking.diameter.peer.PeerTable;
+import io.snice.networking.diameter.peer.fsm.PeerContext;
+import io.snice.networking.diameter.peer.fsm.PeerData;
+import io.snice.networking.diameter.peer.fsm.PeerState;
 import io.snice.networking.diameter.peer.impl.DefaultDiameterEnvironment;
 import io.snice.networking.diameter.peer.impl.DefaultRoutingEngine;
 import io.snice.networking.diameter.yaml.StandardAvpDeserializer;
@@ -68,6 +68,7 @@ public class DiameterBundle<C extends DiameterAppConfig> implements ProtocolBund
         ensureNotNull(config, "The configuration object for the \"" + getBundleName() + "\" cannot be null");
         this.configuration = config;
         final var routingEngine = new DefaultRoutingEngine();
+        // TODO: perhaps the PeerTable should just be called a DiameterStack instead.
         peerTable = PeerTable.create(configuration.getConfig(), routingEngine);
     }
 

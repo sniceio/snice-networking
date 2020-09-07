@@ -67,6 +67,11 @@ public interface Transaction {
          * <p>
          * TODO: or do we actually want to that? Perhaps have a on2xxxx on3xxxx etc etc?
          * TODO: perhaps a generic onAnswer and then if the user does a on2xxxx that takes precedence
+         * <p>
+         * TODO: perhaps have a withGuard type of semantics? That way we are consistent with other parts
+         * TODO: of the framework too and we do not make assumptions about what on2xxxx people want to build
+         * TODO: and leave it up to them. so:
+         * TODO: onAnswer(answer -> true).consume(...)
          *
          * @param f the callback method that will be called upon successful completion
          *          of the {@link Transaction}. The function will take in the {@link Transaction}, which is

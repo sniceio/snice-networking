@@ -1,4 +1,4 @@
-package io.snice.networking.diameter.peer;
+package io.snice.networking.diameter.peer.fsm;
 
 import io.hektor.fsm.FSM;
 import io.hektor.fsm.TransitionListener;
@@ -6,6 +6,8 @@ import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
 import io.snice.codecs.codec.diameter.avp.type.IpAddress;
 import io.snice.networking.common.ChannelContext;
 import io.snice.networking.diameter.PeerConnection;
+import io.snice.networking.diameter.peer.DiameterTestBase;
+import io.snice.networking.diameter.peer.PeerConfiguration;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mock;

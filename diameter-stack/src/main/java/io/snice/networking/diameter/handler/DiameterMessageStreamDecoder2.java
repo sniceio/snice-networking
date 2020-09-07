@@ -5,7 +5,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.snice.buffer.Buffer;
 import io.snice.codecs.codec.diameter.impl.DiameterParser;
-import io.snice.networking.diameter.event.DiameterMessageEvent;
+import io.snice.networking.diameter.event.DiameterMessageReadEvent;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class DiameterMessageStreamDecoder2 extends ByteToMessageDecoder {
         final Buffer buffer = Buffer.of(raw);
         try {
             final var msg = DiameterParser.frame(buffer);
-            final var evt = DiameterMessageEvent.of(msg);
+            final var evt = DiameterMessageReadEvent.of(msg);
             list.add(evt);
         } catch (final IndexOutOfBoundsException e) {
             e.printStackTrace();

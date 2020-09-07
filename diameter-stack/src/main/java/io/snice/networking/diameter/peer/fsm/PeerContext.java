@@ -1,4 +1,4 @@
-package io.snice.networking.diameter.peer;
+package io.snice.networking.diameter.peer.fsm;
 
 import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.avp.api.HostIpAddress;
@@ -8,6 +8,7 @@ import io.snice.codecs.codec.diameter.avp.api.ProductName;
 import io.snice.networking.common.fsm.NetworkContext;
 import io.snice.networking.diameter.PeerConnection;
 import io.snice.networking.diameter.event.DiameterEvent;
+import io.snice.networking.diameter.peer.PeerConfiguration;
 
 import java.util.List;
 import java.util.Optional;

@@ -5,6 +5,7 @@ import io.snice.codecs.codec.diameter.avp.api.OriginHost;
 import io.snice.codecs.codec.diameter.avp.api.OriginRealm;
 import io.snice.networking.common.Connection;
 import io.snice.networking.diameter.event.DiameterEvent;
+import io.snice.networking.diameter.event.DiameterMessageEvent;
 import io.snice.networking.diameter.peer.Peer;
 import io.snice.networking.diameter.peer.impl.PeerConnectionWrapper;
 
