@@ -3,6 +3,7 @@ package io.snice.networking.diameter.peer.fsm;
 import io.hektor.fsm.Data;
 import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.DiameterRequest;
+import io.snice.codecs.codec.diameter.HopByHopIdentifier;
 import io.snice.codecs.codec.diameter.TransactionIdentifier;
 import io.snice.networking.common.event.ConnectionActiveIOEvent;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
@@ -17,7 +18,8 @@ import static io.snice.preconditions.PreConditions.assertNull;
 
 public class PeerData implements Data {
 
-    private final Map<TransactionIdentifier, InternalTransaction> oustandingTransactions;
+    private final Map<HopByHopIdentifier, InternalTransaction> oustandingTransactions;
+
     private final PeerConfiguration config;
 
     private ConnectionAttemptCompletedIOEvent event;
@@ -29,10 +31,10 @@ public class PeerData implements Data {
     }
 
     public boolean hasOutstandingTransaction(final DiameterMessage msg) {
-        return hasOutstandingTransaction(TransactionIdentifier.from(msg));
+        return hasOutstandingTransaction(HopByHopIdentifier.from(msg));
     }
 
-    public boolean hasOutstandingTransaction(final TransactionIdentifier id) {
+    public boolean hasOutstandingTransaction(final HopByHopIdentifier id) {
         return oustandingTransactions.containsKey(id);
     }
 
@@ -56,13 +58,14 @@ public class PeerData implements Data {
     }
 
     public InternalTransaction getTransaction(final DiameterMessage msg) {
-        return oustandingTransactions.get(TransactionIdentifier.from(msg));
+        return oustandingTransactions.get(HopByHopIdentifier.from(msg));
     }
 
     /**
-     * For incoming connections, we need to store away the event stating that the underlying e.g.
-     * TCP or SCTP connection was established since we need to make sure that the Peer
-     * is correctly established first. So, hold onto this event.
+     * For incoming connections, we need to store away the event stating that the underlying
+     * transport (e.g. TCP or SCTP connection) was established since we need to make sure that the Peer
+     * is correctly established first. So, hold onto this event and once the Peer FSM is in a state
+     * where we are ready to let the application now, we'll fire off the event again.
      */
     public void storeConnectionActiveIoEvent(final ConnectionActiveIOEvent event) {
         this.activeEvent = event;

@@ -31,11 +31,12 @@ public class HssApp extends DiameterApplication<HssConfig> {
     public void run(final HssConfig configuration, final DiameterEnvironment<HssConfig> environment) {
 
         final var t = new Thread(null, () -> {
-            final var c1 = HssHelpers.createPeerConf(3869);
+            final var c1 = HssHelpers.createPeerConf(3868);
             final var peer = environment.addPeer(c1);
             peer.establishPeer().thenAccept(p -> {
                 final var ulr = createULR();
                 System.out.println("Sending via a Transaction");
+                // p.send(ulr);
                 final var transaction = p.createNewTransaction(ulr)
                         .onAnswer((t2, answer) -> {
                             System.out.println("Got back an Answer in the transaction callback!");

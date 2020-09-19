@@ -13,7 +13,6 @@ import io.snice.networking.diameter.peer.PeerId;
 import io.snice.networking.diameter.peer.PeerIllegalStateException;
 import io.snice.networking.diameter.peer.PeerSettings;
 import io.snice.networking.diameter.tx.Transaction;
-import io.snice.preconditions.PreConditions;
 
 import java.net.InetSocketAddress;
 import java.util.Objects;

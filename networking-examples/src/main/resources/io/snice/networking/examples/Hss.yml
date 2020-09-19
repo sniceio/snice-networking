@@ -1,6 +1,6 @@
 networkInterfaces:
   - name: default
-    listen: aaa://0.0.0.0:3868
+    listen: aaa://0.0.0.0:3869
     transport: tcp
 
 diameter:
@@ -21,7 +21,7 @@ diameter:
       mode: PASSIVE # an active peer will try and establish a session with the remote address.
       # A passive peer will wait for the remote party to initiate the capability exchange
 
-      uri: aaa://10.36.10.77:3871
+      uri: aaa://10.36.10.77:3880
 
       hostIpAddresses:
         - 10.11.12.13 # This is the IP address(es) that will be used in the Capability Exchange handshake

@@ -164,6 +164,10 @@ public class PeerFsm {
 
         final var transaction = data.getTransaction(msg);
 
+        if (transaction == null) {
+            return false;
+        }
+
         // If we receive an answer and we are the ones that initiated the transaction
         // by sending the request, then this is not a re-transmission but simply
         // an answer to our outstanding transaction. Let it through.
@@ -328,7 +332,7 @@ public class PeerFsm {
         // TODO: ensure that the CEA is success.
         // TODO: handle e.g. 5010 - Diameter no common application etc.
         final var cea = evt.getAnswer();
-        final var result = cea.getResultCode().getRight().toResultCode();
+        final var result = cea.getResultCode().get().toResultCode();
         final var code = result.getAsEnum().get();
 
         // if this was a peer that was established by the user, then there may be

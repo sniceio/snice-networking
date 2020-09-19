@@ -59,7 +59,6 @@ public interface DiameterEvent {
         return toMessageEvent().getAnswer();
     }
 
-
     default boolean isMessageReadEvent() {
         return false;
     }

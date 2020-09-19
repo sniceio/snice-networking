@@ -1,7 +1,7 @@
 package io.snice.networking.diameter.peer.fsm;
 
 import io.snice.codecs.codec.diameter.DiameterRequest;
-import io.snice.codecs.codec.diameter.TransactionIdentifier;
+import io.snice.codecs.codec.diameter.HopByHopIdentifier;
 import io.snice.networking.diameter.tx.Transaction;
 
 import java.util.Optional;
@@ -22,9 +22,10 @@ public class InternalTransaction {
     private final DiameterRequest req;
 
     /**
-     * The actual identifier of this transaction.
+     * The actual identifier of this transaction, which is just the
+     * hop-by-hop identifier.
      */
-    private final TransactionIdentifier id;
+    private final HopByHopIdentifier id;
 
     /**
      * If we are tracking this as a client transaction, it means we are the
@@ -39,7 +40,7 @@ public class InternalTransaction {
      * invoke the application again for e.g. an answer, or perhaps a retransmission,
      * then this {@link Transaction} object may contain application callbacks.
      */
-    private Optional<Transaction> transaction;
+    private Optional<Transaction> transaction = Optional.empty();
 
     public static InternalTransaction create(final DiameterRequest req, final boolean isClientTransaction) {
         assertNotNull(req, "The diameter request cannot be null");
@@ -48,11 +49,11 @@ public class InternalTransaction {
 
     private InternalTransaction(final DiameterRequest req, final boolean isClientTransaction) {
         this.req = req;
-        this.id = TransactionIdentifier.from(req);
+        this.id = HopByHopIdentifier.from(req);
         this.isClientTransaction = isClientTransaction;
     }
 
-    public TransactionIdentifier getId() {
+    public HopByHopIdentifier getId() {
         return id;
     }
 
