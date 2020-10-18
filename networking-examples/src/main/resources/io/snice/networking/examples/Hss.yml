@@ -1,6 +1,6 @@
 networkInterfaces:
   - name: default
-    listen: aaa://0.0.0.0:3869
+    listen: aaa://0.0.0.0:3868
     transport: tcp
 
 diameter:

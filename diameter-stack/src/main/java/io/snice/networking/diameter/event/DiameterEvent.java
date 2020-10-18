@@ -22,6 +22,30 @@ public interface DiameterEvent {
         return false;
     }
 
+    default boolean isAIR() {
+        return false;
+    }
+
+    default boolean isAIA() {
+        return false;
+    }
+
+    default boolean isNOR() {
+        return false;
+    }
+
+    default boolean isNOA() {
+        return false;
+    }
+
+    default boolean isPUR() {
+        return false;
+    }
+
+    default boolean isPUA() {
+        return false;
+    }
+
     default boolean isDWR() {
         return false;
     }

@@ -1,7 +1,8 @@
 package io.snice.networking.examples.diameter;
 
 import io.snice.codecs.codec.diameter.DiameterMessage;
-import io.snice.codecs.codec.diameter.avp.api.ExperimentalResultCode;
+import io.snice.codecs.codec.diameter.avp.api.ApnOiReplacement;
+import io.snice.codecs.codec.diameter.avp.api.DsaFlags;
 import io.snice.codecs.codec.diameter.avp.api.ResultCode;
 import io.snice.networking.diameter.DiameterApplication;
 import io.snice.networking.diameter.DiameterBootstrap;
@@ -23,6 +24,7 @@ public class HssApp extends DiameterApplication<HssConfig> {
 
         bootstrap.onConnection(c -> true).accept(b -> {
             b.match(DiameterEvent::isULR).map(DiameterEvent::getRequest).consume(HssApp::processULR);
+            b.match(DiameterEvent::isAIR).map(DiameterEvent::getRequest).consume(HssApp::processAIR);
             b.match(DiameterEvent::isULA).map(DiameterEvent::getAnswer).consume(HssApp::processULA);
         });
     }
@@ -44,15 +46,21 @@ public class HssApp extends DiameterApplication<HssConfig> {
                         .start();
             });
         }, "kicking off something");
-        t.start();
+        // t.start();
     }
 
     private static final void processULR(final PeerConnection peerConnection, final DiameterMessage ulr) {
         logger.info("Processing a ULR - sending ULA back");
-        final var ula = ulr.createAnswer(ResultCode.DiameterErrorUserUnknown5032)
-                // .withDestinationHost(ulr.getOriginHost())
-                .withAvp(ExperimentalResultCode.DiameterErrorUserUnknown5001);
+        final var ula = ulr.createAnswer(ResultCode.DiameterSuccess2001);
         peerConnection.send(ula);
+    }
+
+    private static final void processAIR(final PeerConnection peerConnection, final DiameterMessage air) {
+        logger.info("Processing a AIR - sending AIA back");
+        final var aia = air.createAnswer(ResultCode.DiameterSuccess2001)
+                .withAvp(ApnOiReplacement.of("hello.apn.mcc123.mcc123.gprs"))
+                .withAvp(DsaFlags.of(123L));
+        peerConnection.send(aia);
     }
 
     private static final void processULA(final PeerConnection peerConnection, final DiameterMessage ula) {

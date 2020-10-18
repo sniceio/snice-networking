@@ -34,6 +34,8 @@ public class PeerConnectionWrapper implements PeerConnection {
     @Override
     public void send(final DiameterMessage.Builder msg) {
         ensureNotNull(msg, "You cannot send a null message");
+        msg.withOriginHost("todo.need.to.pass.it.through.node.epc.mnc001.mcc001.3gppnetwork.org");
+        msg.withOriginRealm("epc.mnc001.mcc001.3gppnetwork.org");
         // TODO: check if we are to add the origin host and realm
         // to this message
         send(msg.build());

@@ -108,6 +108,36 @@ public class DefaultDiameterMessageEvent implements DiameterMessageEvent {
     }
 
     @Override
+    public boolean isAIR() {
+        return msg.isAIR();
+    }
+
+    @Override
+    public boolean isAIA() {
+        return msg.isAIA();
+    }
+
+    @Override
+    public boolean isNOR() {
+        return msg.isNOR();
+    }
+
+    @Override
+    public boolean isNOA() {
+        return msg.isNOA();
+    }
+
+    @Override
+    public boolean isPUR() {
+        return msg.isPUR();
+    }
+
+    @Override
+    public boolean isPUA() {
+        return msg.isPUA();
+    }
+
+    @Override
     public boolean isDWR() {
         return msg.isDWR();
     }
