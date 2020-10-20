@@ -21,6 +21,7 @@ public class TransactionTest extends PeerTestBase {
     public void setUp() throws Exception {
         super.setUp();
         req = someUlr();
+        defaultPeer.establishPeer();
         builder = defaultPeer.createNewTransaction(req);
     }
 

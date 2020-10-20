@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-public class PeerTestBase extends DiameterTestBase {
+public abstract class PeerTestBase extends DiameterTestBase {
 
     @Mock(lenient = true)
     protected DefaultPeerTable<DiameterAppConfig> peerTable;

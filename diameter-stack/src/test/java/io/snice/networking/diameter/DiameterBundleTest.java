@@ -35,10 +35,5 @@ public class DiameterBundleTest {
         assertThat(bundle.getBundleName(), is("DiameterBundle"));
     }
 
-    @Test
-    public void testBasicRouting() {
-        final DiameterEnvironment env = bundle.createEnvironment(stack, config);
-        env.send(ulr);
-    }
 
 }

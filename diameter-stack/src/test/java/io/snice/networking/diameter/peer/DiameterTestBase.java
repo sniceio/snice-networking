@@ -13,7 +13,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DiameterTestBase {
+public abstract class DiameterTestBase {
 
     protected static DestinationRealm defaultDestinationRealm = DestinationRealm.of("hss.epc.mnc001.mcc001.3gppnetwork.org");
     protected static DestinationHost defaultDestinationHost = DestinationHost.of("epc.mnc001.mcc001.3gppnetwork.org");
@@ -22,7 +22,6 @@ public class DiameterTestBase {
     protected static OriginHost defaultOriginHost = OriginHost.of("unit.test.node.epc.mnc001.mcc001.3gppnetwork.org");
     protected static HostIpAddress defaultHostIpAddress = HostIpAddress.of(IpAddress.createIpv4Address("10.11.12.13"));
     protected static ProductName defaultProductName = ProductName.of("Snice Unit Test Product");
-
 
     @Before
     public void setUp() throws Exception {

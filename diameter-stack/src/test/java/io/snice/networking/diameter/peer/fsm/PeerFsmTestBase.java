@@ -19,7 +19,7 @@ import java.util.function.BiConsumer;
 
 import static org.mockito.Mockito.when;
 
-public class PeerFsmTestBase extends DiameterTestBase {
+public abstract class PeerFsmTestBase extends DiameterTestBase {
 
     @Mock
     protected PeerContext ctx;
