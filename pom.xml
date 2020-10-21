@@ -15,7 +15,7 @@
     <name>Snice Networking</name>
     <groupId>io.snice.networking</groupId>
     <artifactId>networking-parent</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.2</version>
     <packaging>pom</packaging>
     <description>Snice Networking - A Super Nice Way to deal with networking</description>
     <licenses>
