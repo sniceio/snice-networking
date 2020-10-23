@@ -1,8 +1,8 @@
 package io.snice.networking.examples.diameter;
 
-import io.snice.buffer.Buffers;
 import io.snice.buffer.WritableBuffer;
 import io.snice.codecs.codec.diameter.DiameterRequest;
+import io.snice.codecs.codec.diameter.MccMnc;
 import io.snice.codecs.codec.diameter.avp.api.AuthSessionState;
 import io.snice.codecs.codec.diameter.avp.api.RatType;
 import io.snice.codecs.codec.diameter.avp.api.UlrFlags;
@@ -17,7 +17,7 @@ public class HssHelpers {
     public static PeerConfiguration createPeerConf(final int port) {
         final var c = new PeerConfiguration();
         try {
-            c.setUri(new URI("aaa://10.36.10.77:" + port));
+            c.setUri(new URI("aaa://10.36.10.74:" + port));
         } catch (final URISyntaxException e) {
             // ignore
         }
@@ -36,7 +36,7 @@ public class HssHelpers {
                 .withDestinationRealm("epc.mnc001.mcc001.3gppnetwork.org")
                 .withOriginRealm("epc.mnc999.mcc999.3gppnetwork.org")
                 .withOriginHost("snice.node.epc.mnc999.mcc999.3gppnetwork.org")
-                .withAvp(VisitedPlmnId.of(Buffers.wrap("999001")))
+                .withAvp(VisitedPlmnId.of(MccMnc.parse("001/001").toBuffer()))
                 .withAvp(AuthSessionState.NoStateMaintained)
                 .withAvp(RatType.Eutran)
                 .withAvp(UlrFlags.of(b.build()))

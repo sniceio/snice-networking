@@ -18,11 +18,13 @@
     <version>0.0.3-SNAPSHOT</version>
     <packaging>pom</packaging>
     <description>Snice Networking - A Super Nice Way to deal with networking</description>
+
     <licenses>
         <license>
-            <name>MIT License</name>
-            <url>http://www.opensource.org/licenses/mit-license.php</url>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
             <distribution>repo</distribution>
+            <comments>A business-friendly OSS license</comments>
         </license>
     </licenses>
 
@@ -186,6 +188,14 @@
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-transport</artifactId>
+                <version>${netty.version}</version>
+                <type>jar</type>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport-sctp</artifactId>
                 <version>${netty.version}</version>
                 <type>jar</type>
                 <scope>compile</scope>
