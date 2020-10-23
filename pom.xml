@@ -192,6 +192,14 @@
             </dependency>
 
             <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport-sctp</artifactId>
+                <version>${netty.version}</version>
+                <type>jar</type>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>io.hektor</groupId>
                 <artifactId>hektor-fsm</artifactId>
                 <version>${hektor.version}</version>

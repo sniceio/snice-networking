@@ -7,6 +7,9 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.sctp.SctpChannelOption;
+import io.netty.channel.sctp.nio.NioSctpChannel;
+import io.netty.channel.sctp.nio.NioSctpServerChannel;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
@@ -197,6 +200,7 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
         private EventLoopGroup bossGroup;
         private EventLoopGroup workerGroup;
         private EventLoopGroup udpGroup;
+        private EventLoopGroup sctpGroup;
         private Clock clock;
 
         /**
@@ -208,6 +212,16 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
          * Our UDP based bootstrap.
          */
         private Bootstrap bootstrap;
+
+        /**
+         * Our SCTP based bootstrap.
+         */
+        private Bootstrap sctpBootstrap;
+
+        /**
+         * The SCTP based server bootstrap.
+         */
+        private ServerBootstrap sctpServerBootstrap;
 
         private final Channel udpListeningPoint = null;
 
@@ -279,22 +293,23 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
             return this;
         }
 
+        public Builder withSCTPEventLoopGroup(final EventLoopGroup group) {
+            this.sctpGroup = group;
+            return this;
+        }
+
         public NettyNetworkLayer build() {
 
             // TODO: check that if you e.g. specify dialog layer then you must also specify transaction layer
 
+            // TOOD: need to re-work all of the default values for the various event loop groups...
             if (bossGroup == null) {
                 bossGroup = new NioEventLoopGroup();
             }
 
-            if (workerGroup == null && udpGroup == null) {
-                workerGroup = new NioEventLoopGroup();
-                udpGroup = workerGroup;
-            } else if (workerGroup != null && udpGroup == null) {
-                udpGroup = workerGroup;
-            } else if (udpGroup != null && workerGroup != null) {
-                workerGroup = udpGroup;
-            }
+            workerGroup = workerGroup == null ? new NioEventLoopGroup() : workerGroup;
+            udpGroup = udpGroup == null ? workerGroup : udpGroup;
+            sctpGroup = sctpGroup == null ? workerGroup : sctpGroup;
 
             final Clock clock = this.clock != null ? this.clock : new SystemClock();
 
@@ -305,6 +320,8 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
                 ifBuilder.udpBootstrap(ensureUDPBootstrap());
                 ifBuilder.tcpBootstrap(ensureTCPBootstrap());
                 ifBuilder.tcpServerBootstrap(ensureTCPServerBootstrap(clock, i.getVipAddress()));
+                ifBuilder.sctpBootstrap(ensureSctpBootstrap());
+                ifBuilder.sctpServerBootstrap(ensureSctpServerBootstrap(clock, i.getVipAddress()));
                 builders.add(ifBuilder);
             });
 
@@ -340,14 +357,14 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
                 b.group(this.udpGroup)
                         .channel(NioDatagramChannel.class)
                         .handler(new ChannelInitializer<DatagramChannel>() {
-                    @Override
-                    protected void initChannel(final DatagramChannel ch) throws Exception {
-                        final ChannelPipeline pipeline = ch.pipeline();
-                        handlers.stream()
-                                .filter(h -> h.hasTransport(Transport.udp))
-                                .forEach(h -> pipeline.addLast(h.getName(), h.getHandler()));
-                    }
-                });
+                            @Override
+                            protected void initChannel(final DatagramChannel ch) throws Exception {
+                                final ChannelPipeline pipeline = ch.pipeline();
+                                handlers.stream()
+                                        .filter(h -> h.hasTransport(Transport.udp))
+                                        .forEach(h -> pipeline.addLast(h.getName(), h.getHandler()));
+                            }
+                        });
 
                 // this allows you to setup connections from the
                 // same listening point
@@ -356,6 +373,50 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
                 this.bootstrap = b;
             }
             return this.bootstrap;
+        }
+
+        private Bootstrap ensureSctpBootstrap() {
+            if (sctpBootstrap == null) {
+                final Bootstrap b = new Bootstrap();
+                b.group(sctpGroup)
+                        .channel(NioSctpChannel.class)
+                        .option(SctpChannelOption.SCTP_NODELAY, true)
+                        .handler(new ChannelInitializer<NioSctpChannel>() {
+                            @Override
+                            protected void initChannel(final NioSctpChannel ch) throws Exception {
+                                final ChannelPipeline pipeline = ch.pipeline();
+                                handlers.stream()
+                                        .filter(h -> h.hasTransport(Transport.sctp))
+                                        .forEach(h -> pipeline.addLast(h.getName(), h.getHandler()));
+                            }
+                        });
+
+                sctpBootstrap = b;
+            }
+
+            return sctpBootstrap;
+        }
+
+        private ServerBootstrap ensureSctpServerBootstrap(final Clock clock, final URI vipAddress) {
+            if (sctpServerBootstrap == null) {
+                final ServerBootstrap b = new ServerBootstrap();
+                b.group(bossGroup, sctpGroup)
+                        .channel(NioSctpServerChannel.class)
+                        // .option(SctpChannelOption.SO_BACKLOG, 100)
+                        .childHandler(new ChannelInitializer<NioSctpChannel>() {
+                            @Override
+                            public void initChannel(final NioSctpChannel ch) throws Exception {
+                                final ChannelPipeline pipeline = ch.pipeline();
+                                handlers.stream()
+                                        .filter(h -> h.hasTransport(Transport.sctp))
+                                        .forEach(h -> pipeline.addLast(h.getName(), h.getHandler()));
+                            }
+                        });
+
+                sctpServerBootstrap = b;
+            }
+
+            return sctpServerBootstrap;
         }
 
         private Bootstrap ensureTCPBootstrap() {

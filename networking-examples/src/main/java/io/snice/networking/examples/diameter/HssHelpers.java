@@ -17,7 +17,7 @@ public class HssHelpers {
     public static PeerConfiguration createPeerConf(final int port) {
         final var c = new PeerConfiguration();
         try {
-            c.setUri(new URI("aaa://10.36.10.77:" + port));
+            c.setUri(new URI("aaa://10.36.10.74:" + port));
         } catch (final URISyntaxException e) {
             // ignore
         }

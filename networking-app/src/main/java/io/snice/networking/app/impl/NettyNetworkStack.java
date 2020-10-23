@@ -81,7 +81,8 @@ public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connect
                 .withHandler(protocolBundle.getProtocolEncoders())
                 .withHandler(protocolBundle.getProtocolDecoders())
                 .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, Optional.empty(), ctxs), Transport.udp)
-                .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, Optional.empty(), ctxs), Transport.tcp);
+                .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, Optional.empty(), ctxs), Transport.tcp)
+                .withHandler("sctp-adapter", () -> new NettySctpInboundAdapter(clock, Optional.empty(), ctxs), Transport.sctp);
                 // .withHandler("tcp-adapter-outbound", () -> new NettyTcpOutboundAdapter<>(clock, serializationFactory, Optional.empty(), ctxs), Transport.tcp)
 
                 // the optional fsm layer - will also be injected dynamically depending on whether
@@ -92,6 +93,7 @@ public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connect
         // TODO: need to ensure that the FSM factory is for a particular transport too
         protocolBundle.getFsmFactory().ifPresent(fsmFactory -> {
             builder.withHandler("fsm-layer", () -> new NettyFsmLayer(fsmFactory), Transport.tcp);
+            builder.withHandler("fsm-layer", () -> new NettyFsmLayer(fsmFactory), Transport.sctp);
         });
 
         // App layer is not optional so it will always be injected but it will need to be configured by

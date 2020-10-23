@@ -1,5 +1,6 @@
 package io.snice.networking.examples.diameter;
 
+import io.netty.util.NetUtil;
 import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.avp.api.ApnOiReplacement;
 import io.snice.codecs.codec.diameter.avp.api.DsaFlags;
@@ -46,7 +47,7 @@ public class HssApp extends DiameterApplication<HssConfig> {
                         .start();
             });
         }, "kicking off something");
-        // t.start();
+        t.start();
     }
 
     private static final void processULR(final PeerConnection peerConnection, final DiameterMessage ulr) {
@@ -68,6 +69,8 @@ public class HssApp extends DiameterApplication<HssConfig> {
     }
 
     public static void main(final String... args) throws Exception {
+        System.out.println("Is IPv4 stack preferred? " + NetUtil.isIpV4StackPreferred());
+
         final var hss = new HssApp();
         hss.run("server", "networking-examples/src/main/resources/io/snice/networking/examples/Hss.yml");
     }

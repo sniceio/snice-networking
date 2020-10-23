@@ -1,7 +1,7 @@
 networkInterfaces:
   - name: default
     listen: aaa://0.0.0.0:3868
-    transport: tcp
+    transport: sctp
 
 diameter:
   productName: "whatever"
