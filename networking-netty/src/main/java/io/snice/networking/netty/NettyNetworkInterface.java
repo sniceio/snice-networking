@@ -43,6 +43,10 @@ public final class NettyNetworkInterface<T> implements NetworkInterface<T>, Chan
 
     private final ServerBootstrap tcpServerBootstrap;
 
+    private final Bootstrap sctpBootstrap;
+
+    private final ServerBootstrap sctpServerBootstrap;
+
     private final List<ListeningPoint> listeningPoints;
 
     private final ListeningPoint[] listeningPointsByTransport = new ListeningPoint[Transport.values().length];
@@ -51,11 +55,15 @@ public final class NettyNetworkInterface<T> implements NetworkInterface<T>, Chan
     private NettyNetworkInterface(final String name, final Bootstrap udpBootstrap,
                                   final Bootstrap tcpBootstrap,
                                   final ServerBootstrap tcpServerBootstrap,
+                                  final Bootstrap sctpBootstrap,
+                                  final ServerBootstrap sctpServerBootstrap,
                                   final List<ListeningPoint> lps) {
         this.name = name;
         this.udpBootstrap = udpBootstrap;
         this.tcpBootstrap = tcpBootstrap;
         this.tcpServerBootstrap = tcpServerBootstrap;
+        this.sctpBootstrap = sctpBootstrap;
+        this.sctpServerBootstrap = sctpServerBootstrap;
         this.listeningPoints = lps;
         lps.forEach(lp -> listeningPointsByTransport[lp.getTransport().ordinal()] = lp);
     }
@@ -91,6 +99,7 @@ public final class NettyNetworkInterface<T> implements NetworkInterface<T>, Chan
             return port;
         }
 
+        // TODO: needs to change since this is geared towards SIP
         if (transport == Transport.tls) {
             return 5061;
         }
@@ -114,7 +123,8 @@ public final class NettyNetworkInterface<T> implements NetworkInterface<T>, Chan
         return listeningPointsByTransport[transport.ordinal()];
     }
 
-    public boolean isSupportingTransport(Transport transport) {
+    @Override
+    public boolean isSupportingTransport(final Transport transport) {
         return listeningPointsByTransport[transport.ordinal()] != null;
     }
 
@@ -214,7 +224,11 @@ public final class NettyNetworkInterface<T> implements NetworkInterface<T>, Chan
 
         private Bootstrap tcpBootstrap;
 
+        private Bootstrap sctpBootstrap;
+
         private ServerBootstrap tcpServerBootstrap;
+
+        private ServerBootstrap sctpServerBootstrap;
 
         private CountDownLatch latch;
 
@@ -238,6 +252,16 @@ public final class NettyNetworkInterface<T> implements NetworkInterface<T>, Chan
             return this;
         }
 
+        public Builder sctpBootstrap(final Bootstrap bootstrap) {
+            this.sctpBootstrap = bootstrap;
+            return this;
+        }
+
+        public Builder sctpServerBootstrap(final ServerBootstrap bootstrap) {
+            this.sctpServerBootstrap = bootstrap;
+            return this;
+        }
+
         public Builder tcpServerBootstrap(final ServerBootstrap bootstrap) {
             this.tcpServerBootstrap = bootstrap;
             return this;
@@ -253,7 +277,11 @@ public final class NettyNetworkInterface<T> implements NetworkInterface<T>, Chan
                 ensureNotNull(this.tcpBootstrap, "You must configure a connection oriented bootstrap");
             }
 
-            if (this.config.hasTLS() || this.config.hasWS() || this.config.hasSCTP()) {
+            if (this.config.hasSCTP()) {
+                ensureNotNull(this.sctpBootstrap, "You must configure the sctp oriented bootstrap");
+            }
+
+            if (this.config.hasTLS() || this.config.hasWS()) {
                 throw new IllegalTransportException("Sorry, can only do TCP and UDP for now");
             }
 
@@ -268,6 +296,8 @@ public final class NettyNetworkInterface<T> implements NetworkInterface<T>, Chan
                         .withTcpBootstrap(tcpBootstrap)
                         .withTcpServerBootstrap(tcpServerBootstrap)
                         .withUdpBootstrap(udpBootstrap)
+                        .withSctpBootstrap(sctpBootstrap)
+                        .withSctpServerBootstrap(sctpServerBootstrap)
                         .build();
                 lps.add(lp);
             });
@@ -276,6 +306,8 @@ public final class NettyNetworkInterface<T> implements NetworkInterface<T>, Chan
                     this.udpBootstrap,
                     this.tcpBootstrap,
                     this.tcpServerBootstrap,
+                    this.sctpBootstrap,
+                    this.sctpServerBootstrap,
                     Collections.unmodifiableList(lps));
         }
 

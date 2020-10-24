@@ -13,6 +13,8 @@ import io.snice.networking.common.Transport;
 import io.snice.networking.common.fsm.FsmFactory;
 import io.snice.networking.diameter.event.DiameterEvent;
 import io.snice.networking.diameter.handler.DiameterMessageStreamDecoder2;
+import io.snice.networking.diameter.handler.DiameterSctpDecoder;
+import io.snice.networking.diameter.handler.DiameterSctpEncoder;
 import io.snice.networking.diameter.handler.DiameterStreamEncoder;
 import io.snice.networking.diameter.peer.PeerTable;
 import io.snice.networking.diameter.peer.fsm.PeerContext;
@@ -39,22 +41,36 @@ public class DiameterBundle<C extends DiameterAppConfig> implements ProtocolBund
 
     private static final Logger logger = LoggerFactory.getLogger(DiameterBundle.class);
 
-    private final ProtocolHandler encoder;
-    private final ProtocolHandler decoder;
+    private final List<ProtocolHandler> encoders;
+    private final List<ProtocolHandler> decoders;
+
     private PeerTable peerTable;
     private C configuration;
 
     public DiameterBundle() {
-        encoder = ProtocolHandler.of("diameter-codec-encoder")
+        final var tcpEncoder = ProtocolHandler.of("diameter-codec-encoder")
                 .withChannelHandler(() -> new DiameterStreamEncoder())
                 .withTransport(Transport.tcp)
                 .build();
 
-        decoder = ProtocolHandler.of("diameter-codec-decoder")
+        final var sctpEncoder = ProtocolHandler.of("diameter-codec-encoder")
+                .withChannelHandler(() -> new DiameterSctpEncoder())
+                .withTransport(Transport.sctp)
+                .build();
+
+        encoders = List.of(tcpEncoder, sctpEncoder);
+
+        final var tcpDecoder = ProtocolHandler.of("diameter-codec-decoder")
                 .withChannelHandler(() -> new DiameterMessageStreamDecoder2())
                 .withTransport(Transport.tcp)
                 .build();
 
+        final var sctpDecoder = ProtocolHandler.of("diameter-codec-decoder")
+                .withChannelHandler(() -> new DiameterSctpDecoder())
+                .withTransport(Transport.sctp)
+                .build();
+
+        decoders = List.of(tcpDecoder, sctpDecoder);
     }
 
     @Override
@@ -98,12 +114,12 @@ public class DiameterBundle<C extends DiameterAppConfig> implements ProtocolBund
 
     @Override
     public List<ProtocolHandler> getProtocolEncoders() {
-        return List.of(encoder);
+        return encoders;
     }
 
     @Override
     public List<ProtocolHandler> getProtocolDecoders() {
-        return List.of(decoder);
+        return decoders;
     }
 
     @Override

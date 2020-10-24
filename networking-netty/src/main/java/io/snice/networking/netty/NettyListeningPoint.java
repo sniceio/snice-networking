@@ -239,9 +239,96 @@ public abstract class NettyListeningPoint<T> implements ListeningPoint<T> {
                     final var remote = ConnectionEndpointId.create(Transport.tcp, remoteAddress);
                     final var evt = ConnectionAttempt.failure(f, remote, future.cause(), clock.getCurrentTimeMillis());
                     // f.completeExceptionally(future.cause());
+                    logger.warn("Unable to establish the SCTP association", future.cause());
                 }
             });
             return f;
+        }
+    }
+
+    /**
+     * Listening point for SCTP
+     */
+    private static class NettySctpListeningPoint<T> extends NettyListeningPoint<T> {
+
+        private final Bootstrap bootstrap;
+        private final ServerBootstrap serverBootstrap;
+
+        /**
+         * @param listenAddress
+         * @param vipAddress
+         * @param bootstrap
+         * @param serverBootstrap
+         * @param clock
+         */
+        private NettySctpListeningPoint(final URI listenAddress,
+                                        final URI vipAddress,
+                                        final Bootstrap bootstrap,
+                                        final ServerBootstrap serverBootstrap,
+                                        final Clock clock) {
+            super(Transport.sctp, listenAddress, vipAddress, clock);
+            this.bootstrap = bootstrap;
+            this.serverBootstrap = serverBootstrap;
+        }
+
+        @Override
+        public CompletableFuture<Void> up() {
+            final CompletableFuture<Void> future = new CompletableFuture<>();
+
+            final ChannelFuture channelFuture = this.serverBootstrap.bind(getLocalAddress());
+            channelFuture.addListener((ChannelFutureListener) channelFuture1 -> {
+                if (channelFuture1.isDone() && channelFuture1.isSuccess()) {
+                    NettyListeningPoint.logger.info("Successfully bound to listening point: " + getListenAddress());
+                    future.complete(null);
+                } else if (channelFuture1.isDone() && !channelFuture1.isSuccess()) {
+                    NettyListeningPoint.logger.info("Unable to bind to listening point: " + getListenAddress());
+                    future.completeExceptionally(channelFuture1.cause());
+                }
+            });
+            return future;
+        }
+
+        @Override
+        public CompletableFuture<Void> down() {
+            return null;
+        }
+
+        @Override
+        public CompletableFuture<Connection<T>> connect(final InetSocketAddress remoteAddress) {
+            final CompletableFuture<Connection<T>> f = new CompletableFuture<>();
+
+            try {
+                // If we do not bind, then it will discover and use all available network interfaces
+                // on your machine and include that in the INIT. If one of them then isn't routable
+                // from the remote host, that remote host may send the HEARTBEAT to the wrong location
+                // which will fail and then the entire connection dies. So, we have to do this...
+                final ChannelFuture bindFuture = bootstrap.bind(new InetSocketAddress(getListenAddress().getHost(), 0));
+                final ChannelFuture channelFuture = bindFuture.sync().channel().connect(remoteAddress);
+
+                // TODO: I believe will end up being all executed in the IO thread, including the f.complete(c) which
+                // TODO: then is all the way up into the application. Will have to re-work that...
+                // TODO: yep, verified! The application will now be executing code on this IO thread, which is
+                // TODO: NOT NOT NOT good. Need to change this... Should probably try and get this
+                // TODO: connect future to be completed once an event has been triggered instead.
+                channelFuture.addListener((ChannelFutureListener) future -> {
+                    if (future.isSuccess()) {
+                        final Channel channel = channelFuture.channel();
+                        final Connection<T> c = new SctpConnection(channel, remoteAddress);
+                        final var evt = ConnectionAttempt.success(f, c, clock.getCurrentTimeMillis());
+                        channel.pipeline().firstContext().fireUserEventTriggered(evt);
+                    } else {
+                        // TODO: since the channel wasn't established, we need to complete
+                        // this future elseewhere... Needs to be posted to some other thread pool
+                        final var remote = ConnectionEndpointId.create(Transport.tcp, remoteAddress);
+                        final var evt = ConnectionAttempt.failure(f, remote, future.cause(), clock.getCurrentTimeMillis());
+                        // f.completeExceptionally(future.cause());
+                    }
+                });
+                return f;
+            } catch (final Throwable t) {
+                t.printStackTrace();
+            }
+            return null;
         }
     }
 
@@ -254,7 +341,11 @@ public abstract class NettyListeningPoint<T> implements ListeningPoint<T> {
 
         private Bootstrap tcpBootstrap;
 
+        private Bootstrap sctpBootstrap;
+
         private ServerBootstrap tcpServerBootstrap;
+
+        private ServerBootstrap sctpServerBootstrap;
 
         private Clock clock;
 
@@ -287,6 +378,16 @@ public abstract class NettyListeningPoint<T> implements ListeningPoint<T> {
             return this;
         }
 
+        public Builder withSctpBootstrap(final Bootstrap bootstrap) {
+            this.sctpBootstrap = bootstrap;
+            return this;
+        }
+
+        public Builder withSctpServerBootstrap(final ServerBootstrap bootstrap) {
+            this.sctpServerBootstrap = bootstrap;
+            return this;
+        }
+
         public Builder withTcpBootstrap(final Bootstrap bootstrap) {
             this.tcpBootstrap = bootstrap;
             return this;
@@ -302,16 +403,19 @@ public abstract class NettyListeningPoint<T> implements ListeningPoint<T> {
             final Clock clock = this.clock != null ? this.clock : new SystemClock();
             if (transport.isTCP()) {
                 assertNotNull(tcpBootstrap, "You must specify the TCP bootstrap");
-                assertNotNull(tcpServerBootstrap, "You must specify the TCP bootstrap");
+                assertNotNull(tcpServerBootstrap, "You must specify the TCP server bootstrap");
                 return new NettyTcpListeningPoint(listenAddress, vipAddress, tcpBootstrap, tcpServerBootstrap, clock);
             } else if (transport.isUDP()) {
                 assertNotNull(udpBootstrap, "You must specify the UDP bootstrap");
                 return new NettyUdpListeningPoint(listenAddress, vipAddress, udpBootstrap, clock);
+            } else if (transport.isSCTP()) {
+                assertNotNull(sctpBootstrap, "You must specify the SCTP bootstrap");
+                assertNotNull(sctpServerBootstrap, "You must specify the SCTP server bootstrap");
+                return new NettySctpListeningPoint(listenAddress, vipAddress, sctpBootstrap, sctpServerBootstrap, clock);
             }
 
             throw new IllegalTransportException("Currently we only support UDP and TCP");
         }
-
     }
 
 }
