@@ -21,8 +21,6 @@ import static io.snice.preconditions.PreConditions.*;
 @ChannelHandler.Sharable
 public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connection<T>, T, C extends NetworkAppConfig> implements NetworkStack<K, T, C> {
 
-    // private final Class<T> type;
-    // private final Class<K> connectionType;
     private final C config;
     private final NetworkApplication<E, K, T, C> app;
     private final List<ConnectionContext<K, T>> ctxs;
@@ -44,25 +42,6 @@ public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connect
         return new Builder(config);
     }
 
-    /*
-    public static <K extends Connection<T>, T> ConnectionTypeStep<T> ofType(final Class<T> type) {
-        assertNotNull(type, "The type cannot be null");
-        return new ConnectionTypeStep<T>() {
-            @Override
-            public <K extends Connection<T>> ConfigurationStep<K, T> withConnectionType(final Class<K> connectionType) {
-                assertNotNull(connectionType, "The connection type cannot be null");
-                return new ConfigurationStep<K, T>() {
-                    @Override
-                    public <C extends NetworkAppConfig> NetworkStack.Builder<K, T, C> withConfiguration(final C config) {
-                        assertNotNull(config, "The configuration for the network stack cannot be null");
-                        return new Builder(type, connectionType, config);
-                    }
-                };
-            }
-        };
-    }
-     */
-
     @Override
     public void start() {
         final var appLayer = new NettyApplicationLayer(protocolBundle);
@@ -83,23 +62,23 @@ public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connect
                 .withHandler("udp-adapter", () -> new NettyUdpInboundAdapter(clock, Optional.empty(), ctxs), Transport.udp)
                 .withHandler("tcp-adapter", () -> new NettyTcpInboundAdapter(clock, Optional.empty(), ctxs), Transport.tcp)
                 .withHandler("sctp-adapter", () -> new NettySctpInboundAdapter(clock, Optional.empty(), ctxs), Transport.sctp);
-                // .withHandler("tcp-adapter-outbound", () -> new NettyTcpOutboundAdapter<>(clock, serializationFactory, Optional.empty(), ctxs), Transport.tcp)
 
-                // the optional fsm layer - will also be injected dynamically depending on whether
-                // the user actually wants an FSM layer or not.
-                // Also, whether there is a separate FSM layer per connection or a shared
-                // one for the entire stack will be dependent on the actual need of the implementation.
-
+        // the optional fsm layer - will also be injected dynamically depending on whether
+        // the user actually wants an FSM layer or not.
+        // Also, whether there is a separate FSM layer per connection or a shared
+        // one for the entire stack will be dependent on the actual need of the implementation.
         // TODO: need to ensure that the FSM factory is for a particular transport too
         protocolBundle.getFsmFactory().ifPresent(fsmFactory -> {
+            builder.withHandler("fsm-layer", () -> new NettyFsmLayer(fsmFactory), Transport.udp);
             builder.withHandler("fsm-layer", () -> new NettyFsmLayer(fsmFactory), Transport.tcp);
             builder.withHandler("fsm-layer", () -> new NettyFsmLayer(fsmFactory), Transport.sctp);
         });
 
         // App layer is not optional so it will always be injected but it will need to be configured by
         // the NetworkApplication etc in order to inject the message pipelines and whatnot.
-        network = builder.withHandler("app-layer", () -> appLayer, Transport.tcp)
+        network = builder
                 .withHandler("app-layer", () -> appLayer, Transport.udp)
+                .withHandler("app-layer", () -> appLayer, Transport.tcp)
                 .withHandler("app-layer", () -> appLayer, Transport.sctp)
                 .build();
 

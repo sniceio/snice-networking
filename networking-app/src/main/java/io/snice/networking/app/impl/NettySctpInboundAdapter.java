@@ -87,7 +87,7 @@ public class NettySctpInboundAdapter<T> extends ChannelOutboundHandlerAdapter im
     }
 
     private void logError(final String msg) {
-        System.err.println("[ " + uuid + " SCTP ]: " + msg);
+        logError("[ " + uuid + "]: " + msg);
     }
 
     @Override
