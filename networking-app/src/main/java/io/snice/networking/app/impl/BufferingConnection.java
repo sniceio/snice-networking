@@ -12,82 +12,82 @@ import java.util.Optional;
 
 public class BufferingConnection<T> implements Connection<T> {
 
-    private final Connection<T> connection;
+    private final ConnectionId connectionId;
 
     private T msgToSend;
 
-    public BufferingConnection(final Connection<T> connection) {
-        this.connection = connection;
+    public BufferingConnection(final ConnectionId connectionId) {
+        this.connectionId = connectionId;
     }
 
     @Override
     public ConnectionId id() {
-        return connection.id();
+        return connectionId;
     }
 
     @Override
     public Optional<URI> getVipAddress() {
-        return connection.getVipAddress();
+        throw new RuntimeException("reworking things");
     }
 
     @Override
     public int getLocalPort() {
-        return connection.getLocalPort();
+        return connectionId.getLocalPort();
     }
 
     @Override
     public int getDefaultPort() {
-        return connection.getDefaultPort();
+        throw new RuntimeException("reworking things");
     }
 
     @Override
     public byte[] getRawLocalIpAddress() {
-        return connection.getRawLocalIpAddress();
+        return connectionId.getRawLocalIpAddress();
     }
 
     @Override
     public String getLocalIpAddress() {
-        return connection.getLocalIpAddress();
+        return connectionId.getLocalIpAddress();
     }
 
     @Override
     public InetSocketAddress getLocalAddress() {
-        return connection.getLocalAddress();
+        return connectionId.getLocalAddress();
     }
 
     @Override
     public Buffer getLocalIpAddressAsBuffer() {
-        return connection.getLocalIpAddressAsBuffer();
+        throw new RuntimeException("reworking things");
     }
 
     @Override
     public InetSocketAddress getRemoteAddress() {
-        return connection.getRemoteAddress();
+        return connectionId.getRemoteAddress();
     }
 
     @Override
     public int getRemotePort() {
-        return connection.getRemotePort();
+        return connectionId.getRemotePort();
     }
 
     @Override
     public byte[] getRawRemoteIpAddress() {
-        return connection.getRawRemoteIpAddress();
+        return connectionId.getRawRemoteIpAddress();
     }
 
     @Override
     public String getRemoteIpAddress() {
-        return connection.getRemoteIpAddress();
+        return connectionId.getRemoteIpAddress();
     }
 
     @Override
     public Buffer getRemoteIpAddressAsBuffer() {
-        return connection.getRemoteIpAddressAsBuffer();
+        throw new RuntimeException("reworking things");
     }
 
     @Override
     public Transport getTransport() {
-        return connection.getTransport();
+        return connectionId.getProtocol();
     }
 
     @Override
@@ -106,7 +106,7 @@ public class BufferingConnection<T> implements Connection<T> {
 
     @Override
     public boolean connect() {
-        return connection.connect();
+        return true;
     }
 
     @Override

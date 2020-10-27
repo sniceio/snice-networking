@@ -24,6 +24,10 @@ public interface ConnectionId {
 
     String getLocalIpAddress();
 
+    default Buffer getLocalIpAddressAsBuffer() {
+        return Buffers.wrap(getLocalIpAddress());
+    }
+
     InetSocketAddress getLocalAddress();
 
     int getRemotePort();
@@ -31,6 +35,10 @@ public interface ConnectionId {
     byte[] getRawRemoteIpAddress();
 
     String getRemoteIpAddress();
+
+    default Buffer getRemoteIpAddressAsBuffer() {
+        return Buffers.wrap(getRemoteIpAddress());
+    }
 
     InetSocketAddress getRemoteAddress();
 
@@ -382,6 +390,7 @@ public interface ConnectionId {
         public String getLocalIpAddress() {
             return convertToStringIP(this.localIp);
         }
+
 
         @Override
         public InetSocketAddress getLocalAddress() {

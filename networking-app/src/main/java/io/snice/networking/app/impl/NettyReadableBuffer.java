@@ -160,6 +160,11 @@ public class NettyReadableBuffer implements ReadableBuffer {
         return Buffer.of(sliceToSize());
     }
 
+    @Override
+    public byte[] getContent() {
+        throw new RuntimeException("not yet implemented");
+    }
+
     private byte[] sliceToSize() {
         final int size = buffer.readableBytes();
         buffer.markReaderIndex();
@@ -274,6 +279,11 @@ public class NettyReadableBuffer implements ReadableBuffer {
         final byte b = buffer.getByte(index + 1);
         final byte c = buffer.getByte(index + 2);
         return Buffer.signedInt(a, b, c);
+    }
+
+    @Override
+    public long getLongFromFiveOctets(final int index) throws IndexOutOfBoundsException {
+        throw new RuntimeException("Not implemented");
     }
 
     @Override

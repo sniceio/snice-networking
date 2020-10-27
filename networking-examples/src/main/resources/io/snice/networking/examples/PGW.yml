@@ -1,5 +1,0 @@
-
-networkInterfaces:
-  - name: default
-    listen: ws://127.0.0.1:2123
-    transport: udp

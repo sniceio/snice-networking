@@ -1,6 +1,5 @@
 package io.snice.networking.app;
 
-import io.snice.codecs.codec.SerializationFactory;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 

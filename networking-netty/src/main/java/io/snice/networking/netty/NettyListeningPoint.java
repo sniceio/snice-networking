@@ -10,7 +10,6 @@ import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionEndpointId;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
-import io.snice.networking.common.event.ConnectionActiveIOEvent;
 import io.snice.networking.core.ListeningPoint;
 import io.snice.networking.core.event.ConnectionAttempt;
 import io.snice.time.Clock;
@@ -152,21 +151,21 @@ public abstract class NettyListeningPoint<T> implements ListeningPoint<T> {
 
         @Override
         public CompletableFuture<Connection<T>> connect(final InetSocketAddress remoteAddress) {
+            final var f = new CompletableFuture();
+
             // Since we don't actually connect when using UDP we will be firing off
-            // a user event stating that a new connection just became active.
-            // Note: since we don't know when the connection goes away, this can
-            // only be one part of the overall solution. For the full stack, this
-            // is being handled by the transport layer...
+            // a success event right away and then we have to rely on the NettyUdpInboundAdapter
+            // to do the right thing. It will also have to complete the future we created
+            // above.
             final Channel channel = udpChannel.get();
-            final ChannelHandlerContext ctx = channel.pipeline().lastContext();
-            final Connection connection = new UdpConnection(channel, remoteAddress, getVipAddress());
+            final ChannelHandlerContext ctx = channel.pipeline().firstContext();
+            final Connection<T> c = new UdpConnection(channel, remoteAddress, getVipAddress());
             final Long arrivalTime = clock.getCurrentTimeMillis();
 
-            // TODO: not sure how to get this working nicely since we will also
-            // need to insert the user pipeline stuff, which we haven't really
-            // thought of for the outbound case just yet.
-            ctx.fireUserEventTriggered(ConnectionActiveIOEvent.create(null, false, arrivalTime));
-            return CompletableFuture.completedFuture(connection);
+            final var evt = ConnectionAttempt.success(f, c, arrivalTime);
+            ctx.pipeline().firstContext().fireUserEventTriggered(evt);
+
+            return f;
         }
     }
 
