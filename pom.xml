@@ -64,6 +64,7 @@
         <module>networking-netty</module>
         <module>networking-app</module>
         <module>diameter-stack</module>
+        <module>gtp-stack</module>
         <module>networking-examples</module>
     </modules>
 
