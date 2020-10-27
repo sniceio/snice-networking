@@ -60,7 +60,11 @@
         <dependency>
             <groupId>io.snice.networking</groupId>
             <artifactId>diameter-stack</artifactId>
-            <type>jar</type>
+        </dependency>
+
+        <dependency>
+            <groupId>io.snice.networking</groupId>
+            <artifactId>gtp-stack</artifactId>
         </dependency>
 
         <!-- For reading yaml files, which we'll use to load configuration

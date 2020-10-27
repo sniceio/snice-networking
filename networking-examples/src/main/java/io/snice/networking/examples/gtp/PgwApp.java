@@ -1,10 +1,9 @@
 package io.snice.networking.examples.gtp;
 
-import io.netty.util.NetUtil;
 import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.common.Connection;
-import io.snice.networking.examples.diameter.HssApp;
 import io.snice.networking.gtp.GtpApplication;
+import io.snice.networking.gtp.GtpEnvironment;
 import io.snice.networking.gtp.event.GtpEvent;
 
 public class PgwApp extends GtpApplication<GtpConfig> {
@@ -14,6 +13,10 @@ public class PgwApp extends GtpApplication<GtpConfig> {
         bootstrap.onConnection(c -> true).accept(b -> {
             b.match(evt -> true).consume((c, gtp) -> c.close());
         });
+    }
+
+    @Override
+    public void run(final GtpConfig configuration, final GtpEnvironment<GtpConfig> environment) {
     }
 
     public static void main(final String... args) throws Exception {

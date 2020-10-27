@@ -6,9 +6,12 @@ import io.snice.networking.app.Environment;
 import io.snice.networking.app.NetworkStack;
 import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
+import io.snice.networking.common.Transport;
 import io.snice.networking.common.fsm.FsmFactory;
 import io.snice.networking.common.fsm.NetworkContext;
 import io.snice.networking.gtp.event.GtpEvent;
+import io.snice.networking.gtp.handler.GtpMessageDatagramDecoder;
+import io.snice.networking.gtp.handler.GtpMessageDatagramEncoder;
 import io.snice.networking.gtp.impl.DefaultGtpEnvironment;
 import io.snice.networking.netty.ProtocolHandler;
 import org.slf4j.Logger;
@@ -31,8 +34,17 @@ public class GtpBundle<C extends GtpAppConfig> implements ProtocolBundle<Connect
     private C configuration;
 
     public GtpBundle() {
-        encoders = List.of();
-        decoders = List.of();
+        final var udpEncoder = ProtocolHandler.of("gtp-codec-encoder")
+                .withChannelHandler(() -> new GtpMessageDatagramEncoder())
+                .withTransport(Transport.udp)
+                .build();
+        encoders = List.of(udpEncoder);
+
+        final var udpDecoder = ProtocolHandler.of("gtp-codec-decoder")
+                .withChannelHandler(() -> new GtpMessageDatagramDecoder())
+                .withTransport(Transport.udp)
+                .build();
+        decoders = List.of(udpDecoder);
     }
 
     @Override
