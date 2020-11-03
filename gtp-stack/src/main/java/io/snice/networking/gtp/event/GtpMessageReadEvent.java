@@ -6,7 +6,7 @@ import io.snice.networking.gtp.event.impl.DefaultGtpMessageEvent;
 
 public interface GtpMessageReadEvent extends GtpMessageEvent {
 
-    static GtpMessageReadEvent of(final GtpMessage msg, final Connection<GtpMessage> connection) {
+    static GtpMessageReadEvent of(final GtpMessage msg, final Connection<GtpEvent> connection) {
         return DefaultGtpMessageEvent.newReadEvent(msg, connection);
     }
 

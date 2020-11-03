@@ -15,7 +15,7 @@ public interface GtpMessageEvent extends GtpEvent {
         return this;
     }
 
-    Connection<GtpMessage> getConnection();
+    Connection<GtpEvent> getConnection();
 
     GtpMessage getMessage();
 }

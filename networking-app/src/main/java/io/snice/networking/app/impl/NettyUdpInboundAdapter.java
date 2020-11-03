@@ -8,23 +8,19 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.socket.DatagramPacket;
 import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
-import io.snice.codecs.codec.SerializationFactory;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
 import io.snice.networking.common.event.ConnectionIOEvent;
+import io.snice.networking.common.event.MessageIOEvent;
 import io.snice.networking.netty.UdpConnection;
 import io.snice.time.Clock;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.BiFunction;
 
 /**
@@ -39,7 +35,6 @@ import java.util.function.BiFunction;
  * channel will have it's own handler because it stores states that is unique
  * to only that channel and as such, it cannot be shared...
  */
-// public class NettyUdpInboundAdapter<T> implements ChannelInboundHandler {
 public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
 
     private final Clock clock;
@@ -98,34 +93,23 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
 
     @Override
     public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
+        final var udp = (UdpReadEvent<T>) msg;
+        final var remote = udp.getRaw().sender();
+        final var id = ConnectionId.create(Transport.udp, udp.getRaw().recipient(), remote);
+        final var connCtx = findContext(id);
+        if (connCtx.isDrop()) {
+            ctx.close();
+            return;
+        }
+
         try {
-            final var pkt = (DatagramPacket) msg;
-            final var remote = pkt.sender();
-            final var id = ConnectionId.create(Transport.udp, remote, remote);
-            final var connCtx = findContext(id);
-            if (connCtx.isDrop()) {
-                ctx.close();
-                return;
-            }
-
-            final var adapter = ensureConnection(ctx.channel(), id, connCtx);
-            final var data = toBuffer(pkt);
-            // TODO: have changed how things work so have to re-work this.
-            // We will now always expect that there is a encoder/decoder
-            // netty style in the pipeline and won't be asking the
-            // context like so:
-            /*
-            adapter.frame(data.toReadableBuffer()).ifPresent(p -> {
-                System.err.println("So got something back on the same channel " + p);
-                adapter.process(p);
-            });
-             */
-
-
+            final var connection = new UdpConnection<T>(ctx.channel(), remote, vipAddress);
+            final var channelContext = new DefaultChannelContext<T>(connection, connCtx);
+            final var evt = MessageIOEvent.create(channelContext, clock.getCurrentTimeMillis(), udp.getMessage());
+            ctx.fireChannelRead(evt);
         } catch (final ClassCastException e) {
+            // TODO: this means that the underlying decoder isn't doing it's job...
             e.printStackTrace();
-            // WTF? This is for UDP!!! TODO: log warn, this should not happen...
-            ctx.fireChannelRead(msg);
         }
     }
 
@@ -146,7 +130,6 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
 
     @Override
     public void channelReadComplete(final ChannelHandlerContext ctx) throws Exception {
-        log("Read complete");
         ctx.flush();
         ctx.fireChannelReadComplete();
     }
@@ -170,19 +153,11 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) throws Exception {
         log("Exception");
         cause.printStackTrace();
-
     }
 
     @Override
     public void channelRegistered(final ChannelHandlerContext ctx) throws Exception {
-        System.out.println("Channel Registered");
-        // TODO: create new Flow if the connection actually has a remote
-        // TODO: address, if not then it is a listening socket and we
-        // TODO: don't care about those (or a un-connected UDP)
-        // System.err.println("UDP Decoder: Channel registered: " + ctx.channel());
-        // if (ctx.channel().localAddress() != null) {
-            // ctx.fireUserEventTriggered(create(ctx, ConnectionOpenedIOEvent::create));
-        // }
+        log("Channel Registered");
     }
 
     private ConnectionIOEvent create(final ChannelHandlerContext ctx, final BiFunction<Connection, Long, ConnectionIOEvent> f) {

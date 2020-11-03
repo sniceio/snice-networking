@@ -28,6 +28,6 @@ public class DefaultGtpEnvironment<C extends GtpAppConfig> implements GtpEnviron
 
     @Override
     public CompletionStage<Connection<GtpEvent>> connect(final Transport transport, final InetSocketAddress remoteAddress) throws IllegalTransportException {
-        throw new RuntimeException("Not implemented just yet");
+        return stack.connect(transport, remoteAddress);
     }
 }

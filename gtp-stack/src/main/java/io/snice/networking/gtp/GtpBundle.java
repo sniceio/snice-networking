@@ -14,6 +14,8 @@ import io.snice.networking.gtp.handler.GtpMessageDatagramDecoder;
 import io.snice.networking.gtp.handler.GtpMessageDatagramEncoder;
 import io.snice.networking.gtp.impl.DefaultGtpEnvironment;
 import io.snice.networking.netty.ProtocolHandler;
+import io.snice.time.Clock;
+import io.snice.time.SystemClock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +33,8 @@ public class GtpBundle<C extends GtpAppConfig> implements ProtocolBundle<Connect
     private final List<ProtocolHandler> encoders;
     private final List<ProtocolHandler> decoders;
 
+    private final Clock clock = new SystemClock();
+
     private C configuration;
 
     public GtpBundle() {
@@ -41,9 +45,10 @@ public class GtpBundle<C extends GtpAppConfig> implements ProtocolBundle<Connect
         encoders = List.of(udpEncoder);
 
         final var udpDecoder = ProtocolHandler.of("gtp-codec-decoder")
-                .withChannelHandler(() -> new GtpMessageDatagramDecoder())
+                .withChannelHandler(() -> new GtpMessageDatagramDecoder(clock))
                 .withTransport(Transport.udp)
                 .build();
+
         decoders = List.of(udpDecoder);
     }
 

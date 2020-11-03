@@ -7,6 +7,7 @@ import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
+import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
 import io.snice.networking.common.event.IOEvent;
 import io.snice.networking.common.event.MessageIOEvent;
@@ -29,12 +30,12 @@ public class NettyApplicationLayer<K extends Connection<T>, T, C extends Network
         final var msg = event.getMessage();
         final var channelContext = (DefaultChannelContext<T>) event.channelContext();
 
-        invokeApplication(msg, ctx, channelContext.getConnectionContext());
+        invokeApplication(msg, channelContext.getConnectionId(), ctx, channelContext.getConnectionContext());
     }
 
-    private void invokeApplication(final T msg, final ChannelHandlerContext ctx, final ConnectionContext<Connection<T>, T> appRules) {
+    private void invokeApplication(final T msg, final ConnectionId id, final ChannelHandlerContext ctx, final ConnectionContext<Connection<T>, T> appRules) {
         // TODO: this needs to take place in a different thread pool!
-        final var bufferingConnection = new BufferingConnection<T>(null);
+        final var bufferingConnection = new BufferingConnection<T>(id);
         final var appConnection = bundle.wrapConnection(bufferingConnection);
         appRules.match(appConnection, msg).apply(appConnection, msg);
         bufferingConnection.processMessage(ctx);
