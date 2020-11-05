@@ -1,0 +1,5 @@
+
+networkInterfaces:
+  - name: gtpc
+    listen: ws://192.168.160.106:2152
+    transport: udp
