@@ -8,4 +8,5 @@ public interface GtpEnvironment<C extends GtpAppConfig> extends Environment<Conn
 
     @Override
     C getConfig();
+
 }

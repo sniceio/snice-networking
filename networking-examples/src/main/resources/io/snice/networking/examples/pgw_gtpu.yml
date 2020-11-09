@@ -1,4 +1,4 @@
 networkInterfaces:
   - name: gtpu
-    listen: ws://192.168.160.90:2152
+    listen: ws://0.0.0.0:2152
     transport: udp
