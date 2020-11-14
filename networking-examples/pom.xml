@@ -54,6 +54,11 @@
 
         <dependency>
             <groupId>io.snice.codecs</groupId>
+            <artifactId>codec-transport-layer</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.snice.codecs</groupId>
             <artifactId>codec-diameter</artifactId>
         </dependency>
 

@@ -1,5 +1,5 @@
 
 networkInterfaces:
   - name: gtpc
-    listen: ws://0.0.0.0:2152
+    listen: ws://0.0.0.0:2123
     transport: udp

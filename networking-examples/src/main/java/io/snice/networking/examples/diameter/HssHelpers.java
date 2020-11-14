@@ -1,8 +1,8 @@
 package io.snice.networking.examples.diameter;
 
 import io.snice.buffer.WritableBuffer;
+import io.snice.codecs.codec.MccMnc;
 import io.snice.codecs.codec.diameter.DiameterRequest;
-import io.snice.codecs.codec.diameter.MccMnc;
 import io.snice.codecs.codec.diameter.avp.api.AuthSessionState;
 import io.snice.codecs.codec.diameter.avp.api.RatType;
 import io.snice.codecs.codec.diameter.avp.api.UlrFlags;

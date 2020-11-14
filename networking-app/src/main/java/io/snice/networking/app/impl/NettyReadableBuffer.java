@@ -277,6 +277,11 @@ public class NettyReadableBuffer implements ReadableBuffer {
     }
 
     @Override
+    public long getLongFromFiveOctets(final int index) throws IndexOutOfBoundsException {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
     public long getUnsignedInt(final int index) throws IndexOutOfBoundsException {
         return buffer.getUnsignedInt(index);
     }

@@ -140,6 +140,14 @@
 
             <dependency>
                 <groupId>io.snice.codecs</groupId>
+                <artifactId>codec-transport-layer</artifactId>
+                <version>${snice-codecs.version}</version>
+                <type>jar</type>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.snice.codecs</groupId>
                 <artifactId>codec-diameter</artifactId>
                 <version>${snice-codecs.version}</version>
                 <type>jar</type>
