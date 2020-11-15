@@ -1,20 +1,13 @@
 package io.snice.networking.app;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import io.snice.generics.Generics;
 import io.snice.networking.app.impl.GenericBootstrap;
 import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
-import io.snice.networking.config.NetworkInterfaceConfiguration;
-import io.snice.networking.config.NetworkInterfaceDeserializer;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.List;
 
+import static io.snice.networking.app.ConfigUtils.getConfigurationClass;
+import static io.snice.networking.app.ConfigUtils.loadConfiguration;
 import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
 
@@ -83,31 +76,14 @@ public abstract class NetworkApplication<E extends Environment<K, T, C>, K exten
         // TODO: actually call a bootstrap method here that allows the app
         // to register the AppBundle (rename it to NetworkStackBundle or something)
 
-        final C config = loadConfiguration(args[1]);
+        final Class<C> cls = getConfigurationClass(getClass());
+        final C config = loadConfiguration(cls, bundle, args[1]);
         run(config, args);
     }
 
     public final void stop() {
         network.stop();
         // return network.sync();
-    }
-
-    protected Class<C> getConfigurationClass() {
-        return Generics.getTypeParameter(getClass(), NetworkAppConfig.class);
-    }
-
-    public C loadConfiguration(final String file) throws Exception {
-        final InputStream stream = new FileInputStream(file);
-        final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-
-        // must register the deserializer for the network interface configuration.
-        final SimpleModule module = new SimpleModule();
-        module.addDeserializer(NetworkInterfaceConfiguration.class, new NetworkInterfaceDeserializer());
-        mapper.registerModule(module);
-        mapper.registerModule(new Jdk8Module());
-
-        bundle.getObjectMapModule().ifPresent(mapper::registerModule);
-        return mapper.readValue(stream, getConfigurationClass());
     }
 
 }

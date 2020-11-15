@@ -27,9 +27,15 @@ import java.util.concurrent.atomic.AtomicReference;
 public class PgwGtpC extends GtpApplication<GtpConfig> {
 
     private final ConcurrentMap<Buffer, Gtp2Request> outstandingRequests = new ConcurrentHashMap<>();
-    private final ConcurrentMap<Teid, PdnSession> pdnSessions = new ConcurrentHashMap<>();
 
     private final AtomicReference<Connection<GtpEvent>> tunnel = new AtomicReference<>();
+
+    private final AtomicReference<TunnelManagement> tunnelManagement = new AtomicReference<>();
+
+
+    public void setTunnelManagement(final TunnelManagement dumb) {
+        tunnelManagement.set(dumb);
+    }
 
     @Override
     public void initialize(final NetworkBootstrap<Connection<GtpEvent>, GtpEvent, GtpConfig> bootstrap) {
@@ -57,17 +63,13 @@ public class PgwGtpC extends GtpApplication<GtpConfig> {
             return;
         }
 
-        System.err.println("yay, matched it to CSR: " + csr);
         final var session = PdnSession.of(csr, response);
-        final var previous = pdnSessions.putIfAbsent(session.getLocalTeid(), session);
-        if (previous != null) {
-            System.err.println("Ahhhhhh, clash of TEIDs");
-        }
+        tunnelManagement.get().onPdnSessionAccepted(session);
 
         new Thread(() -> {
             try {
                 System.err.println("Starting a new thread to send the Delete Session Request in");
-                Thread.sleep(2000);
+                Thread.sleep(10000);
             } catch (final Throwable t) {
             }
             final var c = tunnel.get();
@@ -158,7 +160,7 @@ public class PgwGtpC extends GtpApplication<GtpConfig> {
     @Override
     public void run(final GtpConfig configuration, final GtpEnvironment<GtpConfig> environment) {
 
-        environment.connect(Transport.udp, "3.88.129.158", 2123).thenAccept(c -> {
+        environment.connect(Transport.udp, "34.226.194.235", 2123).thenAccept(c -> {
             // TODO: any good way of dynamically finding out the NAT:ed address?
             tunnel.set(c);
             final var csr = createCsr("107.20.226.156");

@@ -6,8 +6,9 @@ import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2MessageType;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Response;
 import io.snice.codecs.codec.gtp.gtpc.v2.tliv.BearerContext;
-import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Ebi;
 import io.snice.codecs.codec.gtp.gtpc.v2.tliv.FTeid;
+import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Paa;
+import io.snice.networking.gtp.Bearer;
 import io.snice.networking.gtp.PdnSession;
 
 import java.util.Optional;
@@ -25,7 +26,9 @@ public class DefaultPdnSession implements PdnSession {
 
     private final FTeid remoteFTeid;
 
-    private final BearerContext bearerContext;
+    private final Paa paa;
+    private final Bearer defaultLocalBearer;
+    private final Bearer defaultRemoteBearer;
 
     public static PdnSession of(final Gtp2Request request, final Gtp2Response response) {
         assertArgument(request.isCreateSessionRequest(), "The request must be a Create Session Request");
@@ -35,17 +38,35 @@ public class DefaultPdnSession implements PdnSession {
 
         // TODO: check cause. For now, assume happy case...
 
+        final var paa = response.getInformationElement(Paa.TYPE, 0);
+        assertArgument(paa.isPresent(), "No PAA in the Create Session Request");
+
         // our local TEID will be in the header
         final var localTeid = response.getHeader().toGtp2Header().getTeid().get();
+        final var localBearerContext = getBearerContext(request, 0);
+        assertArgument(localBearerContext.isPresent(), "No Bearer Context in the Create Session Request");
 
         // the remote TEID will be in the FTEID
-        final var bearerContext = getBearerContext(response, 0);
+        final var remoteBearerContext = getBearerContext(response, 0);
         final var fteidGtpc = getFTeid(response, 1);
 
-        assertArgument(bearerContext.isPresent(), "No Bearer Context in the Create Session Response");
+        assertArgument(remoteBearerContext.isPresent(), "No Bearer Context in the Create Session Response");
         assertArgument(fteidGtpc.isPresent(), "No GTP-C FTEID found in the Create Session Response");
 
-        return new DefaultPdnSession(request, response, localTeid, fteidGtpc.get(), bearerContext.get());
+        final var defaultLocalBearer = Bearer.of(localBearerContext.get());
+        final var defaultRemoteBearer = Bearer.of(remoteBearerContext.get());
+
+        return new DefaultPdnSession(request, response, localTeid, fteidGtpc.get(), (Paa)paa.get().ensure(), defaultLocalBearer, defaultRemoteBearer);
+    }
+
+    @Override
+    public Bearer getDefaultLocalBearer() {
+        return defaultLocalBearer;
+    }
+
+    @Override
+    public Bearer getDefaultRemoteBearer() {
+        return defaultRemoteBearer;
     }
 
     @Override
@@ -54,18 +75,25 @@ public class DefaultPdnSession implements PdnSession {
     }
 
     private DefaultPdnSession(final Gtp2Request request, final Gtp2Response response,
-                              final Teid localTeid, final FTeid remoteFTeid, final BearerContext bearerContext) {
+                              final Teid localTeid, final FTeid remoteFTeid,
+                              final Paa paa, final Bearer localBearer, final Bearer remoteBearer) {
         this.request = request;
         this.response = response;
         this.localTeid = localTeid;
         this.remoteTeid = remoteFTeid.getValue().getTeid();
         this.remoteFTeid = remoteFTeid;
-        this.bearerContext = bearerContext;
+        this.paa = paa;
+        this.defaultLocalBearer = localBearer;
+        this.defaultRemoteBearer = remoteBearer;
     }
 
     @Override
     public Gtp2Request getCreateSessionRequest() {
         return request;
+    }
+
+    public Paa getPaa() {
+        return paa;
     }
 
     @Override
@@ -75,7 +103,7 @@ public class DefaultPdnSession implements PdnSession {
 
     @Override
     public Gtp2Request createDeleteSessionRequest() {
-        final var ebiMaybe = bearerContext.getValue().getInformationElement(Ebi.TYPE, 0);
+        final var ebiMaybe = defaultRemoteBearer.getEbi();
 
         final var builder = Gtp2Message.create(Gtp2MessageType.DELETE_SESSION_REQUEST).withTeid(remoteTeid);
         ebiMaybe.ifPresent(builder::withTliv);

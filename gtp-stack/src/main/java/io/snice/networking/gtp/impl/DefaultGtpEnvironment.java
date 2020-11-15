@@ -28,6 +28,7 @@ public class DefaultGtpEnvironment<C extends GtpAppConfig> implements GtpEnviron
 
     @Override
     public CompletionStage<Connection<GtpEvent>> connect(final Transport transport, final InetSocketAddress remoteAddress) throws IllegalTransportException {
+        // TODO: turn this into a tunnel instead...
         return stack.connect(transport, remoteAddress);
     }
 }

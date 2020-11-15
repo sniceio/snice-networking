@@ -1,0 +1,20 @@
+networkInterfaces:
+  # the name of the nic will be used by the GTP config options
+  - name: gtpc
+    listen: ws://0.0.0.0:2123
+    transport: udp
+
+  - name: gtpu
+    listen: ws://0.0.0.0:2152
+    transport: udp
+
+gtp:
+  userPlane:
+    enable: true
+    # The name of hte network interface to use for GTP-U.
+    # If the name doesn't match, the stack will error out.
+    nic: gtpu
+
+  controlPlane:
+    enable: true
+    nic: gtpc
