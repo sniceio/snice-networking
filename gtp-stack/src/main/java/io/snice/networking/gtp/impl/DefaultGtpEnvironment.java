@@ -4,8 +4,8 @@ import io.snice.networking.app.NetworkStack;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
-import io.snice.networking.gtp.GtpAppConfig;
 import io.snice.networking.gtp.GtpEnvironment;
+import io.snice.networking.gtp.conf.GtpAppConfig;
 import io.snice.networking.gtp.event.GtpEvent;
 
 import java.net.InetSocketAddress;

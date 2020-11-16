@@ -6,7 +6,7 @@ import io.snice.networking.common.Connection;
 import io.snice.networking.gtp.event.GtpEvent;
 import io.snice.networking.gtp.impl.DefaultGtpUserTunnel;
 
-public interface GtpUserTunnel {
+public interface GtpUserTunnel extends GtpTunnel {
 
     static GtpUserTunnel of(final Connection<GtpEvent> connection, final Paa paa, final Bearer localBearer, final Bearer remoteBearer) {
         return DefaultGtpUserTunnel.of(connection, paa, localBearer, remoteBearer);

@@ -1,4 +1,4 @@
-package io.snice.networking.gtp;
+package io.snice.networking.gtp.conf;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.snice.networking.app.NetworkAppConfig;

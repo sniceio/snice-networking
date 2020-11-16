@@ -9,6 +9,7 @@ import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
 import io.snice.networking.common.fsm.FsmFactory;
 import io.snice.networking.common.fsm.NetworkContext;
+import io.snice.networking.gtp.conf.GtpAppConfig;
 import io.snice.networking.gtp.event.GtpEvent;
 import io.snice.networking.gtp.handler.GtpMessageDatagramDecoder;
 import io.snice.networking.gtp.handler.GtpMessageDatagramEncoder;

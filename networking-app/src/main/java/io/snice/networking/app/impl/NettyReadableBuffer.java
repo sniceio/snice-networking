@@ -160,6 +160,11 @@ public class NettyReadableBuffer implements ReadableBuffer {
         return Buffer.of(sliceToSize());
     }
 
+    @Override
+    public byte[] getContent() {
+        throw new RuntimeException("not yet implemented");
+    }
+
     private byte[] sliceToSize() {
         final int size = buffer.readableBytes();
         buffer.markReaderIndex();

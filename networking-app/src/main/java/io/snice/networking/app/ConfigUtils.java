@@ -27,6 +27,11 @@ public class ConfigUtils {
     }
 
     public static <C extends NetworkAppConfig> C loadConfiguration(final Class<C> cls,
+                                                                   final byte[] content) throws Exception {
+        return loadConfiguration(cls, null, content);
+    }
+
+    public static <C extends NetworkAppConfig> C loadConfiguration(final Class<C> cls,
                                                                    final ProtocolBundle<?, ?, C> bundle,
                                                                    final byte[] content) throws Exception {
         final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
