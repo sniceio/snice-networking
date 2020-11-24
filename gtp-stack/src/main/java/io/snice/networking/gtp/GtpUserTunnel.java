@@ -8,10 +8,13 @@ import io.snice.networking.gtp.impl.DefaultGtpUserTunnel;
 
 public interface GtpUserTunnel extends GtpTunnel {
 
-    static GtpUserTunnel of(final Connection<GtpEvent> connection, final Paa paa, final Bearer localBearer, final Bearer remoteBearer) {
-        return DefaultGtpUserTunnel.of(connection, paa, localBearer, remoteBearer);
+    static GtpUserTunnel of(final Connection<GtpEvent> actualConnection) {
+        return DefaultGtpUserTunnel.of(actualConnection);
     }
 
+    static GtpUserTunnel of(final Connection<GtpEvent> connection, final Paa paa, final Bearer localBearer, final Bearer remoteBearer) {
+        throw new RuntimeException("Don't use this one anymore...");
+    }
 
     /**
      * Send the given message across this tunnel.

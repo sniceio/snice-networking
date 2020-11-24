@@ -64,7 +64,7 @@ public class NettyApplicationLayer<K extends Connection<T>, T, C extends Network
                 invokeApplicationForEvent(appEvent.getApplicationEvent(), ctx, channelContext.getConnectionContext());
 
             } else if (ioEvent.isConnectionActiveIOEvent()) {
-                logger.info("ConnectionActiveIOEvent - turn into a Peer connection here?");
+                // Not sure we need to do anything here... so for now, not doing anything...
             } else {
                 // TODO: log warn with an AlertCode etc...
                 logger.warn("Unhandled IOEvent " + ioEvent);

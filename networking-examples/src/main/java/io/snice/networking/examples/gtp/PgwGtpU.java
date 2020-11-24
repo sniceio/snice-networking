@@ -1,12 +1,8 @@
 package io.snice.networking.examples.gtp;
 
 import io.snice.networking.app.NetworkBootstrap;
-import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
-import io.snice.networking.gtp.GtpApplication;
-import io.snice.networking.gtp.GtpEnvironment;
-import io.snice.networking.gtp.GtpUserTunnel;
-import io.snice.networking.gtp.PdnSession;
+import io.snice.networking.gtp.*;
 import io.snice.networking.gtp.event.GtpEvent;
 
 import java.util.Optional;
@@ -17,11 +13,12 @@ public class PgwGtpU extends GtpApplication<GtpConfig> {
 
     private final AtomicReference<GtpEnvironment<GtpConfig>> environment = new AtomicReference<>();
 
+
     @Override
-    public void initialize(final NetworkBootstrap<Connection<GtpEvent>, GtpEvent, GtpConfig> bootstrap) {
-        bootstrap.onConnection(c -> true).accept(b -> {
-            b.match(evt -> true).consume((c, gtp) -> {
-                System.err.println("Received something else: " + gtp.toMessageEvent().getMessage());
+    public void initialize(NetworkBootstrap<GtpTunnel, GtpEvent, GtpConfig> bootstrap) {
+        bootstrap.onConnection(c -> true).accept(c -> {
+            c.match(evt -> true).consume((tunnel, event) -> {
+                System.err.println("Received something else: " + event.toMessageEvent().getMessage());
             });
         });
     }
@@ -41,4 +38,5 @@ public class PgwGtpU extends GtpApplication<GtpConfig> {
         environment.connect(Transport.udp, "3.89.210.241", 2154).thenAccept(c -> {
         });
     }
+
 }

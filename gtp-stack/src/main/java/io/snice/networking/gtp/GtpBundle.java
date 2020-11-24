@@ -1,19 +1,21 @@
 package io.snice.networking.gtp;
 
 import com.fasterxml.jackson.databind.Module;
-import io.hektor.fsm.Data;
 import io.snice.networking.app.Environment;
 import io.snice.networking.app.NetworkStack;
 import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
 import io.snice.networking.common.fsm.FsmFactory;
-import io.snice.networking.common.fsm.NetworkContext;
 import io.snice.networking.gtp.conf.GtpAppConfig;
 import io.snice.networking.gtp.event.GtpEvent;
+import io.snice.networking.gtp.fsm.GtpTunnelData;
+import io.snice.networking.gtp.fsm.GtpTunnelState;
+import io.snice.networking.gtp.fsm.GtpTunnelContext;
 import io.snice.networking.gtp.handler.GtpMessageDatagramDecoder;
 import io.snice.networking.gtp.handler.GtpMessageDatagramEncoder;
 import io.snice.networking.gtp.impl.DefaultGtpEnvironment;
+import io.snice.networking.gtp.impl.GtpStack;
 import io.snice.networking.netty.ProtocolHandler;
 import io.snice.time.Clock;
 import io.snice.time.SystemClock;
@@ -38,6 +40,8 @@ public class GtpBundle<C extends GtpAppConfig> implements ProtocolBundle<Connect
 
     private C configuration;
 
+    private GtpStack gtpStack;
+
     public GtpBundle() {
         final var udpEncoder = ProtocolHandler.of("gtp-codec-encoder")
                 .withChannelHandler(() -> new GtpMessageDatagramEncoder())
@@ -58,6 +62,7 @@ public class GtpBundle<C extends GtpAppConfig> implements ProtocolBundle<Connect
         logger.info("Initializing GTP Stack");
         ensureNotNull(config, "The configuration object for the \"" + getBundleName() + "\" cannot be null");
         this.configuration = config;
+        gtpStack = new GtpStack(config, clock);
     }
 
     @Override
@@ -103,11 +108,12 @@ public class GtpBundle<C extends GtpAppConfig> implements ProtocolBundle<Connect
 
     @Override
     public Connection<GtpEvent> wrapConnection(final Connection<GtpEvent> connection) {
-        return connection;
+        return GtpControlTunnel.of(connection);
     }
 
     @Override
-    public <S extends Enum<S>, C1 extends NetworkContext<GtpEvent>, D extends Data> Optional<FsmFactory<GtpEvent, S, C1, D>> getFsmFactory() {
-        return Optional.empty();
+    public Optional<FsmFactory<GtpEvent, GtpTunnelState, GtpTunnelContext, GtpTunnelData>> getFsmFactory() {
+        System.err.println("Returning FSM Factory");
+        return Optional.of(gtpStack);
     }
 }

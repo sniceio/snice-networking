@@ -4,6 +4,7 @@ import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.DiameterRequest;
 import io.snice.codecs.codec.diameter.avp.api.OriginHost;
 import io.snice.functional.Either;
+import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.diameter.DiameterEnvironment;
 import io.snice.networking.diameter.PeerConnection;
 import io.snice.networking.diameter.tx.Transaction;
@@ -77,7 +78,8 @@ public interface Peer {
     * not add any new AVPs to the message but rather send it as is.
     * <p>
     * The {@link Transaction} created will be a default {@link Transaction} where all responses are still
-    * delivered via
+    * delivered via the bootstrap rules that were setup during the bootstrap of the application. See
+    * {@link io.snice.networking.app.NetworkApplication#initialize(NetworkBootstrap)}
     * <p>
     * If the {@link Peer} has not been asked to establish a connection to the remote party, either by setting the mode to
     * {@link MODE#ACTIVE} before adding it to the {@link DiameterEnvironment#addPeer(PeerConfiguration)} or by

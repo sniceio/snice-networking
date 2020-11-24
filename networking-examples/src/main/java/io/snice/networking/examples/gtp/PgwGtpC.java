@@ -16,7 +16,7 @@ import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
 import io.snice.networking.gtp.GtpApplication;
 import io.snice.networking.gtp.GtpEnvironment;
-import io.snice.networking.gtp.PdnSession;
+import io.snice.networking.gtp.GtpTunnel;
 import io.snice.networking.gtp.event.GtpEvent;
 import io.snice.networking.gtp.event.GtpMessageWriteEvent;
 
@@ -38,8 +38,7 @@ public class PgwGtpC extends GtpApplication<GtpConfig> {
     }
 
     @Override
-    public void initialize(final NetworkBootstrap<Connection<GtpEvent>, GtpEvent, GtpConfig> bootstrap) {
-
+    public void initialize(final NetworkBootstrap<GtpTunnel, GtpEvent, GtpConfig> bootstrap) {
         bootstrap.onConnection(c -> true).accept(b -> {
             b.match(GtpEvent::isCreateSessionRequest).map(GtpEvent::toGtp2Message).consume(PgwGtpC::processCreateSessionRequest);
             b.match(GtpEvent::isCreateSessionResponse).map(GtpEvent::toGtp2Message).consume(this::processCreateSessionResponse);
@@ -63,6 +62,7 @@ public class PgwGtpC extends GtpApplication<GtpConfig> {
             return;
         }
 
+        /*
         final var session = PdnSession.of(csr, response);
         tunnelManagement.get().onPdnSessionAccepted(session);
 
@@ -80,6 +80,7 @@ public class PgwGtpC extends GtpApplication<GtpConfig> {
             System.err.println("Send the DSR: " + dsr);
 
         }).start();
+         */
     }
 
     private static void processEchoRequest(final Connection<GtpEvent> connection, final Gtp2Message message) {
@@ -169,6 +170,7 @@ public class PgwGtpC extends GtpApplication<GtpConfig> {
             c.send(evt);
         });
     }
+
 
     public static void main(final String... args) throws Exception {
         final var pgw = new PgwGtpC();

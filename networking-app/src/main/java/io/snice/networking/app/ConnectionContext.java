@@ -74,5 +74,6 @@ public interface ConnectionContext<C extends Connection<T>, T> extends Predicate
         <NEW_R> MessageProcessingBuilder<C, T, NEW_R> map(Function<? super R, ? extends NEW_R> f);
 
         <NEW_R> MessageProcessingBuilder<C, T, NEW_R> map(BiFunction<C, ? super R, ? extends NEW_R> f);
+
     }
 }

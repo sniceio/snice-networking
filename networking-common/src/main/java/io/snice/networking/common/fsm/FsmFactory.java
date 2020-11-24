@@ -1,6 +1,5 @@
 package io.snice.networking.common.fsm;
 
-import io.hektor.fsm.Context;
 import io.hektor.fsm.Data;
 import io.hektor.fsm.FSM;
 import io.snice.networking.common.ChannelContext;

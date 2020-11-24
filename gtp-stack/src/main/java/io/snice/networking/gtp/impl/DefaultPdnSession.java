@@ -1,19 +1,24 @@
 package io.snice.networking.gtp.impl;
 
+import io.snice.buffer.Buffers;
+import io.snice.codecs.codec.MccMnc;
 import io.snice.codecs.codec.gtp.Teid;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2MessageType;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Response;
-import io.snice.codecs.codec.gtp.gtpc.v2.tliv.BearerContext;
-import io.snice.codecs.codec.gtp.gtpc.v2.tliv.FTeid;
-import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Paa;
+import io.snice.codecs.codec.gtp.gtpc.v2.Impl.Gtp2MessageBuilder;
+import io.snice.codecs.codec.gtp.gtpc.v2.tliv.*;
+import io.snice.codecs.codec.gtp.gtpc.v2.type.*;
+import io.snice.codecs.codec.tgpp.ReferencePoint;
+import io.snice.functional.Either;
 import io.snice.networking.gtp.Bearer;
 import io.snice.networking.gtp.PdnSession;
 
 import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 
-import static io.snice.preconditions.PreConditions.assertArgument;
+import static io.snice.preconditions.PreConditions.*;
 
 public class DefaultPdnSession implements PdnSession {
 
@@ -56,7 +61,17 @@ public class DefaultPdnSession implements PdnSession {
         final var defaultLocalBearer = Bearer.of(localBearerContext.get());
         final var defaultRemoteBearer = Bearer.of(remoteBearerContext.get());
 
-        return new DefaultPdnSession(request, response, localTeid, fteidGtpc.get(), (Paa)paa.get().ensure(), defaultLocalBearer, defaultRemoteBearer);
+        return new DefaultPdnSession(request, response, localTeid, fteidGtpc.get(), (Paa) paa.get().ensure(), defaultLocalBearer, defaultRemoteBearer);
+    }
+
+    public static Builder createNewSession(final String imsi) {
+        assertNotEmpty(imsi, "The IMSI cannot be null or the empty string");
+        return new DefaultBuilder(Imsi.ofValue(imsi));
+    }
+
+    public static Builder createNewSession(final Imsi imsi) {
+        assertNotNull(imsi, "The IMSI cannot be null");
+        return new DefaultBuilder(imsi);
     }
 
     @Override
@@ -92,6 +107,7 @@ public class DefaultPdnSession implements PdnSession {
         return request;
     }
 
+    @Override
     public Paa getPaa() {
         return paa;
     }
@@ -117,6 +133,115 @@ public class DefaultPdnSession implements PdnSession {
 
     private static Optional<FTeid> getFTeid(final Gtp2Message msg, final int instance) {
         return msg.getInformationElement(FTeid.TYPE).map(tliv -> (FTeid) (tliv.ensure()));
+    }
+
+    private static class DefaultBuilder implements Builder {
+        private final Gtp2MessageBuilder<Gtp2Message> csr;
+
+        private DefaultBuilder(final Imsi imsi) {
+            csr = Gtp2Message.create(Gtp2MessageType.CREATE_SESSION_REQUEST)
+                    .withTeid(Teid.ZEROS) // for initial CSR, the TEID must be zero
+                    .withRandomSeqNo()
+                    .withTliv(imsi);
+        }
+
+        @Override
+        public Builder withServingNetwork(final String mccMnc) {
+            csr.withTliv(ServingNetwork.ofValue(MccMncType.ofValue(mccMnc)));
+            return this;
+        }
+
+        @Override
+        public Builder withRat(final int rat) {
+            csr.withTliv(Rat.ofValue(RatType.of(rat)));
+            return this;
+        }
+
+        @Override
+        public Builder withRat(final RatType rat) {
+            csr.withTliv(Rat.ofValue(rat));
+            return this;
+        }
+
+        @Override
+        public Builder withApn(final String apn) {
+            csr.withTliv(Apn.ofValue(apn));
+            return this;
+        }
+
+        @Override
+        public Builder withUeTimeZone(final UeTimeZone tz) {
+            // TODO: make more user friendly version of this
+            // UeTimeZone.ofValue(Buffers.wrap((byte) 0x08, (byte) 0x00));
+            assertNotNull(tz, "The UE Time Zone cannot be null");
+            csr.withTliv(tz);
+            return this;
+        }
+
+        @Override
+        public Builder withAggregateMaximumBitRate(final int maxUplink, final int maxDownlink) {
+            csr.withTliv(Ambr.ofValue(AmbrType.ofValue(maxUplink, maxDownlink)));
+            return this;
+        }
+
+        @Override
+        public CompletionStage<Either<String, PdnSession>> start() {
+            return null;
+        }
+
+        private static Uli createUli() {
+            final var tac = Buffers.wrap((byte) 0x02, (byte) 0x01);
+            final var tai = TaiField.of(MccMnc.of("901", "62"), tac);
+            final var eci = Buffers.wrap((byte) 0x00, (byte) 0x11, (byte) 0xAA, (byte) 0xBB);
+            final var ecgi = EcgiField.of(MccMnc.of("901", "62"), eci);
+            return Uli.ofValue(UliType.create().withTai(tai).withEcgi(ecgi).build());
+        }
+
+        private static FTeid createFTeidGtpc(final String ipv4Address) {
+            final var ftiedTypeGtpC = FTeidType.create()
+                    .withRandomizedTeid()
+                    .withIPv4Address(ipv4Address)
+                    .withReferencePoint(ReferencePoint.S5, true) // true = gtp-c
+                    .build();
+
+            return FTeid.ofValue(ftiedTypeGtpC, 0);
+        }
+
+        private Gtp2Request createCsr(final String gtpcTunnelIPv4) {
+            final var arp = ArpType.ofValue(10, true, false);
+            final var qos = QosType.ofQci(9).build();
+            final var bqos = BearerQos.ofValue(BearerQosType.ofValue(arp, qos));
+
+            final var ftiedTypeGtpU = FTeidType.create()
+                    .withRandomizedTeid()
+                    .withIPv4Address(gtpcTunnelIPv4)
+                    .withReferencePoint(ReferencePoint.S5, false) // false = gtp-u
+                    .build();
+
+            final var fteidGtpC = createFTeidGtpc(gtpcTunnelIPv4);
+            final var fteidGtpU = FTeid.ofValue(ftiedTypeGtpU, 2);
+
+            final var ebi = Ebi.ofValue(EbiType.ofValue(5));
+            final var grouped = GroupedType.ofValue(ebi, fteidGtpU, bqos);
+
+            final var uli = createUli();
+
+            final var bearerContext = BearerContext.ofValue(grouped);
+
+            final var csr = Gtp2Message.create(Gtp2MessageType.CREATE_SESSION_REQUEST)
+                    .withTliv(Mei.ofValue(TbcdType.parse("1234567890123456")))
+                    .withTliv(fteidGtpC)
+                    .withTliv(SelectionMode.ofValue(SelectionModeType.ofValue(0)))
+                    .withTliv(Pdn.ofValue(PdnType.of(PdnType.Type.IPv4)))
+                    .withTliv(Paa.ofValue(PaaType.fromIPv4("0.0.0.0")))
+                    .withTliv(ApnRestriction.ofValue(CounterType.parse("0")))
+                    .withTliv(bearerContext)
+                    .withTliv(uli)
+                    .build();
+
+            return csr.toGtp2Request();
+        }
+
     }
 
 

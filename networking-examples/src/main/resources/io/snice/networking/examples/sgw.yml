@@ -3,10 +3,12 @@ networkInterfaces:
   - name: gtpc
     listen: ws://0.0.0.0:2123
     transport: udp
+    vipAddress: 52.202.165.16
 
   - name: gtpu
     listen: ws://0.0.0.0:2152
     transport: udp
+    vipAddress: 52.202.165.16
 
 gtp:
   userPlane:

@@ -12,8 +12,12 @@ import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
+import io.snice.networking.common.event.ConnectionActiveIOEvent;
+import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
 import io.snice.networking.common.event.ConnectionIOEvent;
 import io.snice.networking.common.event.MessageIOEvent;
+import io.snice.networking.core.event.ConnectionAttemptSuccess;
+import io.snice.networking.core.event.NetworkEvent;
 import io.snice.networking.netty.UdpConnection;
 import io.snice.time.Clock;
 
@@ -91,11 +95,20 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
         System.out.println("[ " + uuid + " UDP ]: " + msg);
     }
 
+    private void logError(final String msg) {
+        System.err.println("[ " + uuid + " TCP ]: " + msg);
+    }
+
     @Override
     public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
         final var udp = (UdpReadEvent<T>) msg;
         final var remote = udp.getRaw().sender();
+
+        // TODO: if this is an IPv6 address, it'll blow up...
         final var id = ConnectionId.create(Transport.udp, udp.getRaw().recipient(), remote);
+
+        // TODO: store away the connection instead so we don't have to find the
+        // context on every incoming packet! See SNICE-28
         final var connCtx = findContext(id);
         if (connCtx.isDrop()) {
             ctx.close();
@@ -136,7 +149,51 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
 
     @Override
     public void userEventTriggered(final ChannelHandlerContext ctx, final Object evt) throws Exception {
-        System.err.println("Ok, user triggered event: " + evt);
+        log("UserEventTriggered: " + evt);
+        try {
+            final NetworkEvent<T> event = (NetworkEvent<T>) evt;
+            if (event.isConnectionAttemptEvent()) {
+                processConnectionAttemptCompleted(ctx, event.toConnectionAttemptSuccess());
+            }
+
+        } catch (final ClassCastException e) {
+            // TODO: need to introduce proper logging and this should
+            // be a WARN with an AlertCode.
+            logError("Unknown user event triggered. Dropping event " + evt.getClass().getName() + " toString: " + evt);
+        }
+    }
+
+    /**
+     * Unlike SCTP and TCP, there is no "active" event for UDP but in order to maintain the same
+     * irrespective of transport, we'll first be firing off the active event and then
+     * the complete event.
+     * <p>
+     * Inbound v.s. outbound connection:</br>
+     * Also note that if we have a waiting future on the connection event, it was the user who initiated this
+     * "connection", which would make this an outbound connection. If there is no future, then
+     * this is an inbound connection.
+     *
+     * @param ctx
+     * @param evt
+     */
+    private void processConnectionAttemptCompleted(final ChannelHandlerContext ctx, final ConnectionAttemptSuccess<T> evt) {
+        if (evt == null) {
+            return;
+        }
+
+        // TODO: if someone connects to the same local:ip/remote:ip port pair, we should
+        // TODO: store that away so we don't do this every time...
+        // Also, if we did that then we would also be able to keep track of inbound "connections"
+        final var connection = evt.getConnection();
+        final var connectionContext = findContext(connection.id());
+        final var channelContext = new DefaultChannelContext<T>(connection, connectionContext);
+
+        final var isInboundConnection = evt.getUserConnectionFuture() == null;
+        final var connectionActiveIOEvent = ConnectionActiveIOEvent.create(channelContext, isInboundConnection, evt.getArrivalTime());
+        ctx.fireUserEventTriggered(connectionActiveIOEvent);
+
+        final var e = ConnectionAttemptCompletedIOEvent.create(channelContext, evt.getUserConnectionFuture(), connection, evt.getArrivalTime());
+        ctx.fireUserEventTriggered(e);
     }
 
     @Override
