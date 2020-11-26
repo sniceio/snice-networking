@@ -11,12 +11,11 @@ import io.snice.codecs.codec.gtp.gtpc.v2.messages.path.EchoRequest;
 import io.snice.codecs.codec.gtp.gtpc.v2.tliv.*;
 import io.snice.codecs.codec.gtp.gtpc.v2.type.*;
 import io.snice.codecs.codec.tgpp.ReferencePoint;
-import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
 import io.snice.networking.gtp.GtpApplication;
+import io.snice.networking.gtp.GtpBootstrap;
 import io.snice.networking.gtp.GtpEnvironment;
-import io.snice.networking.gtp.GtpTunnel;
 import io.snice.networking.gtp.event.GtpEvent;
 import io.snice.networking.gtp.event.GtpMessageWriteEvent;
 
@@ -38,7 +37,7 @@ public class PgwGtpC extends GtpApplication<GtpConfig> {
     }
 
     @Override
-    public void initialize(final NetworkBootstrap<GtpTunnel, GtpEvent, GtpConfig> bootstrap) {
+    public void initialize(final GtpBootstrap<GtpConfig> bootstrap) {
         bootstrap.onConnection(c -> true).accept(b -> {
             b.match(GtpEvent::isCreateSessionRequest).map(GtpEvent::toGtp2Message).consume(PgwGtpC::processCreateSessionRequest);
             b.match(GtpEvent::isCreateSessionResponse).map(GtpEvent::toGtp2Message).consume(this::processCreateSessionResponse);
@@ -47,6 +46,7 @@ public class PgwGtpC extends GtpApplication<GtpConfig> {
                 System.err.println("Received something else: " + gtp.toMessageEvent().getMessage());
             });
         });
+
     }
 
     private static void processCreateSessionRequest(final Connection<GtpEvent> connection, final Gtp2Message msg) {
@@ -88,7 +88,7 @@ public class PgwGtpC extends GtpApplication<GtpConfig> {
         // write events etc.
         final var echo = (EchoRequest) message;
         final var echoResponse = echo.createResponse().withTliv(Recovery.ofValue("7")).build();
-        final var evt = GtpMessageWriteEvent.of(echoResponse, connection);
+        final var evt = GtpMessageWriteEvent.of(echoResponse, connection.id());
         connection.send(evt);
     }
 
@@ -166,7 +166,7 @@ public class PgwGtpC extends GtpApplication<GtpConfig> {
             tunnel.set(c);
             final var csr = createCsr("107.20.226.156");
             outstandingRequests.putIfAbsent(csr.getHeader().getSequenceNo(), csr);
-            final var evt = GtpMessageWriteEvent.of(csr, c);
+            final var evt = GtpMessageWriteEvent.of(csr, c.id());
             c.send(evt);
         });
     }

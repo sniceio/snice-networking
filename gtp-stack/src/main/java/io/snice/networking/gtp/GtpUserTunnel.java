@@ -3,18 +3,11 @@ package io.snice.networking.gtp;
 import io.snice.buffer.Buffer;
 import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Paa;
 import io.snice.networking.common.Connection;
+import io.snice.networking.common.ConnectionId;
 import io.snice.networking.gtp.event.GtpEvent;
 import io.snice.networking.gtp.impl.DefaultGtpUserTunnel;
 
 public interface GtpUserTunnel extends GtpTunnel {
-
-    static GtpUserTunnel of(final Connection<GtpEvent> actualConnection) {
-        return DefaultGtpUserTunnel.of(actualConnection);
-    }
-
-    static GtpUserTunnel of(final Connection<GtpEvent> connection, final Paa paa, final Bearer localBearer, final Bearer remoteBearer) {
-        throw new RuntimeException("Don't use this one anymore...");
-    }
 
     /**
      * Send the given message across this tunnel.

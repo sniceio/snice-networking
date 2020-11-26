@@ -67,7 +67,10 @@ public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D 
     @Override
     public void channelRead(final ChannelHandlerContext ctx, final Object object) throws Exception {
         final var event = (MessageIOEvent<T>) object;
-        ensureExecutionContext(event, ctx).onUpstreamMessage(event);
+        final var executionCtx = ensureExecutionContext(event, ctx);
+        if (executionCtx != null) {
+            executionCtx.onUpstreamMessage(event);
+        }
     }
 
     /**
@@ -77,6 +80,8 @@ public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D 
     @Override
     public void write(final ChannelHandlerContext ctx, final Object msg, final ChannelPromise promise) throws Exception {
         // TODO: have to think about this one. Shouldn't be able to happen but we need to make sure.
+        final var event = (T) msg;
+        // ensureExecutionContext(event, ctx);
         if (fsmExecutionContext == null) {
             logger.warn("Unable to write message because the execution context hasn't been created. Dropping write");
             return;
@@ -90,7 +95,12 @@ public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D 
     public void userEventTriggered(final ChannelHandlerContext ctx, final Object evt) throws Exception {
         logger.info("UserEventTriggered: " + evt);
         final var ioEvent = (IOEvent<T>) evt;
-        ensureExecutionContext(ioEvent, ctx).onUpstreamMessage(ioEvent);
+        final var executionCtx = ensureExecutionContext(ioEvent, ctx);
+        if (executionCtx != null) {
+            executionCtx.onUpstreamMessage(ioEvent);
+        } else {
+            ctx.fireUserEventTriggered(ioEvent);
+        }
 
         // Note: keeping this one as a comment to point out the following.
         // It should not be called because the actual state machine needs to
@@ -100,7 +110,6 @@ public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D 
         // event to be propagated up the chain.
         // ctx.fireUserEventTriggered(evt);
     }
-
 
     private FsmExecutionContext<T, S, C, D> ensureExecutionContext(final IOEvent<T> event,
                                                                    final ChannelHandlerContext nettyCtx) {
@@ -114,6 +123,10 @@ public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D 
 
         final Optional<T> optionalMsg = event.isMessageIOEvent() ? Optional.of(event.toMessageIOEvent().getMessage()) : Optional.empty();
         final var fsmKey = fsmFactory.calculateKey(connectionId, optionalMsg);
+        if (fsmKey == null) {
+            return null;
+        }
+
         final var ctx = fsmFactory.createNewContext(fsmKey, bufferingCtx);
         final var data = fsmFactory.createNewDataBag(fsmKey);
         final var fsm = fsmFactory.createNewFsm(fsmKey, ctx, data);

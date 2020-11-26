@@ -2,6 +2,7 @@ package io.snice.networking.gtp.event;
 
 import io.snice.codecs.codec.gtp.GtpMessage;
 import io.snice.networking.common.Connection;
+import io.snice.networking.common.ConnectionId;
 
 public interface GtpMessageEvent extends GtpEvent {
 
@@ -17,5 +18,8 @@ public interface GtpMessageEvent extends GtpEvent {
 
     Connection<GtpEvent> getConnection();
 
+    ConnectionId getConnectionId();
+
+    @Override
     GtpMessage getMessage();
 }

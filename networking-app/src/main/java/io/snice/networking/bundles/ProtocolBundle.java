@@ -12,7 +12,6 @@ import io.snice.networking.common.fsm.FsmFactory;
 import io.snice.networking.common.fsm.NetworkContext;
 import io.snice.networking.netty.ProtocolHandler;
 
-import javax.annotation.processing.Completions;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -73,13 +72,13 @@ public interface ProtocolBundle<K extends Connection<T>, T, C extends NetworkApp
      * The bundle will be asked to perform any initializing tasks after the {@link NetworkBootstrap} has
      * been bootstrapped but before the underlying {@link NetworkStack} has been built and started.
      * As such, the only thing available to the bundle at this stage is the actual configuration object.
-     *
+     * <p>
      * If curious, see {@link io.snice.networking.app.NetworkApplication#run(NetworkAppConfig, String...)} for
      * how it's done.
      *
      * @param configuration
      */
-    default void initialize(C configuration) {
+    default void initialize(final C configuration) {
         // default is to do nothing. Implementing bundles should override this.
     }
 
@@ -116,4 +115,5 @@ public interface ProtocolBundle<K extends Connection<T>, T, C extends NetworkApp
     }
 
     <S extends Enum<S>, C extends NetworkContext<T>, D extends Data> Optional<FsmFactory<T, S, C, D>> getFsmFactory();
+
 }

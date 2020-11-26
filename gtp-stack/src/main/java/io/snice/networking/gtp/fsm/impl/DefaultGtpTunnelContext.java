@@ -5,6 +5,8 @@ import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.networking.common.ChannelContext;
 import io.snice.networking.gtp.conf.GtpConfig;
 import io.snice.networking.gtp.event.GtpEvent;
+import io.snice.networking.gtp.event.GtpMessageReadEvent;
+import io.snice.networking.gtp.event.GtpMessageWriteEvent;
 import io.snice.networking.gtp.fsm.GtpTunnelContext;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
@@ -27,13 +29,23 @@ public class DefaultGtpTunnelContext implements GtpTunnelContext {
 
     @Override
     public void sendDownstream(final Gtp2Message msg) {
-        System.err.println("Sending downstream");
+        final var evt = GtpMessageWriteEvent.of(msg, ctx.getConnectionId());
+        ctx.sendDownstream(evt);
+    }
+
+    @Override
+    public void sendDownstream(final GtpEvent msg) {
+        ctx.sendDownstream(msg);
     }
 
     @Override
     public void sendUpstream(final Gtp2Message msg) {
-        System.err.println("Sending upstream");
+        throw new RuntimeException("Not yet implemented");
+    }
 
+    @Override
+    public void sendUpstream(final GtpEvent event) {
+        ctx.sendUpstream(event);
     }
 
     @Override

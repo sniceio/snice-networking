@@ -15,7 +15,6 @@ public class GtpMessageDatagramEncoder extends MessageToMessageEncoder<GtpEvent>
 
     @Override
     protected void encode(final ChannelHandlerContext ctx, final GtpEvent event, final List<Object> out) {
-        System.err.println("GtpMessageEncoder: " + event);
         if (!event.isMessageWriteEvent()) {
             return;
         }
@@ -23,8 +22,7 @@ public class GtpMessageDatagramEncoder extends MessageToMessageEncoder<GtpEvent>
         try {
             final var write = event.toMessageWriteEvent();
             final var byteBuf = toByteBuf(ctx.channel(), write.getMessage());
-            final DatagramPacket pkt = new DatagramPacket(byteBuf, write.getConnection().getRemoteAddress());
-            System.err.println("UDP packet: " + pkt);
+            final DatagramPacket pkt = new DatagramPacket(byteBuf, write.getConnectionId().getRemoteAddress());
             out.add(pkt);
         } catch (final Throwable t) {
             t.printStackTrace();

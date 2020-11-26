@@ -4,8 +4,8 @@ package io.snice.networking.examples.gtp;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.path.EchoRequest;
 import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Recovery;
-import io.snice.networking.app.NetworkBootstrap;
 import io.snice.networking.gtp.GtpApplication;
+import io.snice.networking.gtp.GtpBootstrap;
 import io.snice.networking.gtp.GtpEnvironment;
 import io.snice.networking.gtp.GtpTunnel;
 import io.snice.networking.gtp.event.GtpEvent;
@@ -16,7 +16,7 @@ import io.snice.networking.gtp.event.GtpEvent;
 public class Sgw2 extends GtpApplication<GtpConfig> {
 
     @Override
-    public void initialize(final NetworkBootstrap<GtpTunnel, GtpEvent, GtpConfig> bootstrap) {
+    public void initialize(final GtpBootstrap<GtpConfig> bootstrap) {
         bootstrap.onConnection(c -> true).accept(b -> {
             b.match(GtpEvent::isCreateSessionResponse).map(GtpEvent::toGtp2Message).consume(Sgw2::processCreateSessionResponse);
             b.match(GtpEvent::isEchoRequest).map(GtpEvent::toGtp2Message).consume(Sgw2::processEchoRequest);
@@ -37,11 +37,18 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
 
     @Override
     public void run(final GtpConfig configuration, final GtpEnvironment<GtpConfig> environment) {
-        final var pgw = "3.83.40.41";
+        final var pgw = "35.153.209.227";
         System.err.println("Establishing new tunnel");
         environment.establishControlPlane(pgw, 2123).thenAccept(c -> {
-            System.err.println("============= tunnel has been established successfully ==============");
-            // final var sessionFuture = c.createPdnSession("99999");
+            final var f = c.createPdnSession("99999")
+                    .withRat(6)
+                    .withAggregateMaximumBitRate(10000, 10000)
+                    .withServingNetwork("310/410")
+                    .withApn("super")
+                    .start();
+            f.thenAccept(e -> {
+                System.err.println("The PdnSession Future completed");
+            });
         });
         // environment.establishControlPlane()
     }

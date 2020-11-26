@@ -3,16 +3,12 @@ package io.snice.networking.gtp;
 import io.snice.codecs.codec.gtp.Teid;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Response;
-import io.snice.codecs.codec.gtp.gtpc.v2.tliv.*;
-import io.snice.codecs.codec.gtp.gtpc.v2.type.AmbrType;
-import io.snice.codecs.codec.gtp.gtpc.v2.type.MccMncType;
+import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Paa;
+import io.snice.codecs.codec.gtp.gtpc.v2.tliv.UeTimeZone;
 import io.snice.codecs.codec.gtp.gtpc.v2.type.RatType;
 import io.snice.functional.Either;
-import io.snice.networking.gtp.impl.DefaultPdnSession;
 
 import java.util.concurrent.CompletionStage;
-
-import static io.snice.preconditions.PreConditions.assertNotNull;
 
 public interface PdnSession {
 
@@ -62,10 +58,15 @@ public interface PdnSession {
     interface Builder {
 
         Builder withServingNetwork(String mccMnc);
+
         Builder withRat(int rat);
+
         Builder withRat(RatType rat);
+
         Builder withApn(String apn);
+
         Builder withUeTimeZone(UeTimeZone tz);
+
         Builder withAggregateMaximumBitRate(int maxUplink, int maxDownlink);
 
         /**

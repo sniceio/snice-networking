@@ -13,9 +13,11 @@ import io.snice.codecs.codec.gtp.gtpc.v2.type.*;
 import io.snice.codecs.codec.tgpp.ReferencePoint;
 import io.snice.functional.Either;
 import io.snice.networking.gtp.Bearer;
+import io.snice.networking.gtp.GtpTunnel;
 import io.snice.networking.gtp.PdnSession;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import static io.snice.preconditions.PreConditions.*;
@@ -64,14 +66,14 @@ public class DefaultPdnSession implements PdnSession {
         return new DefaultPdnSession(request, response, localTeid, fteidGtpc.get(), (Paa) paa.get().ensure(), defaultLocalBearer, defaultRemoteBearer);
     }
 
-    public static Builder createNewSession(final String imsi) {
+    public static Builder createNewSession(final GtpTunnel tunnel, final String imsi) {
         assertNotEmpty(imsi, "The IMSI cannot be null or the empty string");
-        return new DefaultBuilder(Imsi.ofValue(imsi));
+        return new DefaultBuilder(tunnel, Imsi.ofValue(imsi));
     }
 
-    public static Builder createNewSession(final Imsi imsi) {
+    public static Builder createNewSession(final GtpTunnel tunnel, final Imsi imsi) {
         assertNotNull(imsi, "The IMSI cannot be null");
-        return new DefaultBuilder(imsi);
+        return new DefaultBuilder(tunnel, imsi);
     }
 
     @Override
@@ -137,12 +139,14 @@ public class DefaultPdnSession implements PdnSession {
 
     private static class DefaultBuilder implements Builder {
         private final Gtp2MessageBuilder<Gtp2Message> csr;
+        private final GtpTunnel tunnel;
 
-        private DefaultBuilder(final Imsi imsi) {
+        private DefaultBuilder(final GtpTunnel tunnel, final Imsi imsi) {
             csr = Gtp2Message.create(Gtp2MessageType.CREATE_SESSION_REQUEST)
                     .withTeid(Teid.ZEROS) // for initial CSR, the TEID must be zero
                     .withRandomSeqNo()
                     .withTliv(imsi);
+            this.tunnel = tunnel;
         }
 
         @Override
@@ -186,7 +190,9 @@ public class DefaultPdnSession implements PdnSession {
 
         @Override
         public CompletionStage<Either<String, PdnSession>> start() {
-            return null;
+            final var message = csr.build();
+            tunnel.send(message);
+            return new CompletableFuture<>();
         }
 
         private static Uli createUli() {

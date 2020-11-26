@@ -41,6 +41,10 @@ public abstract class NetworkApplication<E extends Environment<K, T, C>, K exten
      */
     public abstract void initialize(final NetworkBootstrap<K, T, C> bootstrap);
 
+    protected ProtocolBundle<K, T, C> getProtocolBundle() {
+        return bundle;
+    }
+
     /**
      * Call this method from your {@code public static void main} entry point
      * of your application.

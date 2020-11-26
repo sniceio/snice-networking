@@ -10,7 +10,7 @@ import io.snice.networking.common.fsm.FsmSupport;
 import io.snice.networking.gtp.conf.GtpAppConfig;
 import io.snice.networking.gtp.conf.GtpConfig;
 import io.snice.networking.gtp.event.GtpEvent;
-import io.snice.networking.gtp.fsm.ControlTunnelFsm;
+import io.snice.networking.gtp.fsm.GtpControlTunnelFsm;
 import io.snice.networking.gtp.fsm.GtpTunnelContext;
 import io.snice.networking.gtp.fsm.GtpTunnelData;
 import io.snice.networking.gtp.fsm.GtpTunnelState;
@@ -19,14 +19,14 @@ import io.snice.time.Clock;
 
 import java.util.Optional;
 
-public class GtpStack implements FsmFactory<GtpEvent, GtpTunnelState, GtpTunnelContext, GtpTunnelData> {
+public class GtpTunnelFsmSupport implements FsmFactory<GtpEvent, GtpTunnelState, GtpTunnelContext, GtpTunnelData> {
 
-    private static final FsmSupport<GtpTunnelState> loggingSupport = new FsmSupport<>(ControlTunnelFsm.class);
+    private static final FsmSupport<GtpTunnelState> loggingSupport = new FsmSupport<>(GtpControlTunnelFsm.class);
 
     private final GtpConfig config;
     private final Clock clock;
 
-    public GtpStack(final GtpAppConfig config, final Clock clock) {
+    public GtpTunnelFsmSupport(final GtpAppConfig config, final Clock clock) {
         this.config = config.getConfig();
         this.clock = clock;
     }
@@ -48,6 +48,6 @@ public class GtpStack implements FsmFactory<GtpEvent, GtpTunnelState, GtpTunnelC
 
     @Override
     public FSM<GtpTunnelState, GtpTunnelContext, GtpTunnelData> createNewFsm(final FsmKey key, final GtpTunnelContext ctx, final GtpTunnelData data) {
-        return ControlTunnelFsm.definition.newInstance(key, ctx, data, loggingSupport::unhandledEvent, loggingSupport::onTransition);
+        return GtpControlTunnelFsm.definition.newInstance(key, ctx, data, loggingSupport::unhandledEvent, loggingSupport::onTransition);
     }
 }

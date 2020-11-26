@@ -2,6 +2,7 @@ package io.snice.networking.gtp.event.impl;
 
 import io.snice.codecs.codec.gtp.GtpMessage;
 import io.snice.networking.common.Connection;
+import io.snice.networking.common.ConnectionId;
 import io.snice.networking.gtp.event.GtpEvent;
 import io.snice.networking.gtp.event.GtpMessageEvent;
 import io.snice.networking.gtp.event.GtpMessageReadEvent;
@@ -12,7 +13,7 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
 public class DefaultGtpMessageEvent implements GtpMessageEvent {
 
     private final GtpMessage msg;
-    private final Connection<GtpEvent> connection;
+    private final ConnectionId connectionId;
 
     public static GtpMessageReadEvent newReadEvent(final GtpMessage msg, final Connection<GtpEvent> connection) {
         assertNotNull(msg, "The gtp message cannot be null");
@@ -20,22 +21,29 @@ public class DefaultGtpMessageEvent implements GtpMessageEvent {
         return new MessageReadEvent(msg, connection);
     }
 
-    public static GtpMessageWriteEvent newWriteEvent(final GtpMessage msg, final Connection<GtpEvent> connection) {
+    public static GtpMessageWriteEvent newWriteEvent(final GtpMessage msg, final ConnectionId connectionId) {
         assertNotNull(msg, "The gtp message cannot be null");
-        assertNotNull(connection, "The connection cannot be null");
-        return new MessageWriteEvent(msg, connection);
+        assertNotNull(connectionId, "The connection cannot be null");
+        return new MessageWriteEvent(msg, connectionId);
     }
 
-    private DefaultGtpMessageEvent(final GtpMessage msg, final Connection<GtpEvent> connection) {
+    private DefaultGtpMessageEvent(final GtpMessage msg, final ConnectionId connectionId) {
         this.msg = msg;
-        this.connection = connection;
+        this.connectionId = connectionId;
+    }
+
+    @Deprecated
+    @Override
+    public Connection<GtpEvent> getConnection() {
+        throw new IllegalArgumentException("Deprecated");
     }
 
     @Override
-    public Connection<GtpEvent> getConnection() {
-        return connection;
+    public ConnectionId getConnectionId() {
+        return connectionId;
     }
 
+    @Override
     public GtpMessage getMessage() {
         return msg;
     }
@@ -43,7 +51,7 @@ public class DefaultGtpMessageEvent implements GtpMessageEvent {
     private static class MessageReadEvent extends DefaultGtpMessageEvent implements GtpMessageReadEvent {
 
         private MessageReadEvent(final GtpMessage msg, final Connection<GtpEvent> connection) {
-            super(msg, connection);
+            super(msg, connection.id());
         }
 
         @Override
@@ -54,8 +62,8 @@ public class DefaultGtpMessageEvent implements GtpMessageEvent {
 
     private static class MessageWriteEvent extends DefaultGtpMessageEvent implements GtpMessageWriteEvent {
 
-        private MessageWriteEvent(final GtpMessage msg, final Connection<GtpEvent> connection) {
-            super(msg, connection);
+        private MessageWriteEvent(final GtpMessage msg, final ConnectionId connectionId) {
+            super(msg, connectionId);
         }
 
         @Override
