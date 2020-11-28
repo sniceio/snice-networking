@@ -45,7 +45,7 @@ public class DefaultPdnSession implements PdnSession {
 
         // TODO: check cause. For now, assume happy case...
 
-        final var paa = response.getInformationElement(Paa.TYPE, 0);
+        final var paa = response.getInfoElement(Paa.TYPE, 0);
         assertArgument(paa.isPresent(), "No PAA in the Create Session Request");
 
         // our local TEID will be in the header
@@ -130,11 +130,11 @@ public class DefaultPdnSession implements PdnSession {
     }
 
     private static Optional<BearerContext> getBearerContext(final Gtp2Message msg, final int instance) {
-        return msg.getInformationElement(BearerContext.TYPE, instance).map(tliv -> (BearerContext) (tliv.ensure()));
+        return msg.getInfoElement(BearerContext.TYPE, instance).map(tliv -> (BearerContext) (tliv.ensure()));
     }
 
     private static Optional<FTeid> getFTeid(final Gtp2Message msg, final int instance) {
-        return msg.getInformationElement(FTeid.TYPE).map(tliv -> (FTeid) (tliv.ensure()));
+        return msg.getInfoElement(FTeid.TYPE).map(tliv -> (FTeid) (tliv.ensure()));
     }
 
     private static class DefaultBuilder implements Builder {
@@ -147,45 +147,6 @@ public class DefaultPdnSession implements PdnSession {
                     .withRandomSeqNo()
                     .withTliv(imsi);
             this.tunnel = tunnel;
-        }
-
-        @Override
-        public Builder withServingNetwork(final String mccMnc) {
-            csr.withTliv(ServingNetwork.ofValue(MccMncType.ofValue(mccMnc)));
-            return this;
-        }
-
-        @Override
-        public Builder withRat(final int rat) {
-            csr.withTliv(Rat.ofValue(RatType.of(rat)));
-            return this;
-        }
-
-        @Override
-        public Builder withRat(final RatType rat) {
-            csr.withTliv(Rat.ofValue(rat));
-            return this;
-        }
-
-        @Override
-        public Builder withApn(final String apn) {
-            csr.withTliv(Apn.ofValue(apn));
-            return this;
-        }
-
-        @Override
-        public Builder withUeTimeZone(final UeTimeZone tz) {
-            // TODO: make more user friendly version of this
-            // UeTimeZone.ofValue(Buffers.wrap((byte) 0x08, (byte) 0x00));
-            assertNotNull(tz, "The UE Time Zone cannot be null");
-            csr.withTliv(tz);
-            return this;
-        }
-
-        @Override
-        public Builder withAggregateMaximumBitRate(final int maxUplink, final int maxDownlink) {
-            csr.withTliv(Ambr.ofValue(AmbrType.ofValue(maxUplink, maxDownlink)));
-            return this;
         }
 
         @Override
@@ -235,13 +196,13 @@ public class DefaultPdnSession implements PdnSession {
             final var bearerContext = BearerContext.ofValue(grouped);
 
             final var csr = Gtp2Message.create(Gtp2MessageType.CREATE_SESSION_REQUEST)
-                    .withTliv(Mei.ofValue(TbcdType.parse("1234567890123456")))
+                    // .withTliv(Mei.ofValue(TbcdType.parse("1234567890123456")))
                     .withTliv(fteidGtpC)
-                    .withTliv(SelectionMode.ofValue(SelectionModeType.ofValue(0)))
-                    .withTliv(Pdn.ofValue(PdnType.of(PdnType.Type.IPv4)))
-                    .withTliv(Paa.ofValue(PaaType.fromIPv4("0.0.0.0")))
-                    .withTliv(ApnRestriction.ofValue(CounterType.parse("0")))
-                    .withTliv(bearerContext)
+                    // .withTliv(SelectionMode.ofValue(SelectionModeType.ofValue(0)))
+                    // .withTliv(Pdn.ofValue(PdnType.of(PdnType.Type.IPv4)))
+                    // .withTliv(Paa.ofValue(PaaType.fromIPv4("0.0.0.0")))
+                    // .withTliv(ApnRestriction.ofValue(CounterType.parse("0")))
+                    // .withTliv(bearerContext)
                     .withTliv(uli)
                     .build();
 

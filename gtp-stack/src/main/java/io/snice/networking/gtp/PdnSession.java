@@ -4,16 +4,14 @@ import io.snice.codecs.codec.gtp.Teid;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Response;
 import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Paa;
-import io.snice.codecs.codec.gtp.gtpc.v2.tliv.UeTimeZone;
-import io.snice.codecs.codec.gtp.gtpc.v2.type.RatType;
 import io.snice.functional.Either;
 
 import java.util.concurrent.CompletionStage;
 
-public interface PdnSession {
+public interface PdnSession extends Session {
 
     // static PdnSession of(final Gtp2Request request, final Gtp2Response response) {
-        // return DefaultPdnSession.of(request, response);
+    // return DefaultPdnSession.of(request, response);
     // }
 
     Bearer getDefaultLocalBearer();
@@ -57,17 +55,6 @@ public interface PdnSession {
 
     interface Builder {
 
-        Builder withServingNetwork(String mccMnc);
-
-        Builder withRat(int rat);
-
-        Builder withRat(RatType rat);
-
-        Builder withApn(String apn);
-
-        Builder withUeTimeZone(UeTimeZone tz);
-
-        Builder withAggregateMaximumBitRate(int maxUplink, int maxDownlink);
 
         /**
          * Kick-off the {@link PdnSession} and if successful, as in we receive

@@ -1,14 +1,25 @@
 package io.snice.networking.examples.gtp;
 
 
+import io.snice.buffer.Buffers;
+import io.snice.codecs.codec.MccMnc;
+import io.snice.codecs.codec.gtp.Teid;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.path.EchoRequest;
+import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
 import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Recovery;
+import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Uli;
+import io.snice.codecs.codec.gtp.gtpc.v2.type.EcgiField;
+import io.snice.codecs.codec.gtp.gtpc.v2.type.RatType;
+import io.snice.codecs.codec.gtp.gtpc.v2.type.TaiField;
+import io.snice.codecs.codec.gtp.gtpc.v2.type.UliType;
 import io.snice.networking.gtp.GtpApplication;
 import io.snice.networking.gtp.GtpBootstrap;
 import io.snice.networking.gtp.GtpEnvironment;
 import io.snice.networking.gtp.GtpTunnel;
 import io.snice.networking.gtp.event.GtpEvent;
+
+import static io.snice.codecs.codec.gtp.gtpc.v2.type.PdnType.Type.IPv4;
 
 /**
  * Sample app that ties together both GTP-C and GTP-U
@@ -35,20 +46,51 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
         tunnel.send(echoResponse);
     }
 
+    private static Uli createUli() {
+        final var tac = Buffers.wrap((byte) 0x02, (byte) 0x01);
+        final var tai = TaiField.of(MccMnc.of("901", "62"), tac);
+        final var eci = Buffers.wrap((byte) 0x00, (byte) 0x11, (byte) 0xAA, (byte) 0xBB);
+        final var ecgi = EcgiField.of(MccMnc.of("901", "62"), eci);
+        return Uli.ofValue(UliType.create().withTai(tai).withEcgi(ecgi).build());
+    }
+
+
     @Override
     public void run(final GtpConfig configuration, final GtpEnvironment<GtpConfig> environment) {
-        final var pgw = "35.153.209.227";
+        final var pgw = "3.92.49.45";
+        final var sgw = "107.20.226.156";
         System.err.println("Establishing new tunnel");
+        final var csr = CreateSessionRequest.create()
+                .withTeid(Teid.ZEROS)
+                .withRat(RatType.EUTRAN)
+                .withAggregateMaximumBitRate(10000, 10000)
+                .withImsi("999994000000642")
+                .withServingNetwork("310/410")
+                .withTliv(createUli())
+                .withApnSelectionMode(0)
+                .withApn("super")
+                .withNoApnRestrictions()
+                .withPdnType(IPv4)
+                .withIPv4PdnAddressAllocation("0.0.0.0")
+                .withNewSenderControlPlaneFTeid()
+                .withRandomizedTeid()
+                .withIPv4Address(sgw)
+                .doneFTeid()
+                .withNewBearerContext()
+                .withNewSgwFTeid()
+                .withRandomizedTeid()
+                .withIPv4Address(sgw)
+                .doneFTeid()
+                .withEpsBearerId(5)
+                .withNewBearerQualityOfService(9)
+                .withPriorityLevel(10)
+                .withPci()
+                .doneBearerQoS()
+                .doneBearerContext()
+                .build();
         environment.establishControlPlane(pgw, 2123).thenAccept(c -> {
-            final var f = c.createPdnSession("99999")
-                    .withRat(6)
-                    .withAggregateMaximumBitRate(10000, 10000)
-                    .withServingNetwork("310/410")
-                    .withApn("super")
-                    .start();
-            f.thenAccept(e -> {
-                System.err.println("The PdnSession Future completed");
-            });
+            System.err.println("======== sending CSR =====");
+            c.send(csr);
         });
         // environment.establishControlPlane()
     }

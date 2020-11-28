@@ -2,6 +2,8 @@ package io.snice.networking.gtp.impl;
 
 import com.fasterxml.jackson.databind.Module;
 import io.snice.codecs.codec.gtp.GtpMessage;
+import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
+import io.snice.codecs.codec.gtp.gtpc.v2.Impl.Gtp2MessageBuilder;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.app.Environment;
 import io.snice.networking.app.NetworkBootstrap;
@@ -188,6 +190,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements GtpStack<C> {
 
     @Override
     public void send(final GtpMessage msg, final ConnectionId id) {
+        System.err.println("Sending the gTP message");
         assertNotNull(msg, "The message to send cannot be null");
         assertNotNull(id, "The id of the connection to send the message over cannot be null");
         findConnection(msg, id).send(GtpMessageWriteEvent.of(msg, id));
@@ -195,6 +198,10 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements GtpStack<C> {
 
     private Connection<GtpEvent> findConnection(final GtpMessage msg, final ConnectionId id) {
         // TODO: not entirely correct but since we haven't implemented GTPv1 right now other than GTP-U it is correct for now.
+        // Also, perhaps we should just put everything in one map and then a thin wrapper class/holder that
+        // tells us if this is a GTP-U or GTP-C tunnel. And perhaps the version even though that is not really
+        // something that is currently exposed as far as indicating what the tunnel will be used for (GTPv1 v.s. GTPv2 over the
+        // control tunnel).
         final var connection = msg.isGtpVersion2() ? controlPlaneConnections.get(id) : userPlaneConnections.get(id);
         if (connection == null) {
             throw new IllegalArgumentException("There is no existing connection for " + id);
@@ -204,7 +211,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements GtpStack<C> {
 
     @Override
     public void close(final ConnectionId connection) {
-
+        throw new RuntimeException("Sorry, haven't implemented just yet");
     }
 
     @Override
@@ -240,6 +247,16 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements GtpStack<C> {
             userPlaneConnections.put(c.id(), c);
             return DefaultGtpUserTunnel.of(c.id(), gtpStack);
         });
+    }
+
+    @Override
+    public PdnSession.Builder initiateNewPdnSession(final Gtp2Request createSessionRequest) {
+        return null;
+    }
+
+    @Override
+    public PdnSession.Builder initiateNewPdnSession(final Gtp2MessageBuilder<Gtp2Request> createSessionRequest) {
+        return null;
     }
 
     private class GtpBootstrapImpl<C extends GtpAppConfig> extends GenericBootstrap<GtpTunnel, GtpEvent, C> implements GtpBootstrap<C> {
