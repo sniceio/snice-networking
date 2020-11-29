@@ -1,6 +1,5 @@
 package io.snice.networking.gtp;
 
-import io.snice.codecs.codec.gtp.GtpMessage;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
 import io.snice.codecs.codec.gtp.gtpc.v2.Impl.Gtp2MessageBuilder;
 import io.snice.networking.bundles.ProtocolBundle;
@@ -9,7 +8,6 @@ import io.snice.networking.common.ConnectionId;
 import io.snice.networking.gtp.conf.ControlPlaneConfig;
 import io.snice.networking.gtp.conf.GtpAppConfig;
 import io.snice.networking.gtp.event.GtpEvent;
-import io.snice.networking.gtp.event.GtpMessageWriteEvent;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletionStage;
@@ -18,17 +16,6 @@ public interface GtpStack<C extends GtpAppConfig> extends ProtocolBundle<Connect
 
 
     C getConfig();
-
-    void send(GtpMessageWriteEvent event);
-
-    /**
-     * Ask the {@link GtpStack} to send the given message over the connection identified by the
-     * {@link ConnectionId}.
-     *
-     * @param msg
-     * @param connection
-     */
-    void send(GtpMessage msg, ConnectionId connection);
 
     void close(ConnectionId connection);
 

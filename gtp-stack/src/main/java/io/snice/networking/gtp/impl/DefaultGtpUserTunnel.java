@@ -7,17 +7,13 @@ import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1MessageType;
 import io.snice.codecs.codec.gtp.gtpc.v1.impl.ImmutableGtp1Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Paa;
 import io.snice.codecs.codec.transport.UdpMessage;
-import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
 import io.snice.networking.gtp.Bearer;
-import io.snice.networking.gtp.GtpStack;
 import io.snice.networking.gtp.GtpUserTunnel;
 import io.snice.networking.gtp.conf.GtpAppConfig;
-import io.snice.networking.gtp.conf.GtpConfig;
 import io.snice.networking.gtp.event.GtpEvent;
 import io.snice.networking.gtp.event.GtpMessageWriteEvent;
-import io.snice.preconditions.PreConditions;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -26,18 +22,18 @@ import java.util.Optional;
 import static io.snice.preconditions.PreConditions.assertArgument;
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
-public class DefaultGtpUserTunnel<C extends GtpAppConfig> implements GtpUserTunnel {
+public class DefaultGtpUserTunnel<C extends GtpAppConfig> implements InternalGtpUserTunnel {
 
     private final ConnectionId connectionId;
-    private final GtpStack<C> stack;
+    private final InternalGtpStack<C> stack;
 
-    public static <C extends GtpAppConfig> GtpUserTunnel of(final ConnectionId connectionId, final GtpStack<C> stack) {
+    public static <C extends GtpAppConfig> GtpUserTunnel of(final ConnectionId connectionId, final InternalGtpStack<C> stack) {
         assertNotNull(connectionId, "The connection id cannot be null");
         assertNotNull(stack, "The GTP Stack cannot be null");
         return new DefaultGtpUserTunnel(connectionId, stack);
     }
 
-    private DefaultGtpUserTunnel(final ConnectionId connectionId, final GtpStack stack) {
+    private DefaultGtpUserTunnel(final ConnectionId connectionId, final InternalGtpStack stack) {
         this.connectionId = connectionId;
         this.stack = stack;
 
@@ -81,7 +77,7 @@ public class DefaultGtpUserTunnel<C extends GtpAppConfig> implements GtpUserTunn
 
     @Override
     public void send(final GtpMessage msg) {
-        stack.send(msg, connectionId);
+        stack.send(msg, this);
     }
 
 

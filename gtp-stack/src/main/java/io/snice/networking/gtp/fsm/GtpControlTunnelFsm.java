@@ -30,7 +30,7 @@ public class GtpControlTunnelFsm {
         sync.transitionTo(OPEN).onEvent(ConnectionAttemptCompletedIOEvent.class).withAction(GtpControlTunnelFsm::processConnectionCompleted);
         open.transitionTo(OPEN).onEvent(GtpMessageReadEvent.class).withGuard(GtpMessageReadEvent::isEchoRequest).withAction(GtpControlTunnelFsm::processEchoRequest);
         open.transitionTo(OPEN).onEvent(GtpMessageReadEvent.class).withAction(GtpControlTunnelFsm::processRead);
-        open.transitionTo(OPEN).onEvent(GtpMessageWriteEvent.class).withAction((evt, tunnel, data) -> tunnel.sendDownstream(evt));
+        open.transitionTo(OPEN).onEvent(GtpMessageWriteEvent.class).withAction(GtpControlTunnelFsm::processWrite);
 
 
         // TODO: need to figure out what kills it. For now, just so that the FSM actually builds.
@@ -55,7 +55,46 @@ public class GtpControlTunnelFsm {
         ctx.sendDownstream(echoResponse);
     }
 
+    /**
+     * Process an incoming read event.
+     * <p>
+     * Note that any re-transmissions should already have been dealt with so that is why we do not
+     * need to check that here...
+     */
     private static final void processRead(final GtpMessageReadEvent event, final GtpTunnelContext ctx, final GtpTunnelData data) {
-        ctx.sendUpstream(event);
+        final var msg = event.getMessage();
+
+        // TODO: need to change because currently Gtp2Request doesn't extent GtpRequest. Must have missed something.
+        if (msg.isRequest()) {
+            final var transaction = data.storeTransaction(msg.toGtp2Request(), false);
+            event.getTransaction().ifPresent(transaction::setTransaction);
+            ctx.getChannelContext().sendUpstream(event);
+            return;
+        }
+
+        // not actually correct but I haven't scheduled any timers just yet
+        // so we would leak these...
+        final var transaction = data.removeTransaction(msg);
+        if (transaction == null) {
+            logger.info("Dropping stray response {}", msg);
+            return;
+        }
+
+        final var decoratedEventMaybe = transaction.getTransaction()
+                .map(t -> GtpMessageReadEvent.of(msg, t))
+                .orElse(event);
+        ctx.sendUpstream(decoratedEventMaybe);
+    }
+
+    private static final void processWrite(final GtpMessageWriteEvent event, final GtpTunnelContext ctx, final GtpTunnelData data) {
+        System.err.println("Got a write, should I keep track of the transaction? " + event.getTransaction());
+
+        // TODO: need to change because currently Gtp2Request doesn't extent GtpRequest. Must have missed something.
+        final var msg = event.getMessage();
+        if (msg.isRequest() && msg.isGtpVersion2()) {
+            final var transaction = data.storeTransaction(msg.toGtp2Request(), true);
+            event.getTransaction().ifPresent(transaction::setTransaction);
+        }
+        ctx.sendDownstream(event);
     }
 }

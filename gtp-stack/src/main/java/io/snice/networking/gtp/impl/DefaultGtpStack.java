@@ -19,6 +19,7 @@ import io.snice.networking.gtp.conf.ControlPlaneConfig;
 import io.snice.networking.gtp.conf.GtpAppConfig;
 import io.snice.networking.gtp.conf.UserPlaneConfig;
 import io.snice.networking.gtp.event.GtpEvent;
+import io.snice.networking.gtp.event.GtpMessageReadEvent;
 import io.snice.networking.gtp.event.GtpMessageWriteEvent;
 import io.snice.networking.gtp.fsm.GtpTunnelContext;
 import io.snice.networking.gtp.fsm.GtpTunnelData;
@@ -42,7 +43,7 @@ import java.util.concurrent.ConcurrentMap;
 import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
 
-public class DefaultGtpStack<C extends GtpAppConfig> implements GtpStack<C> {
+public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack<C> {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultGtpStack.class);
 
@@ -116,8 +117,27 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements GtpStack<C> {
 
     private void processEvent(final ConnectionContext<GtpTunnel, GtpEvent> ctx, final GtpTunnel tunnel, final GtpEvent event) {
         if (event.isMessageReadEvent()) {
-            // processMessageReadEvent(ctx, peer, event.toMessageReadEvent());
-            System.err.println("Intercepted it!!!");
+            processMessageReadEvent(ctx, tunnel, event.toMessageReadEvent());
+        } else {
+            ctx.match(tunnel, event).apply(tunnel, event);
+        }
+    }
+
+    private void processMessageReadEvent(final ConnectionContext<GtpTunnel, GtpEvent> ctx, final GtpTunnel tunnel, final GtpMessageReadEvent event) {
+        final var transactionMaybe = event.getTransaction();
+
+        // TODO: this was a hack to try some stuff out. Should allow for a message pipe thing
+        // TODO: also, what if a transaction is present but e.g no onAnswer callback has been
+        // TODO: specified, do we fallback to the general context?
+        if (transactionMaybe.isPresent()) {
+            final var transaction = transactionMaybe.get();
+            final var msg = event.getMessage();
+            if (msg.isResponse()) {
+                final var callback = transaction.getOnResponse();
+                if (callback != null) {
+                    callback.accept(transaction, msg.toGtp2Response());
+                }
+            }
         } else {
             ctx.match(tunnel, event).apply(tunnel, event);
         }
@@ -189,14 +209,32 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements GtpStack<C> {
     }
 
     @Override
-    public void send(final GtpMessage msg, final ConnectionId id) {
-        System.err.println("Sending the gTP message");
+    public void send(final GtpMessageWriteEvent event, final InternalGtpControlTunnel tunnel) {
+        assertNotNull(event, "The event to send cannot be null");
+        findConnection(event.getMessage(), event.getConnectionId()).send(event);
+    }
+
+
+    @Override
+    public void send(final GtpMessage msg, final InternalGtpControlTunnel tunnel) {
         assertNotNull(msg, "The message to send cannot be null");
-        assertNotNull(id, "The id of the connection to send the message over cannot be null");
-        findConnection(msg, id).send(GtpMessageWriteEvent.of(msg, id));
+        assertNotNull(tunnel, "The GTP Control Tunnel cannot be null");
+        findConnection(msg, tunnel.id()).send(GtpMessageWriteEvent.of(msg, tunnel.id()));
+    }
+
+    @Override
+    public void send(final GtpMessage msg, final InternalGtpUserTunnel tunnel) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Transaction.Builder createNewTransaction(final InternalGtpControlTunnel tunnel, final Gtp2Request request) throws IllegalGtpMessageException {
+        return DefaultTransaction.of(tunnel, this, request);
     }
 
     private Connection<GtpEvent> findConnection(final GtpMessage msg, final ConnectionId id) {
+        // TODO: split the two tunnels. Already started to split with the InternalGtpXxxTunnel etc so make use of it...
+        //
         // TODO: not entirely correct but since we haven't implemented GTPv1 right now other than GTP-U it is correct for now.
         // Also, perhaps we should just put everything in one map and then a thin wrapper class/holder that
         // tells us if this is a GTP-U or GTP-C tunnel. And perhaps the version even though that is not really
@@ -251,12 +289,12 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements GtpStack<C> {
 
     @Override
     public PdnSession.Builder initiateNewPdnSession(final Gtp2Request createSessionRequest) {
-        return null;
+        throw new RuntimeException("Sorry, not yet implemented");
     }
 
     @Override
     public PdnSession.Builder initiateNewPdnSession(final Gtp2MessageBuilder<Gtp2Request> createSessionRequest) {
-        return null;
+        throw new RuntimeException("Sorry, not yet implemented");
     }
 
     private class GtpBootstrapImpl<C extends GtpAppConfig> extends GenericBootstrap<GtpTunnel, GtpEvent, C> implements GtpBootstrap<C> {
@@ -264,4 +302,5 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements GtpStack<C> {
             super(config);
         }
     }
+
 }

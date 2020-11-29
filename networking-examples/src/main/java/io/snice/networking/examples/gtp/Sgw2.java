@@ -57,14 +57,14 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
 
     @Override
     public void run(final GtpConfig configuration, final GtpEnvironment<GtpConfig> environment) {
-        final var pgw = "3.92.49.45";
+        final var pgw = "3.81.248.57";
         final var sgw = "107.20.226.156";
-        System.err.println("Establishing new tunnel");
+        final var imsi = "999994000000642";
         final var csr = CreateSessionRequest.create()
                 .withTeid(Teid.ZEROS)
                 .withRat(RatType.EUTRAN)
                 .withAggregateMaximumBitRate(10000, 10000)
-                .withImsi("999994000000642")
+                .withImsi(imsi)
                 .withServingNetwork("310/410")
                 .withTliv(createUli())
                 .withApnSelectionMode(0)
@@ -89,8 +89,17 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
                 .doneBearerContext()
                 .build();
         environment.establishControlPlane(pgw, 2123).thenAccept(c -> {
-            System.err.println("======== sending CSR =====");
-            c.send(csr);
+            try {
+                System.err.println("============ new transaction =============");
+                final var t = c.createNewTransaction(csr)
+                        .onAnswer((transaction, response) -> {
+                            System.err.println("yaaaay! Got it in a transaction. The data is: " + transaction.getApplicationData());
+                        })
+                        .withApplicationData("hello world data")
+                        .start();
+            } catch (final Throwable t) {
+                t.printStackTrace();
+            }
         });
         // environment.establishControlPlane()
     }

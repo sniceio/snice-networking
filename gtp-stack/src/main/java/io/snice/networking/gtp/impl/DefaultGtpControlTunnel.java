@@ -2,47 +2,48 @@ package io.snice.networking.gtp.impl;
 
 import io.snice.buffer.Buffer;
 import io.snice.codecs.codec.gtp.GtpMessage;
+import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
-import io.snice.networking.gtp.GtpControlTunnel;
-import io.snice.networking.gtp.GtpStack;
+import io.snice.networking.gtp.IllegalGtpMessageException;
 import io.snice.networking.gtp.PdnSession;
+import io.snice.networking.gtp.Transaction;
 import io.snice.networking.gtp.conf.GtpAppConfig;
 import io.snice.networking.gtp.event.GtpEvent;
-import io.snice.networking.gtp.event.GtpMessageWriteEvent;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Optional;
 
-import static io.snice.preconditions.PreConditions.assertArgument;
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
-public class DefaultGtpControlTunnel<C extends GtpAppConfig> implements GtpControlTunnel {
+public class DefaultGtpControlTunnel<C extends GtpAppConfig> implements InternalGtpControlTunnel {
 
     private final ConnectionId connectionId;
-    private final GtpStack<C> stack;
+    private final InternalGtpStack<C> stack;
 
-    public static <C extends GtpAppConfig> DefaultGtpControlTunnel of(final ConnectionId connectionId, final GtpStack<C> stack) {
+    public static <C extends GtpAppConfig> DefaultGtpControlTunnel of(final ConnectionId connectionId, final InternalGtpStack<C> stack) {
         assertNotNull(connectionId, "The connection id cannot be null");
         assertNotNull(stack, "The GTP Stack cannot be null");
         return new DefaultGtpControlTunnel(connectionId, stack);
     }
 
-    private DefaultGtpControlTunnel(final ConnectionId connectionId, final GtpStack<C> stack) {
+    private DefaultGtpControlTunnel(final ConnectionId connectionId, final InternalGtpStack<C> stack) {
         this.connectionId = connectionId;
         this.stack = stack;
     }
 
     @Override
     public void send(final GtpEvent msg) {
-        assertArgument(msg.isMessageWriteEvent(), "You can only send " + GtpMessageWriteEvent.class.getName());
-        stack.send(msg.toMessageWriteEvent());
+        throw new IllegalArgumentException("You are not allowed to use this send method. " +
+                "Please use the overloaded non GtpEvent one");
+        // assertArgument(msg.isMessageWriteEvent(), "You can only send " + GtpMessageWriteEvent.class.getName());
+        // stack.send(msg.toMessageWriteEvent());
     }
 
     @Override
     public void send(final GtpMessage msg) {
-        stack.send(msg, connectionId);
+        stack.send(msg, this);
     }
 
     @Override
@@ -55,6 +56,11 @@ public class DefaultGtpControlTunnel<C extends GtpAppConfig> implements GtpContr
         // outstandingRequests.putIfAbsent(csr.getHeader().getSequenceNo(), csr);
         // actualConnection.send(evt);
         // return null;
+    }
+
+    @Override
+    public Transaction.Builder createNewTransaction(final Gtp2Request request) throws IllegalGtpMessageException {
+        return stack.createNewTransaction(this, request);
     }
 
     @Override
@@ -137,5 +143,4 @@ public class DefaultGtpControlTunnel<C extends GtpAppConfig> implements GtpContr
     public void close() {
         stack.close(connectionId);
     }
-
 }
