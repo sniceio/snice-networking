@@ -1,7 +1,6 @@
 package io.snice.networking.netty;
 
 import io.netty.channel.Channel;
-import io.netty.channel.socket.DatagramPacket;
 import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
 import io.snice.networking.common.ConnectionId;
@@ -48,13 +47,17 @@ public final class UdpConnection<T> extends AbstractConnection<T> {
      */
     @Override
     public void send(final T msg) {
-        final var buffer = serialize(msg);
-        final var byteBuf = toByteBuf(buffer);
-        final var pkt = new DatagramPacket(byteBuf, getRemoteAddress());
-        write(pkt);
+        write(msg);
+
+        // The below isn't correct. Not sure what I was thinking, perhaps making it simple
+        // for demos? Should be encoders in a normal fashion...
+        // final var buffer = serialize(msg);
+        // final var byteBuf = toByteBuf(buffer);
+        // final var pkt = new DatagramPacket(byteBuf, getRemoteAddress());
+        // write(pkt);
     }
 
-    private Buffer serialize(Object msg) {
+    private Buffer serialize(final Object msg) {
         if (msg instanceof String) {
             return Buffers.wrap((String)msg);
         }

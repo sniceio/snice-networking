@@ -38,7 +38,11 @@ public class DefaultConnectionContext<K extends Connection<T>, T> implements Con
     @Override
     public <U extends Object> MessagePipe<K, U, ?> matchEvent(final K connection, final U event) {
         // TODO: insert default rule...
-        return (MessagePipe<K, U, ?>) eventRules.stream().filter(pipe -> pipe.test(connection, event)).findFirst().orElseThrow(RuntimeException::new);
+        return (MessagePipe<K, U, ?>) eventRules.stream().filter(pipe -> pipe.test(connection, event)).findFirst()
+                .orElseThrow(() -> {
+                    System.err.println(event);
+                    return new RuntimeException();
+                });
     }
 
     @Override

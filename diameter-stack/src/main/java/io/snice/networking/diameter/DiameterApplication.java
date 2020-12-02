@@ -69,7 +69,7 @@ public abstract class DiameterApplication<C extends DiameterAppConfig> extends N
 
     /**
      * This is our "trap" function for all connections that were accepted by the user application. In short, if the
-     * user applicaiton wish to accept the incoming connection we will push all events through this function
+     * user application wish to accept the incoming connection we will push all events through this function
      * and if the event is an event that may contain a diameter {@link Transaction} (not all of them can)
      * then we first check if the user did create a {@link Transaction} for this request/answer exchange and if so,
      * if they also specified a callback for the particular event

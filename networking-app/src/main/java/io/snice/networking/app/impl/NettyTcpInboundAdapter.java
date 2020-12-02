@@ -117,7 +117,7 @@ public class NettyTcpInboundAdapter<T> extends ChannelOutboundHandlerAdapter imp
      */
     @Override
     public void channelActive(final ChannelHandlerContext ctx) throws Exception {
-        assertNull(connection, "There was already an active connection for this TCP Context, should be imposssible.");
+        assertNull(connection, "There was already an active connection for this TCP Context, should be impossible.");
         log("Channel is now active. IsInbound: " + isInbound);
 
         final var channel = ctx.channel();

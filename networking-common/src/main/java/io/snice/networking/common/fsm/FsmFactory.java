@@ -1,6 +1,5 @@
 package io.snice.networking.common.fsm;
 
-import io.hektor.fsm.Context;
 import io.hektor.fsm.Data;
 import io.hektor.fsm.FSM;
 import io.snice.networking.common.ChannelContext;
@@ -20,6 +19,9 @@ public interface FsmFactory<T, S extends Enum<S>, C extends NetworkContext<T>, D
      * E.g., perhaps you are building an FSM that keeps track of some TCP state. That
      * FSM will most likely only use the {@link ConnectionId} as the key and what
      * message was received across the TCP connection may not matter.
+     * <p>
+     * Also, it may be that some messages are not meant for this FSM and in that case, you can
+     * return null and the invocation of an FSM will be skipped.
      *
      * @param connectionId the id of the underlying {@link Connection}
      * @param msg          an optional message.

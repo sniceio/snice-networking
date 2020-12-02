@@ -45,8 +45,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <snice-commons.version>0.1.5</snice-commons.version>
-        <snice-codecs.version>0.0.2</snice-codecs.version>
+        <snice-commons.version>0.1.6-SNAPSHOT</snice-commons.version>
+        <snice-codecs.version>0.0.3-SNAPSHOT</snice-codecs.version>
         <hektor.version>0.0.3</hektor.version>
         <netty.version>4.1.43.Final</netty.version>
         <logback.version>1.2.3</logback.version>
@@ -64,6 +64,7 @@
         <module>networking-netty</module>
         <module>networking-app</module>
         <module>diameter-stack</module>
+        <module>gtp-stack</module>
         <module>networking-examples</module>
     </modules>
 
@@ -139,6 +140,14 @@
 
             <dependency>
                 <groupId>io.snice.codecs</groupId>
+                <artifactId>codec-transport-layer</artifactId>
+                <version>${snice-codecs.version}</version>
+                <type>jar</type>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.snice.codecs</groupId>
                 <artifactId>codec-diameter</artifactId>
                 <version>${snice-codecs.version}</version>
                 <type>jar</type>
@@ -148,6 +157,14 @@
             <dependency>
                 <groupId>io.snice.networking</groupId>
                 <artifactId>diameter-stack</artifactId>
+                <version>${project.version}</version>
+                <type>jar</type>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.snice.networking</groupId>
+                <artifactId>gtp-stack</artifactId>
                 <version>${project.version}</version>
                 <type>jar</type>
                 <scope>compile</scope>
