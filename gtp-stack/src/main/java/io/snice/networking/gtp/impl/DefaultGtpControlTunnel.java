@@ -6,7 +6,6 @@ import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
 import io.snice.networking.gtp.IllegalGtpMessageException;
-import io.snice.networking.gtp.PdnSession;
 import io.snice.networking.gtp.Transaction;
 import io.snice.networking.gtp.conf.GtpAppConfig;
 import io.snice.networking.gtp.event.GtpEvent;
@@ -46,17 +45,14 @@ public class DefaultGtpControlTunnel<C extends GtpAppConfig> implements Internal
         stack.send(msg, this);
     }
 
+    /*
     @Override
     public PdnSession.Builder createPdnSession(final String imsi) {
         // TODO: SNICE-26: get the NAT:ed address from the vip address of the NIC.
         return DefaultPdnSession.createNewSession(this, imsi);
-        // final var natedAddress = "52.202.165.16";
-        // final var csr = createCsr(natedAddress);
-        // final var evt = GtpMessageWriteEvent.of(csr, actualConnection);
-        // outstandingRequests.putIfAbsent(csr.getHeader().getSequenceNo(), csr);
-        // actualConnection.send(evt);
-        // return null;
     }
+
+     */
 
     @Override
     public Transaction.Builder createNewTransaction(final Gtp2Request request) throws IllegalGtpMessageException {

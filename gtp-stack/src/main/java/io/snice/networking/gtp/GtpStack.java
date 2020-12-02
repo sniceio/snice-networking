@@ -42,7 +42,7 @@ public interface GtpStack<C extends GtpAppConfig> extends ProtocolBundle<Connect
      * @param createSessionRequest the Create Session Request.
      * @return a new {@link PdnSession.Builder} that allows you to register callbacks etc.
      */
-    PdnSession.Builder initiateNewPdnSession(Gtp2Request createSessionRequest);
+    // PdnSession.Builder initiateNewPdnSession(Gtp2Request createSessionRequest);
 
     /**
      * To create a new stack maintained 4G PDN Session, ask the {@link GtpStack} to initiate one.
@@ -63,6 +63,6 @@ public interface GtpStack<C extends GtpAppConfig> extends ProtocolBundle<Connect
      * @param createSessionRequest the Create Session Request builder.
      * @return a new {@link PdnSession.Builder} that allows you to register callbacks etc.
      */
-    PdnSession.Builder initiateNewPdnSession(Gtp2MessageBuilder<Gtp2Request> createSessionRequest);
+    // PdnSession.Builder initiateNewPdnSession(Gtp2MessageBuilder<Gtp2Request> createSessionRequest);
 
 }

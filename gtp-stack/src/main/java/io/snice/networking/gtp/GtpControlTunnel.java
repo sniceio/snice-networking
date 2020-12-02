@@ -6,8 +6,6 @@ import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
 
 public interface GtpControlTunnel extends GtpTunnel {
 
-    PdnSession.Builder createPdnSession(String imsi);
-
     @Override
     default boolean isControlTunnel() {
         return true;

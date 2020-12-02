@@ -87,8 +87,6 @@ public class GtpControlTunnelFsm {
     }
 
     private static final void processWrite(final GtpMessageWriteEvent event, final GtpTunnelContext ctx, final GtpTunnelData data) {
-        System.err.println("Got a write, should I keep track of the transaction? " + event.getTransaction());
-
         // TODO: need to change because currently Gtp2Request doesn't extent GtpRequest. Must have missed something.
         final var msg = event.getMessage();
         if (msg.isRequest() && msg.isGtpVersion2()) {

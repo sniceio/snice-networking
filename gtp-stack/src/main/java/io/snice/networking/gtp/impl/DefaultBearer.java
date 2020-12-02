@@ -26,7 +26,7 @@ public class DefaultBearer implements Bearer {
 
     @Override
     public Optional<Ebi> getEbi() {
-        return ctx.getValue().getInformationElement(Ebi.TYPE, 0)
+        return ctx.getValue().getInfoElement(Ebi.TYPE, 0)
                 .map(tliv -> (Ebi) tliv.ensure());
     }
 
@@ -37,7 +37,7 @@ public class DefaultBearer implements Bearer {
 
     private static Optional<FTeid> getFTeid(final BearerContext ctx) {
         // TODO: should add this to the actual BearerContext instead.
-        return ctx.getValue().getInformationElement(FTeid.TYPE).map(tliv -> (FTeid) (tliv.ensure()));
+        return ctx.getValue().getInfoElement(FTeid.TYPE).map(tliv -> (FTeid) (tliv.ensure()));
     }
 
 }

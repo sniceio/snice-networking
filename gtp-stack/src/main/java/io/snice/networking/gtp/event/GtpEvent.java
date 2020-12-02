@@ -46,6 +46,14 @@ public interface GtpEvent {
         return getMessage().getHeader().getMessageTypeDecimal() == Gtp2MessageType.CREATE_SESSION_RESPONSE.getType();
     }
 
+    default boolean isDeleteSessionRequest() {
+        return getMessage().getHeader().getMessageTypeDecimal() == Gtp2MessageType.DELETE_SESSION_REQUEST.getType();
+    }
+
+    default boolean isDeleteSessionResponse() {
+        return getMessage().getHeader().getMessageTypeDecimal() == Gtp2MessageType.DELETE_SESSION_RESPONSE.getType();
+    }
+
     default boolean isEchoRequest() {
         return getMessage().getHeader().getMessageTypeDecimal() == Gtp2MessageType.ECHO_REQUEST.getType();
     }

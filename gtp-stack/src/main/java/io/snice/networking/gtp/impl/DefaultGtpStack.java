@@ -287,6 +287,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
         });
     }
 
+    /*
     @Override
     public PdnSession.Builder initiateNewPdnSession(final Gtp2Request createSessionRequest) {
         throw new RuntimeException("Sorry, not yet implemented");
@@ -296,6 +297,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
     public PdnSession.Builder initiateNewPdnSession(final Gtp2MessageBuilder<Gtp2Request> createSessionRequest) {
         throw new RuntimeException("Sorry, not yet implemented");
     }
+     */
 
     private class GtpBootstrapImpl<C extends GtpAppConfig> extends GenericBootstrap<GtpTunnel, GtpEvent, C> implements GtpBootstrap<C> {
         public GtpBootstrapImpl(final C config) {
