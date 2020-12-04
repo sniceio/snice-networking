@@ -1,13 +1,21 @@
 package io.snice.networking.bundles;
 
+import io.netty.buffer.ByteBufUtil;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.LineBasedFrameDecoder;
-import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.MessageToMessageDecoder;
+import io.netty.handler.codec.MessageToMessageEncoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.snice.networking.app.NetworkAppConfig;
+import io.snice.networking.app.impl.UdpReadEvent;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
 import io.snice.networking.netty.ProtocolHandler;
 
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -23,19 +31,24 @@ public class StringBundle<C extends NetworkAppConfig> extends BundleSupport<Conn
     public StringBundle() {
         super(String.class);
         final var encoder = ProtocolHandler.of("String-encoder")
-                .withChannelHandler(() -> new StringEncoder(StandardCharsets.UTF_8))
-                .withTransports(Transport.tcp, Transport.udp)
+                .withChannelHandler(() -> new StringDatagramEncoder(StandardCharsets.UTF_8))
+                .withTransports(Transport.udp)
                 .build();
-        encoders = List.of(encoder);
+
+        final var encoderTcp = ProtocolHandler.of("String-encoder")
+                .withChannelHandler(() -> new StringEncoder(StandardCharsets.UTF_8))
+                .withTransports(Transport.tcp)
+                .build();
+        encoders = List.of(encoder, encoderTcp);
 
         final var frameDecoder = ProtocolHandler.of("String-frame-decoder")
                 .withChannelHandler(() -> new LineBasedFrameDecoder(80))
-                .withTransports(Transport.tcp, Transport.udp)
+                .withTransports(Transport.tcp)
                 .build();
 
         final var stringDecoder = ProtocolHandler.of("String-decoder")
-                .withChannelHandler(() -> new StringDecoder(StandardCharsets.UTF_8))
-                .withTransports(Transport.tcp, Transport.udp)
+                .withChannelHandler(() -> new StringDatagramDecoder(StandardCharsets.UTF_8))
+                .withTransports(Transport.udp)
                 .build();
 
         decoders = List.of(frameDecoder, stringDecoder);
@@ -54,5 +67,43 @@ public class StringBundle<C extends NetworkAppConfig> extends BundleSupport<Conn
     @Override
     public List<ProtocolHandler> getProtocolDecoders() {
         return decoders;
+    }
+
+    @ChannelHandler.Sharable
+    private static class StringDatagramDecoder extends MessageToMessageDecoder<DatagramPacket> {
+        private final Charset charset;
+
+        private StringDatagramDecoder(final Charset charset) {
+            this.charset = charset;
+        }
+
+        @Override
+        protected void decode(final ChannelHandlerContext ctx, final DatagramPacket udp, final List<Object> list) throws Exception {
+            final var content = udp.content();
+
+            final byte[] b = new byte[content.readableBytes()];
+            content.getBytes(0, b);
+
+            final var str = new String(b, charset);
+            list.add(UdpReadEvent.create(ctx, udp, str));
+        }
+    }
+
+    private static class StringDatagramEncoder extends MessageToMessageEncoder<String> {
+
+        private final Charset charset;
+
+        private StringDatagramEncoder(final Charset charset) {
+            this.charset = charset;
+        }
+
+        @Override
+        protected void encode(final ChannelHandlerContext ctx, final String string, final List<Object> out) {
+            System.err.println("============= encoding, not sure I'm getting here");
+            final var byteBuf = ByteBufUtil.encodeString(ctx.alloc(), CharBuffer.wrap(string), this.charset);
+            // final DatagramPacket pkt = new DatagramPacket(byteBuf, write.getConnectionId().getRemoteAddress());
+            // out.add(pkt);
+        }
+
     }
 }

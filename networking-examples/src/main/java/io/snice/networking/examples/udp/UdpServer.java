@@ -1,6 +1,7 @@
 package io.snice.networking.examples.udp;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.socket.DatagramPacket;
 import io.snice.networking.examples.Utils;
 import io.snice.networking.netty.InboundOutboundHandlerAdapter;
 import io.snice.networking.netty.NettyNetworkLayer;
@@ -21,20 +22,18 @@ public class UdpServer extends InboundOutboundHandlerAdapter {
 
     @Override
     public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
-        System.err.println(msg);
-        ctx.fireChannelRead(msg);
+        final var udp = (DatagramPacket) msg;
+        final var content = udp.content();
+        final byte[] b = new byte[content.readableBytes()];
+        content.getBytes(0, b);
+
+        final DatagramPacket pkt = new DatagramPacket(udp.content(), udp.sender());
+        ctx.write(pkt);
     }
 
     @Override
-    public void handlerAdded(final ChannelHandlerContext ctx) throws Exception {
-        System.out.println("yay");
-
-    }
-
-    @Override
-    public void handlerRemoved(final ChannelHandlerContext ctx) throws Exception {
-        System.out.println("yay");
-
+    public void channelReadComplete(final ChannelHandlerContext ctx) throws Exception {
+        ctx.flush();
     }
 
     @Override

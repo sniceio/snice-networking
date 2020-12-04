@@ -1,9 +1,16 @@
 package io.snice.networking.gtp.impl;
 
 import com.fasterxml.jackson.databind.Module;
+import io.snice.buffer.Buffer;
 import io.snice.codecs.codec.gtp.GtpMessage;
+import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1MessageType;
+import io.snice.codecs.codec.gtp.gtpc.v1.impl.ImmutableGtp1Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
-import io.snice.codecs.codec.gtp.gtpc.v2.Impl.Gtp2MessageBuilder;
+import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Response;
+import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
+import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Paa;
+import io.snice.codecs.codec.transport.UdpMessage;
+import io.snice.net.IPv4;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.app.Environment;
 import io.snice.networking.app.NetworkBootstrap;
@@ -39,6 +46,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
@@ -224,7 +232,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
 
     @Override
     public void send(final GtpMessage msg, final InternalGtpUserTunnel tunnel) {
-        throw new RuntimeException("Not yet implemented");
+        findConnection(msg, tunnel.id()).send(GtpMessageWriteEvent.of(msg, tunnel.id()));
     }
 
     @Override
@@ -287,12 +295,13 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
         });
     }
 
-    /*
     @Override
-    public PdnSession.Builder initiateNewPdnSession(final Gtp2Request createSessionRequest) {
-        throw new RuntimeException("Sorry, not yet implemented");
+    public PdnSession.Builder<C> initiateNewPdnSession(final CreateSessionRequest createSessionRequest) {
+        assertNotNull(createSessionRequest, "The Create Session Request cannot be null");
+        return new PdnSessionBuilder<C>(createSessionRequest);
     }
 
+    /*
     @Override
     public PdnSession.Builder initiateNewPdnSession(final Gtp2MessageBuilder<Gtp2Request> createSessionRequest) {
         throw new RuntimeException("Sorry, not yet implemented");
@@ -302,6 +311,155 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
     private class GtpBootstrapImpl<C extends GtpAppConfig> extends GenericBootstrap<GtpTunnel, GtpEvent, C> implements GtpBootstrap<C> {
         public GtpBootstrapImpl(final C config) {
             super(config);
+        }
+    }
+
+    /**
+     * Used when a user wish the stack to manage the {@link PdnSession}s for them and this method is
+     * called when the initial response to the Create Session Request is received.
+     */
+    private void processPdnSessionResponse(final Transaction transaction, final Gtp2Response response) {
+        final PdnSessionInitialTransactionHolder holder = (PdnSessionInitialTransactionHolder) transaction.getApplicationData().get();
+        final var ctx = PdnSessionContext.of(holder.csr, response);
+        final var session = new DefaultPdnSession<C>(ctx, holder.tunnel);
+        holder.future.complete(session);
+    }
+
+    /**
+     * Used when a user asks to {@link PdnSession#terminate()} and we will trap the response in this method and
+     * kill the session.
+     */
+    private void processPdnSessionTerminatedResponse(final Transaction transaction, final Gtp2Response response) {
+        final var session = (DefaultPdnSession<C>) transaction.getApplicationData().get();
+        // TODO: have to invoke any potential onSessionTerminated callbacks...
+    }
+
+    private class PdnSessionBuilder<C extends GtpAppConfig> implements PdnSession.Builder {
+
+        private final CreateSessionRequest csr;
+        private String remoteAddress;
+        private int port = 2123;
+
+        private PdnSessionBuilder(final CreateSessionRequest csr) {
+            this.csr = csr;
+        }
+
+        @Override
+        public PdnSession.Builder withRemoteIPv4(final String ipv4) {
+            IPv4.fromString(ipv4); // will make sure it is correct
+            remoteAddress = ipv4;
+            return this;
+        }
+
+        @Override
+        public PdnSession.Builder withRemotePort(final int port) {
+            this.port = port;
+            return this;
+        }
+
+        @Override
+        public PdnSession.Builder onSessionTerminated(final BiConsumer f) {
+            throw new RuntimeException("not yet implemented");
+        }
+
+        @Override
+        public CompletionStage<PdnSession> start() {
+            assertNotNull(remoteAddress, "The address of the remote element (such as a PGW) cannot be null");
+            final CompletableFuture<PdnSession> future = new CompletableFuture<>();
+            establishControlPlane(new InetSocketAddress(remoteAddress, port)).thenAccept(tunnel -> {
+                tunnel.createNewTransaction(csr)
+                        .withApplicationData(new PdnSessionInitialTransactionHolder(tunnel, future, csr))
+                        .onAnswer(DefaultGtpStack.this::processPdnSessionResponse)
+                        .start();
+            }).exceptionally(throwable -> {
+                // TODO: need to handle this better. For now, good enough;
+                future.completeExceptionally(throwable);
+                return null;
+            });
+            return future;
+        }
+    }
+
+    private class DefaultPdnSession<C extends GtpAppConfig> implements PdnSession {
+
+        private final int defaultGtpuPort = 2152;
+        private final PdnSessionContext ctx;
+        private final GtpControlTunnel tunnel;
+
+        private DefaultPdnSession(final PdnSessionContext ctx, final GtpControlTunnel tunnel) {
+            this.ctx = ctx;
+            this.tunnel = tunnel;
+        }
+
+        @Override
+        public PdnSessionContext getContext() {
+            return ctx;
+        }
+
+        @Override
+        public void terminate() {
+            tunnel.createNewTransaction(ctx.createDeleteSessionRequest())
+                    .withApplicationData(this)
+                    .onAnswer(DefaultGtpStack.this::processPdnSessionTerminatedResponse)
+                    .start();
+        }
+
+        @Override
+        public CompletionStage<EpsBearer> establishDefaultBearer() {
+            final var localPort = 7893;
+            final var remoteBearer = ctx.getDefaultRemoteBearer();
+            System.err.println("The IP Address in the remote bearer is: " + remoteBearer.getIPv4AddressAsString().get());
+            final var pgw = "35.170.185.132";
+            final var remote = new InetSocketAddress(pgw, defaultGtpuPort);
+            return establishUserPlane(remote).thenApply(tunnel ->
+                    // TODO: need to save it away too...
+                    new DefaultEpsBearer(tunnel, ctx.getPaa(), ctx.getDefaultLocalBearer(), remoteBearer, localPort)
+            );
+        }
+    }
+
+    private static class DefaultEpsBearer implements EpsBearer {
+        private final GtpUserTunnel tunnel;
+        private final Paa paa;
+        private final Bearer localBearer;
+        private final Bearer remoteBearer;
+        private final int defaultLocalPort;
+
+        private DefaultEpsBearer(final GtpUserTunnel tunnel, final Paa paa, final Bearer localBearer, final Bearer remoteBearer, final int defaultLocalPort) {
+            this.tunnel = tunnel;
+            this.paa = paa;
+            this.localBearer = localBearer;
+            this.remoteBearer = remoteBearer;
+            this.defaultLocalPort = defaultLocalPort;
+        }
+
+        @Override
+        public void send(final String remoteAddress, final int remotePort, final Buffer data) {
+            final var ipv4 = UdpMessage.createUdpIPv4(data)
+                    .withDestinationPort(remotePort)
+                    .withSourcePort(defaultLocalPort)
+                    .withTTL(64)
+                    .withDestinationIp(remoteAddress)
+                    .withSourceIp(paa.getValue().getIPv4Address().get())
+                    .build();
+
+            final var gtpU = ImmutableGtp1Message.create(Gtp1MessageType.G_PDU)
+                    .withTeid(remoteBearer.getTeid())
+                    .withPayload(ipv4.getBuffer())
+                    .build();
+            tunnel.send(gtpU);
+        }
+    }
+
+    private static class PdnSessionInitialTransactionHolder {
+        private final GtpControlTunnel tunnel;
+        public final CreateSessionRequest csr;
+        public final CompletableFuture<PdnSession> future;
+
+        private PdnSessionInitialTransactionHolder(final GtpControlTunnel tunnel, final CompletableFuture<PdnSession> future, final CreateSessionRequest csr) {
+            this.tunnel = tunnel;
+            this.csr = csr;
+            this.future = future;
         }
     }
 

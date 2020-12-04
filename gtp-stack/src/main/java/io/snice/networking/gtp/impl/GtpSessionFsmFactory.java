@@ -37,8 +37,6 @@ public class GtpSessionFsmFactory implements FsmFactory<GtpEvent, GtpSessionStat
             return null;
         }
 
-        System.err.println("Calculating Session Key for " + msg.get());
-
         return ConnectionIdFsmKey.of(connectionId);
     }
 

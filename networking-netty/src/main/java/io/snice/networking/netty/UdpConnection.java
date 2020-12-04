@@ -48,13 +48,6 @@ public final class UdpConnection<T> extends AbstractConnection<T> {
     @Override
     public void send(final T msg) {
         write(msg);
-
-        // The below isn't correct. Not sure what I was thinking, perhaps making it simple
-        // for demos? Should be encoders in a normal fashion...
-        // final var buffer = serialize(msg);
-        // final var byteBuf = toByteBuf(buffer);
-        // final var pkt = new DatagramPacket(byteBuf, getRemoteAddress());
-        // write(pkt);
     }
 
     private Buffer serialize(final Object msg) {

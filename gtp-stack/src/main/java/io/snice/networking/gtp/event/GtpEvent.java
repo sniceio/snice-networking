@@ -1,6 +1,8 @@
 package io.snice.networking.gtp.event;
 
 import io.snice.codecs.codec.gtp.GtpMessage;
+import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1Message;
+import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1MessageType;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2MessageType;
 
@@ -34,8 +36,16 @@ public interface GtpEvent {
         return toMessageEvent().getMessage();
     }
 
+    default Gtp1Message toGtp1Message() {
+        return getMessage().toGtp1Message();
+    }
+
     default Gtp2Message toGtp2Message() {
         return getMessage().toGtp2Message();
+    }
+
+    default boolean isPdu() {
+        return getMessage().getHeader().getMessageTypeDecimal() == Gtp1MessageType.G_PDU.getType();
     }
 
     default boolean isCreateSessionRequest() {

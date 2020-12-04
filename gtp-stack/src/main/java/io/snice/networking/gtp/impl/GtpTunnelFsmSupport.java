@@ -33,6 +33,7 @@ public class GtpTunnelFsmSupport implements FsmFactory<GtpEvent, GtpTunnelState,
 
     @Override
     public FsmKey calculateKey(final ConnectionId connectionId, final Optional<GtpEvent> msg) {
+        // TODO: should probably create a different type of key for gtp-u v.s. gtp-c
         return ConnectionIdFsmKey.of(connectionId);
     }
 

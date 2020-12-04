@@ -64,6 +64,11 @@ public class GtpControlTunnelFsm {
     private static final void processRead(final GtpMessageReadEvent event, final GtpTunnelContext ctx, final GtpTunnelData data) {
         final var msg = event.getMessage();
 
+        if (msg.isGtpVersion1()) {
+            ctx.sendUpstream(event);
+            return;
+        }
+
         // TODO: need to change because currently Gtp2Request doesn't extent GtpRequest. Must have missed something.
         if (msg.isRequest()) {
             final var transaction = data.storeTransaction(msg.toGtp2Request(), false);
@@ -90,9 +95,10 @@ public class GtpControlTunnelFsm {
         // TODO: need to change because currently Gtp2Request doesn't extent GtpRequest. Must have missed something.
         final var msg = event.getMessage();
         if (msg.isRequest() && msg.isGtpVersion2()) {
-            final var transaction = data.storeTransaction(msg.toGtp2Request(), true);
+            final var transaction = data.storeTransaction(msg, true);
             event.getTransaction().ifPresent(transaction::setTransaction);
         }
+
         ctx.sendDownstream(event);
     }
 }

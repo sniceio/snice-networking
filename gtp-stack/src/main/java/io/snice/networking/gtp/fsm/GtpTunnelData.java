@@ -3,7 +3,6 @@ package io.snice.networking.gtp.fsm;
 import io.hektor.fsm.Data;
 import io.snice.buffer.Buffer;
 import io.snice.codecs.codec.gtp.GtpMessage;
-import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
 import io.snice.networking.gtp.conf.GtpConfig;
 
 import java.util.HashMap;
@@ -32,7 +31,14 @@ public class GtpTunnelData implements Data {
      * and handled by the FSM before this method is called. Hence, no additional check
      * is done here for that.
      */
-    public InternalTransaction storeTransaction(final Gtp2Request request, final boolean isClientTransaction) {
+    public InternalTransaction storeTransaction(final GtpMessage request, final boolean isClientTransaction) {
+
+        // Right now GTP-U is the only GTPv1 that is supported and it really
+        // won't have a seq number so bail out.
+        if (request.isGtpVersion1()) {
+            return null;
+        }
+
         final var header = request.toGtp2Request().getHeader();
         final var seqNo = header.getSequenceNo();
         final var internalTransaction = InternalTransaction.create(request, seqNo, isClientTransaction);

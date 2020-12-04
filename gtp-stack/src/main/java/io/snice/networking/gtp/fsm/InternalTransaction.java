@@ -2,8 +2,8 @@ package io.snice.networking.gtp.fsm;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
+import io.snice.codecs.codec.gtp.GtpMessage;
 import io.snice.codecs.codec.gtp.GtpRequest;
-import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
 import io.snice.networking.gtp.Transaction;
 
 import java.util.Optional;
@@ -21,7 +21,7 @@ public class InternalTransaction {
     /**
      * The request that created this transaction.
      */
-    private final Gtp2Request req;
+    private final GtpMessage req;
 
     /**
      * The actual identifier of this transaction, which is just the sequence number
@@ -47,7 +47,7 @@ public class InternalTransaction {
      */
     private Optional<Transaction> transaction = Optional.empty();
 
-    public static InternalTransaction create(final Gtp2Request req,
+    public static InternalTransaction create(final GtpMessage req,
                                              final Buffer transactionId,
                                              final boolean isClientTransaction) {
         assertNotNull(req, "The GTP request cannot be null");
@@ -55,7 +55,7 @@ public class InternalTransaction {
         return new InternalTransaction(req, transactionId, isClientTransaction);
     }
 
-    private InternalTransaction(final Gtp2Request req, final Buffer transactionId, final boolean isClientTransaction) {
+    private InternalTransaction(final GtpMessage req, final Buffer transactionId, final boolean isClientTransaction) {
         this.req = req;
         this.id = transactionId;
         this.isClientTransaction = isClientTransaction;

@@ -1,5 +1,6 @@
 package io.snice.networking.gtp.impl;
 
+import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
 import io.snice.networking.gtp.*;
@@ -10,15 +11,13 @@ import io.snice.networking.gtp.conf.UserPlaneConfig;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletionStage;
 
-import static io.snice.preconditions.PreConditions.assertNotNull;
-
 public class DefaultGtpEnvironment<C extends GtpAppConfig> implements GtpEnvironment<C> {
 
-    private final GtpStack<C> stack;
+    private final InternalGtpStack<C> stack;
     private final UserPlaneConfig userPlaneConfig;
     private final ControlPlaneConfig controlPlaneConfig;
 
-    public DefaultGtpEnvironment(final GtpStack<C> stack) {
+    public DefaultGtpEnvironment(final InternalGtpStack<C> stack) {
         this.stack = stack;
         this.userPlaneConfig = stack.getConfig().getConfig().getUserPlane();
         this.controlPlaneConfig = stack.getConfig().getConfig().getControlPlane();
@@ -37,6 +36,11 @@ public class DefaultGtpEnvironment<C extends GtpAppConfig> implements GtpEnviron
     @Override
     public CompletionStage<GtpUserTunnel> establishUserPlane(final InetSocketAddress remoteAddress) {
         return stack.establishUserPlane(remoteAddress);
+    }
+
+    @Override
+    public PdnSession.Builder<C> initiateNewPdnSession(final CreateSessionRequest createSessionRequest) {
+        return stack.initiateNewPdnSession(createSessionRequest);
     }
 
     @Override

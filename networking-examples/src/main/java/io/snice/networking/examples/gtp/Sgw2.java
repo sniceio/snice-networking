@@ -1,19 +1,21 @@
 package io.snice.networking.examples.gtp;
 
 
+import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
 import io.snice.codecs.codec.MccMnc;
 import io.snice.codecs.codec.gtp.Teid;
+import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
-import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Response;
-import io.snice.codecs.codec.gtp.gtpc.v2.messages.path.EchoRequest;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
-import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Recovery;
 import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Uli;
 import io.snice.codecs.codec.gtp.gtpc.v2.type.EcgiField;
 import io.snice.codecs.codec.gtp.gtpc.v2.type.RatType;
 import io.snice.codecs.codec.gtp.gtpc.v2.type.TaiField;
 import io.snice.codecs.codec.gtp.gtpc.v2.type.UliType;
+import io.snice.codecs.codec.internet.IpMessage;
+import io.snice.codecs.codec.internet.ipv4.IPv4Message;
+import io.snice.codecs.codec.transport.UdpMessage;
 import io.snice.networking.gtp.*;
 import io.snice.networking.gtp.event.GtpEvent;
 
@@ -32,13 +34,35 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
      * everything.
      */
     private final AtomicReference<GtpControlTunnel> tunnel = new AtomicReference<>();
+    private GtpEnvironment<GtpConfig> environment;
+
+    /**
+     * dns query for google.com. Grabbed from wireshark
+     */
+    final static Buffer dnsQuery = Buffer.of(
+            (byte) 0x5c, (byte) 0x79, (byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00,
+            (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x03, (byte) 0x77, (byte) 0x77, (byte) 0x77,
+            (byte) 0x06, (byte) 0x67, (byte) 0x6f, (byte) 0x6f, (byte) 0x67, (byte) 0x6c, (byte) 0x65, (byte) 0x03,
+            (byte) 0x63, (byte) 0x6f, (byte) 0x6d, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x01);
 
     @Override
     public void initialize(final GtpBootstrap<GtpConfig> bootstrap) {
         bootstrap.onConnection(c -> true).accept(b -> {
+            b.match(GtpEvent::isPdu).map(GtpEvent::toGtp1Message).consume(Sgw2::processPdu);
             b.match(GtpEvent::isCreateSessionResponse).map(GtpEvent::toGtp2Message).consume(Sgw2::processCreateSessionResponse);
             b.match(GtpEvent::isDeleteSessionResponse).map(GtpEvent::toGtp2Message).consume(Sgw2::processDeleteSessionResponse);
         });
+    }
+
+    private static void processPdu(final GtpTunnel tunnel, final Gtp1Message pdu) {
+
+        // TODO: some convenience methods for dealing with IP packets would be nice...
+        final var payload = pdu.getPayload().get();
+        final IPv4Message<Buffer> ipv4 = IpMessage.frame(payload).toIPv4();
+        final var udp = UdpMessage.frame(ipv4.getPayload());
+        final var content = udp.getPayload();
+
+        // now do something with the content.
     }
 
     private static void processCreateSessionResponse(final GtpTunnel tunnel, final Gtp2Message message) {
@@ -46,7 +70,7 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
     }
 
     private static void processDeleteSessionResponse(final GtpTunnel tunnel, final Gtp2Message message) {
-        // TODO - may also optionally in the future belong to a session...
+        // if we are running with Session support, this one will not be called.
     }
 
     // TODO: needs to move into a Uli convenience builder...
@@ -60,8 +84,14 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
 
     @Override
     public void run(final GtpConfig configuration, final GtpEnvironment<GtpConfig> environment) {
-        final var pgw = "3.81.248.57";
-        final var sgw = "107.20.226.156";
+        this.environment = environment;
+
+        // If the PGW is behind a NAT, make sure you grab the public address (duh)
+        final var pgw = "35.170.185.132";
+
+        // If you're behind a NAT, you want the NAT:ed address here. Otherwise, your
+        // local NIC is fine. All depends where the PGW is...
+        final var sgw = "52.202.165.16";
         final var imsi = "999994000000642";
         final var csr = CreateSessionRequest.create()
                 .withTeid(Teid.ZEROS)
@@ -92,43 +122,26 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
                 .doneBearerContext()
                 .build();
 
-        environment.establishControlPlane(pgw, 2123).thenAccept(c -> {
-            tunnel.set(c);
-            try {
-                c.createNewTransaction(csr)
-                        .onAnswer(this::sendDeleteSession)
-                        .withApplicationData("hello world data")
-                        .start();
-            } catch (final Throwable t) {
-                t.printStackTrace();
-            }
-        });
+        environment.initiateNewPdnSession(csr)
+                .withRemoteIPv4(pgw)
+                .start()
+                .thenAccept(session -> {
+                    // Note: kicking off a new thread because it is the same thread pool
+                    // as the underlying stack.
+                    final var t = new Thread(() -> {
+                        try {
+                            Thread.sleep(100);
+                            session.establishDefaultBearer().toCompletableFuture().get()
+                                    .send("8.8.8.8", 53, dnsQuery);
+                            Thread.sleep(4000);
+                            session.terminate();
+                        } catch (final Throwable e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    t.start();
+                });
     }
-
-    /**
-     * Just wait a little while, then kill the session again... and we'll do it from a different thread to
-     * allow other things to come in since currently (will change) it's the same thread pool that used for
-     * networking...
-     */
-    private void sendDeleteSession(final Transaction t, final Gtp2Response response) {
-        final var context = PdnSessionContext.of(t.getRequest().toCreateSessionRequest(), response);
-        final var thread = new Thread(() -> {
-            try {
-                Thread.sleep(4000);
-                final var delete = context.createDeleteSessionRequest();
-
-                // For "fun", not sending this one in a transaction...
-                // tunnel.get().createNewTransaction(delete).onAnswer((tr, r) -> System.err.println("Got the DSR back")).start();
-
-                tunnel.get().send(delete);
-            } catch (final Throwable e) {
-
-            }
-
-        });
-        thread.start();
-    }
-
 
     public static void main(final String... args) throws Exception {
         final var sgw = new Sgw2();

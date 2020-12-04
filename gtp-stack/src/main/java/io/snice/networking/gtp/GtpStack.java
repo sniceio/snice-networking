@@ -2,6 +2,7 @@ package io.snice.networking.gtp;
 
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
 import io.snice.codecs.codec.gtp.gtpc.v2.Impl.Gtp2MessageBuilder;
+import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
 import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
@@ -33,6 +34,8 @@ public interface GtpStack<C extends GtpAppConfig> extends ProtocolBundle<Connect
 
     CompletionStage<GtpUserTunnel> establishUserPlane(InetSocketAddress remoteAddress);
 
+    PdnSession.Builder<C> initiateNewPdnSession(final CreateSessionRequest createSessionRequest);
+
     /**
      * To create a new stack maintained 4G PDN Session, ask the {@link GtpStack} to initiate one.
      * The given {@link Gtp2Request} must be a Create Session Request but apart from that, no
@@ -43,6 +46,7 @@ public interface GtpStack<C extends GtpAppConfig> extends ProtocolBundle<Connect
      * @return a new {@link PdnSession.Builder} that allows you to register callbacks etc.
      */
     // PdnSession.Builder initiateNewPdnSession(Gtp2Request createSessionRequest);
+
 
     /**
      * To create a new stack maintained 4G PDN Session, ask the {@link GtpStack} to initiate one.

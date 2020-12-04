@@ -1,9 +1,9 @@
 package io.snice.networking.gtp;
 
+import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
 import io.snice.networking.app.Environment;
 import io.snice.networking.gtp.conf.GtpAppConfig;
 import io.snice.networking.gtp.event.GtpEvent;
-import io.snice.preconditions.PreConditions;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletionStage;
@@ -24,9 +24,12 @@ public interface GtpEnvironment<C extends GtpAppConfig> extends Environment<GtpT
 
     CompletionStage<GtpUserTunnel> establishUserPlane(final InetSocketAddress remoteAddress);
 
-    default CompletionStage<GtpUserTunnel> establishUserPlane(final String remoteHost, final int remoteIp ) {
+    default CompletionStage<GtpUserTunnel> establishUserPlane(final String remoteHost, final int remoteIp) {
         assertNotEmpty(remoteHost, "The remote host cannot be null or the empty string");
         return establishUserPlane(new InetSocketAddress(remoteHost, remoteIp));
     }
+
+    PdnSession.Builder<C> initiateNewPdnSession(final CreateSessionRequest createSessionRequest);
+
 
 }
