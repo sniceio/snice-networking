@@ -39,7 +39,7 @@
 
         <dependency>
             <groupId>io.snice.codecs</groupId>
-            <artifactId>codec-transport-layer</artifactId>
+            <artifactId>codec-layers-432</artifactId>
         </dependency>
 
         <dependency>

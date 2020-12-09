@@ -45,8 +45,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <snice-commons.version>0.1.6-SNAPSHOT</snice-commons.version>
-        <snice-codecs.version>0.0.3-SNAPSHOT</snice-codecs.version>
+        <snice-commons.version>0.1.6</snice-commons.version>
+        <snice-codecs.version>0.0.5</snice-codecs.version>
         <hektor.version>0.0.3</hektor.version>
         <netty.version>4.1.43.Final</netty.version>
         <logback.version>1.2.3</logback.version>
@@ -132,7 +132,7 @@
 
             <dependency>
                 <groupId>io.snice.codecs</groupId>
-                <artifactId>codec-gtp</artifactId>
+                <artifactId>codec-layers-432</artifactId>
                 <version>${snice-codecs.version}</version>
                 <type>jar</type>
                 <scope>compile</scope>
@@ -140,7 +140,7 @@
 
             <dependency>
                 <groupId>io.snice.codecs</groupId>
-                <artifactId>codec-transport-layer</artifactId>
+                <artifactId>codec-gtp</artifactId>
                 <version>${snice-codecs.version}</version>
                 <type>jar</type>
                 <scope>compile</scope>

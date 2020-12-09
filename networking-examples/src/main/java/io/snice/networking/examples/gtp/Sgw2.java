@@ -67,6 +67,9 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
 
     private static void processCreateSessionResponse(final GtpTunnel tunnel, final Gtp2Message message) {
         // actually, now with Transaction support, we don't "go" this way anymore...
+        final var response = message.toGtp2Message().toCreateSessionRequest().createResponse()
+                .withImsi("asdf").build();
+        tunnel.send(response);
     }
 
     private static void processDeleteSessionResponse(final GtpTunnel tunnel, final Gtp2Message message) {
@@ -87,12 +90,13 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
         this.environment = environment;
 
         // If the PGW is behind a NAT, make sure you grab the public address (duh)
-        final var pgw = "35.170.185.132";
+        final var pgw = "52.90.72.87";
 
         // If you're behind a NAT, you want the NAT:ed address here. Otherwise, your
         // local NIC is fine. All depends where the PGW is...
-        final var sgw = "52.202.165.16";
+        final var sgw = "107.20.226.156";
         final var imsi = "999994000000642";
+
         final var csr = CreateSessionRequest.create()
                 .withTeid(Teid.ZEROS)
                 .withRat(RatType.EUTRAN)
@@ -131,8 +135,9 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
                     final var t = new Thread(() -> {
                         try {
                             Thread.sleep(100);
-                            session.establishDefaultBearer().toCompletableFuture().get()
-                                    .send("8.8.8.8", 53, dnsQuery);
+                            final var bearer = session.establishDefaultBearer().toCompletableFuture().get();
+                            // bearer.send("165.227.89.76", 52483, "hello world");
+                            bearer.send("8.8.8.8", 53, dnsQuery);
                             Thread.sleep(4000);
                             session.terminate();
                         } catch (final Throwable e) {

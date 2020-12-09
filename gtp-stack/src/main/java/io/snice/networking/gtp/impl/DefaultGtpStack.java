@@ -2,6 +2,7 @@ package io.snice.networking.gtp.impl;
 
 import com.fasterxml.jackson.databind.Module;
 import io.snice.buffer.Buffer;
+import io.snice.buffer.Buffers;
 import io.snice.codecs.codec.gtp.GtpMessage;
 import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1MessageType;
 import io.snice.codecs.codec.gtp.gtpc.v1.impl.ImmutableGtp1Message;
@@ -409,7 +410,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
             final var localPort = 7893;
             final var remoteBearer = ctx.getDefaultRemoteBearer();
             System.err.println("The IP Address in the remote bearer is: " + remoteBearer.getIPv4AddressAsString().get());
-            final var pgw = "35.170.185.132";
+            final var pgw = "52.90.72.87"; // TODO: have to fix this NAT issue.
             final var remote = new InetSocketAddress(pgw, defaultGtpuPort);
             return establishUserPlane(remote).thenApply(tunnel ->
                     // TODO: need to save it away too...
@@ -449,7 +450,13 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
                     .build();
             tunnel.send(gtpU);
         }
+
+        @Override
+        public void send(final String remoteAddress, final int remotePort, final String data) {
+            send(remoteAddress, remotePort, Buffers.wrap(data));
+        }
     }
+
 
     private static class PdnSessionInitialTransactionHolder {
         private final GtpControlTunnel tunnel;

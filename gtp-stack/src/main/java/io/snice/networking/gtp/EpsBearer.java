@@ -6,4 +6,6 @@ public interface EpsBearer {
 
     void send(String remoteAddress, int remotePort, Buffer data);
 
+    void send(String remoteAddress, int remotePort, String data);
+
 }
