@@ -1,16 +1,10 @@
 package io.snice.networking.gtp.impl;
 
 import com.fasterxml.jackson.databind.Module;
-import io.snice.buffer.Buffer;
-import io.snice.buffer.Buffers;
 import io.snice.codecs.codec.gtp.GtpMessage;
-import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1MessageType;
-import io.snice.codecs.codec.gtp.gtpc.v1.impl.ImmutableGtp1Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Response;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
-import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Paa;
-import io.snice.codecs.codec.transport.UdpMessage;
 import io.snice.net.IPv4;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.app.Environment;
@@ -399,7 +393,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
 
         @Override
         public void terminate() {
-            tunnel.createNewTransaction(ctx.createDeleteSessionRequest())
+            tunnel.createNewTransaction(ctx.createDeleteSessionRequest().build().toGtp2Request())
                     .withApplicationData(this)
                     .onAnswer(DefaultGtpStack.this::processPdnSessionTerminatedResponse)
                     .start();
@@ -414,48 +408,11 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
             final var remote = new InetSocketAddress(pgw, defaultGtpuPort);
             return establishUserPlane(remote).thenApply(tunnel ->
                     // TODO: need to save it away too...
-                    new DefaultEpsBearer(tunnel, ctx.getPaa(), ctx.getDefaultLocalBearer(), remoteBearer, localPort)
+                    DefaultEpsBearer.create(tunnel, ctx, localPort)
             );
         }
     }
 
-    private static class DefaultEpsBearer implements EpsBearer {
-        private final GtpUserTunnel tunnel;
-        private final Paa paa;
-        private final Bearer localBearer;
-        private final Bearer remoteBearer;
-        private final int defaultLocalPort;
-
-        private DefaultEpsBearer(final GtpUserTunnel tunnel, final Paa paa, final Bearer localBearer, final Bearer remoteBearer, final int defaultLocalPort) {
-            this.tunnel = tunnel;
-            this.paa = paa;
-            this.localBearer = localBearer;
-            this.remoteBearer = remoteBearer;
-            this.defaultLocalPort = defaultLocalPort;
-        }
-
-        @Override
-        public void send(final String remoteAddress, final int remotePort, final Buffer data) {
-            final var ipv4 = UdpMessage.createUdpIPv4(data)
-                    .withDestinationPort(remotePort)
-                    .withSourcePort(defaultLocalPort)
-                    .withTTL(64)
-                    .withDestinationIp(remoteAddress)
-                    .withSourceIp(paa.getValue().getIPv4Address().get())
-                    .build();
-
-            final var gtpU = ImmutableGtp1Message.create(Gtp1MessageType.G_PDU)
-                    .withTeid(remoteBearer.getTeid())
-                    .withPayload(ipv4.getBuffer())
-                    .build();
-            tunnel.send(gtpU);
-        }
-
-        @Override
-        public void send(final String remoteAddress, final int remotePort, final String data) {
-            send(remoteAddress, remotePort, Buffers.wrap(data));
-        }
-    }
 
 
     private static class PdnSessionInitialTransactionHolder {

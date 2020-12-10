@@ -1,8 +1,9 @@
 package io.snice.networking.gtp;
 
 import io.snice.codecs.codec.gtp.Teid;
-import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
+import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Response;
+import io.snice.codecs.codec.gtp.gtpc.v2.Impl.Gtp2MessageBuilder;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
 import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Paa;
 import io.snice.networking.gtp.impl.DefaultPdnSessionContext;
@@ -50,9 +51,10 @@ public interface PdnSessionContext {
     /**
      * Convenience method for creating a Delete Session Request based on this context, which means we will pull out
      * the correct remote TEID, set the EBI etc.
+     *
      * @return a delete session request that can be used to delete this pdn session.
      */
-    Gtp2Request createDeleteSessionRequest();
+    Gtp2MessageBuilder<Gtp2Message> createDeleteSessionRequest();
 
     /**
      * The Create Session Response, which either established the

@@ -3,8 +3,8 @@ package io.snice.networking.gtp.impl;
 import io.snice.codecs.codec.gtp.Teid;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2MessageType;
-import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Response;
+import io.snice.codecs.codec.gtp.gtpc.v2.Impl.Gtp2MessageBuilder;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
 import io.snice.codecs.codec.gtp.gtpc.v2.tliv.BearerContext;
 import io.snice.codecs.codec.gtp.gtpc.v2.tliv.FTeid;
@@ -72,7 +72,7 @@ public class DefaultPdnSessionContext implements PdnSessionContext {
     }
 
     @Override
-    public Gtp2Request createDeleteSessionRequest() {
+    public Gtp2MessageBuilder<Gtp2Message> createDeleteSessionRequest() {
         final var ebiMaybe = defaultRemoteBearer.getEbi();
 
         final var builder = Gtp2Message.create(Gtp2MessageType.DELETE_SESSION_REQUEST)
@@ -80,7 +80,7 @@ public class DefaultPdnSessionContext implements PdnSessionContext {
                 .withRandomSeqNo();
         ebiMaybe.ifPresent(builder::withTliv);
 
-        return builder.build().toGtp2Request();
+        return builder;
     }
 
     @Override
