@@ -42,13 +42,18 @@ public class GtpTunnelData implements Data {
         final var header = request.toGtp2Request().getHeader();
         final var seqNo = header.getSequenceNo();
         final var internalTransaction = InternalTransaction.create(request, seqNo, isClientTransaction);
+        // System.err.println("Storing Transaction: " + internalTransaction);
         transactions.put(seqNo, internalTransaction);
         return internalTransaction;
     }
 
     public InternalTransaction removeTransaction(final GtpMessage msg) {
         if (msg.isGtpVersion2()) {
-            return transactions.remove(msg.toGtp2Message().getHeader().getSequenceNo());
+            final var seqNo = msg.toGtp2Message().getHeader().getSequenceNo();
+            // System.err.println("Attempting to remove: " + seqNo.dumpAsHex().strip());
+            final var transaction = transactions.remove(seqNo);
+            // System.err.println("Removing Transaction: " + transaction);
+            return transaction;
         }
         throw new RuntimeException("No GTPv1 Support right now");
     }

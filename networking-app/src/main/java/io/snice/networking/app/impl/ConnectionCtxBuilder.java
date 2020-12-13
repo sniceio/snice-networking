@@ -19,6 +19,7 @@ public class ConnectionCtxBuilder<K extends Connection<T>, T, R> implements Conn
     private final Predicate<ConnectionId> condition;
     private Function<K, T> dropFunction;
     private Consumer<ConnectionContext.ConfigurationBuilder<K, T, R>> confBuilderConsumer;
+    private Consumer<K> saveFunction;
 
     ConnectionCtxBuilder(final Predicate<ConnectionId> condition) {
         this.condition = condition;
@@ -37,7 +38,7 @@ public class ConnectionCtxBuilder<K extends Connection<T>, T, R> implements Conn
             eventRules = List.of();
         }
 
-        return new DefaultConnectionContext<K, T>(condition, dropFunction, rules, eventRules);
+        return new DefaultConnectionContext<K, T>(condition, saveFunction, dropFunction, rules, eventRules);
     }
 
     @Override
@@ -51,6 +52,13 @@ public class ConnectionCtxBuilder<K extends Connection<T>, T, R> implements Conn
     @Override
     public void drop() {
         drop(c -> null);
+    }
+
+    @Override
+    public ConnectionContext.Builder<K, T, R> save(final Consumer<K> f) {
+        assertNotNull(f, "The function cannot be null");
+        this.saveFunction = f;
+        return this;
     }
 
     @Override

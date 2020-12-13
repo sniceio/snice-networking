@@ -8,6 +8,7 @@ import io.snice.codecs.codec.gtp.Teid;
 import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
+import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Cause;
 import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Uli;
 import io.snice.codecs.codec.gtp.gtpc.v2.type.EcgiField;
 import io.snice.codecs.codec.gtp.gtpc.v2.type.RatType;

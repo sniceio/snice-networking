@@ -61,7 +61,8 @@ public abstract class DiameterApplication<C extends DiameterAppConfig> extends N
                 b.drop(rule.getDropFunction().get());
             } else {
                 b.accept(builder -> {
-                    builder.match(e -> true).consume((peer, event) -> processEvent(rule, peer, event));
+                    builder.match(e -> true)
+                            .consume((peer, event) -> processEvent(rule, peer, event));
                 });
             }
         });

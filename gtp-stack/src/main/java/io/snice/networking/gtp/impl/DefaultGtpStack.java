@@ -42,6 +42,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
@@ -64,8 +65,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
     private UserPlaneConfig userPlaneConfig;
     private ControlPlaneConfig controlPlaneConfig;
 
-    private ConcurrentMap<ConnectionId, Connection<GtpEvent>> controlPlaneConnections;
-    private ConcurrentMap<ConnectionId, Connection<GtpEvent>> userPlaneConnections;
+    private ConcurrentMap<ConnectionId, Connection<GtpEvent>> tunnels;
 
     public DefaultGtpStack() {
         final var udpEncoder = ProtocolHandler.of("gtp-codec-encoder")
@@ -92,10 +92,9 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
         sessionFactory = new GtpSessionFsmFactory(config, clock);
 
         userPlaneConfig = config.getConfig().getUserPlane();
-        userPlaneConnections = new ConcurrentHashMap<>(); // TODO: make the default size configurable
-
         controlPlaneConfig = config.getConfig().getControlPlane();
-        controlPlaneConnections = new ConcurrentHashMap<>(); // TODO: make the default size configurable
+
+        tunnels = new ConcurrentHashMap<>(); // TODO: make the default size configurable
     }
 
     /**
@@ -111,11 +110,17 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
             if (rule.isDrop()) {
                 b.drop(rule.getDropFunction().get());
             } else {
+                final var saveFunction = rule.getSaveAction();
+                b.save(tunnel -> saveInboundConnection(tunnel, saveFunction));
                 b.accept(builder -> {
                     builder.match(e -> true).consume((peer, event) -> processEvent(rule, peer, event));
                 });
             }
         });
+    }
+
+    private void saveInboundConnection(final Connection<GtpEvent> connection, final Optional<Consumer<GtpTunnel>> userSaveFunction) {
+        System.err.println("Saving the inbound connection");
     }
 
     private void processEvent(final ConnectionContext<GtpTunnel, GtpEvent> ctx, final GtpTunnel tunnel, final GtpEvent event) {
@@ -190,9 +195,12 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
 
     @Override
     public Connection<GtpEvent> wrapConnection(final Connection<GtpEvent> connection) {
-        // TODO: may actually be either Control or User Plane. We need to match this
-        // against which NIC it comes over.
-        return DefaultGtpControlTunnel.of(connection.id(), this);
+        // Note: you cannot SAVE this connection for future use, ever!
+        // The reason is that the underlying network layer needs to be in control and will
+        // typically for incoming messages wrap a fake connection so it buffers up all
+        // messages that are to be processed after the invocation of the application
+        // returns...
+        return DirectGtpControlTunnel.of(connection, this);
     }
 
     @Override
@@ -236,14 +244,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
     }
 
     private Connection<GtpEvent> findConnection(final GtpMessage msg, final ConnectionId id) {
-        // TODO: split the two tunnels. Already started to split with the InternalGtpXxxTunnel etc so make use of it...
-        //
-        // TODO: not entirely correct but since we haven't implemented GTPv1 right now other than GTP-U it is correct for now.
-        // Also, perhaps we should just put everything in one map and then a thin wrapper class/holder that
-        // tells us if this is a GTP-U or GTP-C tunnel. And perhaps the version even though that is not really
-        // something that is currently exposed as far as indicating what the tunnel will be used for (GTPv1 v.s. GTPv2 over the
-        // control tunnel).
-        final var connection = msg.isGtpVersion2() ? controlPlaneConnections.get(id) : userPlaneConnections.get(id);
+        final var connection = tunnels.get(id);
         if (connection == null) {
             throw new IllegalArgumentException("There is no existing connection for " + id);
         }
@@ -268,7 +269,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
                         "interface exists"));
         final var gtpStack = this;
         return nic.connect(Transport.udp, remoteAddress).thenApply(c -> {
-            controlPlaneConnections.put(c.id(), c);
+            tunnels.put(c.id(), c);
             return DefaultGtpControlTunnel.of(c.id(), gtpStack);
         });
     }
@@ -285,7 +286,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
                         "interface exists"));
         final var gtpStack = this;
         return nic.connect(Transport.udp, remoteAddress).thenApply(c -> {
-            userPlaneConnections.put(c.id(), c);
+            tunnels.put(c.id(), c);
             return DefaultGtpUserTunnel.of(c.id(), gtpStack);
         });
     }

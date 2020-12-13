@@ -53,4 +53,11 @@ public interface NetworkBootstrap<K extends Connection<T>, T, C extends NetworkA
      */
     ConnectionContext.Builder<K, T, T> onConnection(Predicate<ConnectionId> condition);
 
+    /**
+     *
+     * @param connection
+     * @return
+     */
+    // NetworkBootstrap<K, T, C> onAcceptedInboundConnection(Consumer<K> connection);
+
 }

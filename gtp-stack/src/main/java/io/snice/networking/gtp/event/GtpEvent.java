@@ -5,6 +5,9 @@ import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1Message;
 import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1MessageType;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2MessageType;
+import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
+import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
+import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.DeleteSessionRequest;
 
 public interface GtpEvent {
 
@@ -42,6 +45,18 @@ public interface GtpEvent {
 
     default Gtp2Message toGtp2Message() {
         return getMessage().toGtp2Message();
+    }
+
+    default Gtp2Request toGtp2Request() {
+        return getMessage().toGtp2Request();
+    }
+
+    default CreateSessionRequest toCreateSessionRequest() {
+        return getMessage().toCreateSessionRequest();
+    }
+
+    default DeleteSessionRequest toDeleteSessionRequest() {
+        return getMessage().toDeleteSessionRequest();
     }
 
     default boolean isPdu() {

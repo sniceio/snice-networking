@@ -1,0 +1,21 @@
+networkInterfaces:
+  # the name of the nic will be used by the GTP config options
+  - name: gtpc
+    listen: gtp://127.0.0.1:2123
+    transport: udp
+    # vip address is currently not really supported so will have zero effect if you set it.
+    # vipAddress: 52.202.165.16
+
+gtp:
+  userPlane:
+    enable: false # we are not proxying GTP-U so turn it off.
+
+  controlPlane:
+    enable: true
+    nic: gtpc
+
+# Very simple configuration for this proxy. Normally you probably want this
+# proxy to be able to dynamically find e.g. PGWs downstream of it but for
+# this sample app, we will just have a static configured address
+proxyToAddress: 127.0.0.1
+proxyToPort: 3123

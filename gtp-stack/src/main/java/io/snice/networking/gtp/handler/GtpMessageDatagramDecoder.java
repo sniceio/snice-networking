@@ -26,6 +26,7 @@ public class GtpMessageDatagramDecoder extends MessageToMessageDecoder<DatagramP
 
     @Override
     protected void decode(final ChannelHandlerContext ctx, final DatagramPacket udp, final List<Object> list) throws Exception {
+        final long arrivalTime = clock.getCurrentTimeMillis();
         final var content = udp.content();
 
         final byte[] b = new byte[content.readableBytes()];
@@ -35,6 +36,6 @@ public class GtpMessageDatagramDecoder extends MessageToMessageDecoder<DatagramP
         final var msg = GtpMessage.frame(buffer);
         final var connection = new UdpConnection<GtpEvent>(ctx.channel(), udp.sender(), vipAddress);
         final var evt = GtpMessageReadEvent.of(msg, connection);
-        list.add(UdpReadEvent.create(ctx, udp, evt));
+        list.add(UdpReadEvent.create(ctx, udp, evt, arrivalTime));
     }
 }

@@ -25,7 +25,12 @@ public class EchoServer extends BasicNetworkApplication<String, NetworkAppConfig
 
     @Override
     public void initialize(final NetworkBootstrap<Connection<String>, String, NetworkAppConfig> bootstrap) {
-        bootstrap.onConnection(con -> true).accept(builder -> {
+        bootstrap.onConnection(con -> true).save(c -> {
+            // save the connection if we want to re-use the same one
+            // without having to ask to it to be re-established (note: under the hood, it may still
+            // be around and re-used but from an application point-of-view, you would have to "fetch" it again
+            // by asking to have it re-established)
+        }).accept(builder -> {
             builder.match(s -> s.startsWith("hello")).consume((connection, str) -> connection.send("hello world!\n"));
             builder.match(s -> true).map(String::strip).consume((c, str) -> c.send(str));
         });

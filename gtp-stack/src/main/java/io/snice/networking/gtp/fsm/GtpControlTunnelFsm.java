@@ -26,7 +26,7 @@ public class GtpControlTunnelFsm {
         final var open = builder.withState(OPEN);
         final var terminated = builder.withFinalState(TERMINATED);
 
-        closed.transitionTo(SYNC).onEvent(ConnectionActiveIOEvent.class).withGuard(ConnectionActiveIOEvent::isOutboundConnection);
+        closed.transitionTo(SYNC).onEvent(ConnectionActiveIOEvent.class);
         sync.transitionTo(OPEN).onEvent(ConnectionAttemptCompletedIOEvent.class).withAction(GtpControlTunnelFsm::processConnectionCompleted);
         open.transitionTo(OPEN).onEvent(GtpMessageReadEvent.class).withGuard(GtpMessageReadEvent::isEchoRequest).withAction(GtpControlTunnelFsm::processEchoRequest);
         open.transitionTo(OPEN).onEvent(GtpMessageReadEvent.class).withAction(GtpControlTunnelFsm::processRead);
@@ -94,9 +94,16 @@ public class GtpControlTunnelFsm {
     private static final void processWrite(final GtpMessageWriteEvent event, final GtpTunnelContext ctx, final GtpTunnelData data) {
         // TODO: need to change because currently Gtp2Request doesn't extent GtpRequest. Must have missed something.
         final var msg = event.getMessage();
-        if (msg.isRequest() && msg.isGtpVersion2()) {
-            final var transaction = data.storeTransaction(msg, true);
-            event.getTransaction().ifPresent(transaction::setTransaction);
+        if (msg.isGtpVersion2()) {
+            if (msg.isRequest()) {
+                final var transaction = data.storeTransaction(msg, true);
+                event.getTransaction().ifPresent(transaction::setTransaction);
+            } else {
+                final var transaction = data.removeTransaction(msg);
+                if (transaction == null) {
+                    logger.warn("Odd, got a GTPv2 response that didn't match a transaction");
+                }
+            }
         }
 
         ctx.sendDownstream(event);
