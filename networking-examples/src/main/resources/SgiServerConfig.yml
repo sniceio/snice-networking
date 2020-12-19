@@ -1,0 +1,5 @@
+
+networkInterfaces:
+  - name: default
+    listen: udp://0.0.0.0:7788
+    transport: udp

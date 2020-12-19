@@ -42,6 +42,6 @@ public class EchoClient extends BasicNetworkApplication<String, EchoClientConfig
     }
 
     public static void main(final String... args) throws Exception {
-        new EchoClient().run(args);
+        new EchoClient().run("EchoClientConfig.yml");
     }
 }

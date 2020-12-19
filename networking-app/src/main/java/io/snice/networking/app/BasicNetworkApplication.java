@@ -10,4 +10,8 @@ public abstract class BasicNetworkApplication<T, C extends NetworkAppConfig> ext
         super((ProtocolBundle<Connection<T>, T, C>) ProtocolBundleRegistry.getDefaultRegistry().find(type)
                 .orElseThrow(() -> new IllegalArgumentException("Unable to find an appropriate app bundle for type " + type)));
     }
+
+    public BasicNetworkApplication(final ProtocolBundle<Connection<T>, T, C> bundle) {
+        super(bundle);
+    }
 }

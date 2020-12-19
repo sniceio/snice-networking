@@ -71,23 +71,23 @@
     <dependencyManagement>
         <dependencies>
 
-        <dependency>
-            <groupId>net.sourceforge.argparse4j</groupId>
-            <artifactId>argparse4j</artifactId>
-            <version>${argparse.version}</version>
-            <scope>compile</scope>
+            <dependency>
+                <groupId>net.sourceforge.argparse4j</groupId>
+                <artifactId>argparse4j</artifactId>
+                <version>${argparse.version}</version>
+                <scope>compile</scope>
                 <type>jar</type>
-        </dependency>
+            </dependency>
 
-        <!-- For rendering liquid template -->
+            <!-- For rendering liquid template -->
 
-        <dependency>
-            <groupId>nl.big-o</groupId>
-            <artifactId>liqp</artifactId>
-            <version>${liqp.version}</version>
-            <scope>compile</scope>
+            <dependency>
+                <groupId>nl.big-o</groupId>
+                <artifactId>liqp</artifactId>
+                <version>${liqp.version}</version>
+                <scope>compile</scope>
                 <type>jar</type>
-        </dependency>
+            </dependency>
 
 
             <dependency>

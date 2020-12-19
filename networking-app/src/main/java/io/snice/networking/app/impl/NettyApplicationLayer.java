@@ -67,6 +67,7 @@ public class NettyApplicationLayer<K extends Connection<T>, T, C extends Network
                 invokeApplicationForEvent(appEvent.getApplicationEvent(), ctx, channelContext.getConnectionContext());
             } else if (ioEvent.isConnectionActiveIOEvent()) {
                 // Not sure we need to do anything here... so for now, not doing anything...
+                logger.info("Connection is now active " + ioEvent.channelContext().getConnectionId());
             } else {
                 // TODO: log warn with an AlertCode etc...
                 logger.warn("Unhandled IOEvent " + ioEvent);
@@ -98,7 +99,10 @@ public class NettyApplicationLayer<K extends Connection<T>, T, C extends Network
     private void processConnectionEstablished(final ConnectionAttemptCompletedIOEvent<T> evt) {
         final var future = evt.getUserFuture();
         if (future != null) {
-            evt.getConnection().ifPresent(future::complete);
+            evt.getConnection().ifPresent(c -> {
+                final var specializedConnection = bundle.wrapConnection(c);
+                future.complete(specializedConnection);
+            });
             evt.getCause().ifPresent(future::completeExceptionally);
         } else {
             final var internalCtxt = (InternalChannelContext<T>) evt.channelContext();

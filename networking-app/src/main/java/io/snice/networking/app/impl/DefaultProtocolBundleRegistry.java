@@ -1,9 +1,11 @@
 package io.snice.networking.app.impl;
 
+import io.snice.buffer.Buffer;
 import io.snice.networking.app.NetworkAppConfig;
 import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.bundles.ProtocolBundleRegistry;
 import io.snice.networking.bundles.StringBundle;
+import io.snice.networking.bundles.buffer.BufferBundle;
 import io.snice.networking.common.Connection;
 
 import java.util.HashMap;
@@ -24,6 +26,7 @@ public class DefaultProtocolBundleRegistry implements ProtocolBundleRegistry {
 
     static {
         DEFAULT_REGISTRY.registerBundle(new StringBundle(), String.class, "str");
+        DEFAULT_REGISTRY.registerBundle(new BufferBundle(), Buffer.class, "buffer");
     }
 
     public static ProtocolBundleRegistry getDefaultRegistry() {

@@ -103,16 +103,26 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
         final var udp = (UdpReadEvent<T>) msg;
         final var remote = udp.getRaw().sender();
 
-        // TODO: if this is an IPv6 address, it'll blow up...
-        final var id = ConnectionId.create(Transport.udp, udp.getRaw().recipient(), remote);
-
-        // TODO: store away the connection instead so we don't have to find the
-        // context on every incoming packet! See SNICE-28
-        final var channelContext = ensureContext(ctx, id, null, udp.getArrivalTime());
 
         try {
+
+            final var id = ConnectionId.create(Transport.udp, udp.getRaw().recipient(), remote);
+            final var channelContext = ensureContext(ctx, id, null, udp.getArrivalTime());
+
+            // null context if e.g. the user has decided to drop the connection.
+            // TODO: if the user has a function to run on the drop, it isn't being executed right tnow...
+            // TODO: should return an object instead so it is more obvious
+            if (channelContext == null) {
+                return;
+            }
+
             final var evt = MessageIOEvent.create(channelContext, clock.getCurrentTimeMillis(), udp.getMessage());
             ctx.fireChannelRead(evt);
+        } catch (final ArrayIndexOutOfBoundsException e) {
+            // TODO: because the ConnectionId.create assumes it's an IPv4 address.
+            throw new RuntimeException("Sorry, currently the internal ConnectionId assumes everything is IPv4 and as such " +
+                    "this isn't working. Please restart your application with the JVM argument " +
+                    "\"-Djava.net.preferIPv4Stack=true\" and it'll be fine");
         } catch (final ClassCastException e) {
             // TODO: this means that the underlying decoder isn't doing it's job...
             e.printStackTrace();
@@ -136,31 +146,46 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
                                             final CompletableFuture<Connection<T>> connectionFuture,
                                             final long arrivalTime) {
         return channels.computeIfAbsent(id, cId -> {
+
+            // if we do not have a connection future then this connection was NOT initiated by
+            // the application and as such, this is an "inbound" connection, as opposed to an "outbound"
+            final boolean isInbound = connectionFuture == null;
+
             final var connCtx = findContext(id);
-            if (connCtx.isDrop()) {
+            // only drop if this is an inbound connection attempt. For outbound, the user
+            // obviously requested it so we need to let it through.
+            if (isInbound && connCtx.isDrop()) {
                 ctx.close();
                 // Dead adapter so we stop other attempts?
                 return null;
             }
 
-            final var udpConnection = new UdpConnection(ctx.channel(), id, vipAddress);
-            final var cCtx = new DefaultChannelContext<T>(udpConnection, connCtx);
+            try {
 
-            // TODO: need to re-work.
-            // These events are being fired to maintain the same contract as with
-            // connection oriented protocols, such as TCP and SCTP. However, the below
-            // approach is "dangerous" in that it takes place within the lock of
-            // the concurrent hash map and as such, if the user holds onto anything
-            // it has the potential of blocking network traffic.
-            final var connectionActiveIOEvent = ConnectionActiveIOEvent.create(cCtx, true, arrivalTime);
-            ctx.fireUserEventTriggered(connectionActiveIOEvent);
+                final var udpConnection = new UdpConnection(ctx.channel(), id, vipAddress);
+                final var cCtx = new DefaultChannelContext<T>(udpConnection, connCtx);
 
-            // Note that for this inbound UDP "connection", there is no future waiting to be completed since
-            // this is not a connection the user initiated. However, the user may have specified a
-            // "save" function, which will be called by the NettyApplicationLayer in order to invoke the app.
-            final var e = ConnectionAttemptCompletedIOEvent.create(cCtx, connectionFuture, udpConnection, arrivalTime);
-            ctx.fireUserEventTriggered(e);
-            return cCtx;
+                // TODO: need to re-work.
+                // These events are being fired to maintain the same contract as with
+                // connection oriented protocols, such as TCP and SCTP. However, the below
+                // approach is "dangerous" in that it takes place within the lock of
+                // the concurrent hash map and as such, if the user holds onto anything
+                // it has the potential of blocking network traffic.
+                //
+
+                final var connectionActiveIOEvent = ConnectionActiveIOEvent.create(cCtx, isInbound, arrivalTime);
+                ctx.fireUserEventTriggered(connectionActiveIOEvent);
+
+                // Note that for this inbound UDP "connection", there is no future waiting to be completed since
+                // this is not a connection the user initiated. However, the user may have specified a
+                // "save" function, which will be called by the NettyApplicationLayer in order to invoke the app.
+                final var e = ConnectionAttemptCompletedIOEvent.create(cCtx, connectionFuture, udpConnection, arrivalTime);
+                ctx.fireUserEventTriggered(e);
+                return cCtx;
+            } catch (final Throwable th) {
+                th.printStackTrace();
+                throw th;
+            }
         });
     }
 
@@ -220,22 +245,7 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
         // Also, if we did that then we would also be able to keep track of inbound "connections"
         final var connection = evt.getConnection();
         final var id = connection.id();
-        // final var connectionContext = findContext(connection.id());
-
         ensureContext(ctx, id, evt.getUserConnectionFuture(), evt.getArrivalTime());
-
-        /*
-        final var channelContext = new DefaultChannelContext<T>(connection, connectionContext);
-
-        final var isInboundConnection = evt.getUserConnectionFuture() == null;
-        System.err.println("ProcessConnectionAttemptCompleted. IsInbound: " + isInboundConnection + " Thread: " + Thread.currentThread());
-        final var connectionActiveIOEvent = ConnectionActiveIOEvent.create(channelContext, isInboundConnection, evt.getArrivalTime());
-        ctx.fireUserEventTriggered(connectionActiveIOEvent);
-
-        final var e = ConnectionAttemptCompletedIOEvent.create(channelContext, evt.getUserConnectionFuture(), connection, evt.getArrivalTime());
-        ctx.fireUserEventTriggered(e);
-
-         */
     }
 
     @Override

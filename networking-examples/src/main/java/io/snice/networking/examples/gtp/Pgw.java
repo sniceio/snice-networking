@@ -6,9 +6,12 @@ import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.DeleteSessionRequest;
+import io.snice.codecs.codec.internet.IpMessage;
+import io.snice.codecs.codec.transport.UdpMessage;
 import io.snice.networking.gtp.*;
 import io.snice.networking.gtp.event.GtpEvent;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -23,6 +26,12 @@ public class Pgw extends GtpApplication<GtpConfig> {
      */
     private final AtomicReference<GtpControlTunnel> tunnel = new AtomicReference<>();
     private GtpEnvironment<GtpConfig> environment;
+
+    private final Sgi sgi;
+
+    public Pgw(final Sgi sgi) {
+        this.sgi = sgi;
+    }
 
     /**
      * dns query for google.com. Grabbed from wireshark
@@ -51,10 +60,34 @@ public class Pgw extends GtpApplication<GtpConfig> {
      * @param pdu
      */
     private static void processPdu(final GtpTunnel tunnel, final Gtp1Message pdu) {
+        System.err.println("Processing PDU");
+        final var payload = pdu.getPayload().get();
+        final var ipv4 = IpMessage.frame(payload).toIPv4();
+        final var udp = UdpMessage.frame(ipv4.getPayload());
+        final var address = new InetSocketAddress(ipv4.getDestinationIpAsString(), udp.getDestinationPort());
+        System.err.println("Sending to: " + address);
     }
 
     private static void processCreateSessionRequest(final GtpTunnel tunnel, final CreateSessionRequest request) {
-        final var response = request.createResponse().build();
+        final var response = request.createResponse()
+                .withIPv4PdnAddressAllocation("20.30.40.50")
+                .withNewSenderControlPlaneFTeid()
+                .withRandomizedTeid()
+                .withIPv4Address("127.0.0.1")
+                .doneFTeid()
+                .withNewBearerContext()
+                .withEpsBearerId(5)
+                .withNewSgwFTeid()
+                .withRandomizedTeid()
+                .withIPv4Address("127.0.0.1")
+                .doneFTeid()
+                .withNewBearerQualityOfService(9)
+                .withPriorityLevel(10)
+                .withPci()
+                .doneBearerQoS()
+                .doneBearerContext()
+                .build();
+
         tunnel.send(response);
     }
 
@@ -81,8 +114,9 @@ public class Pgw extends GtpApplication<GtpConfig> {
     }
 
     public static void main(final String... args) throws Exception {
-        final var pgw = new Pgw();
-
+        final var sgi = new Sgi();
+        final var pgw = new Pgw(sgi);
+        sgi.run("SgiServerConfig.yml");
         pgw.run("server", "networking-examples/src/main/resources/io/snice/networking/examples/pgw.yml");
 
         // run with this example config if you are running this PGW behind the proxy example

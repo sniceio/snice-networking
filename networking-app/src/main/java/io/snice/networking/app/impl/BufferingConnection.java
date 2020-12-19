@@ -111,6 +111,5 @@ public class BufferingConnection<T> implements Connection<T> {
 
     @Override
     public void close() {
-        System.err.println("Closing");
     }
 }

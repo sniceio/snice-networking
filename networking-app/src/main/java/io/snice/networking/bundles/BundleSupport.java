@@ -32,11 +32,12 @@ public abstract class BundleSupport<K extends Connection<T>, T, C extends Networ
 
     @Override
     public K wrapConnection(final Connection<T> connection) {
+        System.err.println("BundleSupport: wrapping connection, meaning returning the same one again");
         return (K) connection;
     }
 
     @Override
-    public <E extends Environment<K, T, C>> E createEnvironment(final NetworkStack<K, T, C> stack, C configuration) {
+    public <E extends Environment<K, T, C>> E createEnvironment(final NetworkStack<K, T, C> stack, final C configuration) {
         return (E)new DefaultEnvironment(stack, configuration);
     }
 
