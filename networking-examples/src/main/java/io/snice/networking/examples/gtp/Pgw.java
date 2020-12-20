@@ -2,16 +2,12 @@ package io.snice.networking.examples.gtp;
 
 
 import io.snice.buffer.Buffer;
-import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.DeleteSessionRequest;
-import io.snice.codecs.codec.internet.IpMessage;
-import io.snice.codecs.codec.transport.UdpMessage;
 import io.snice.networking.gtp.*;
 import io.snice.networking.gtp.event.GtpEvent;
 
-import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -45,27 +41,10 @@ public class Pgw extends GtpApplication<GtpConfig> {
     @Override
     public void initialize(final GtpBootstrap<GtpConfig> bootstrap) {
         bootstrap.onConnection(c -> true).accept(b -> {
-            b.match(GtpEvent::isPdu).map(GtpEvent::toGtp1Message).consume(Pgw::processPdu);
+            b.match(GtpEvent::isPdu).map(GtpEvent::toGtp1Message).consume(sgi::processPdu);
             b.match(GtpEvent::isCreateSessionRequest).map(GtpEvent::toCreateSessionRequest).consume(Pgw::processCreateSessionRequest);
             b.match(GtpEvent::isDeleteSessionRequest).map(GtpEvent::toDeleteSessionRequest).consume(Pgw::processDeleteSessionRequest);
         });
-    }
-
-    /**
-     * Process a GTP-U packet and (in theory) send it to the remote endpoint.
-     * <p>
-     * TODO: Find a rawsocket library for Java (there are a few)
-     *
-     * @param tunnel
-     * @param pdu
-     */
-    private static void processPdu(final GtpTunnel tunnel, final Gtp1Message pdu) {
-        System.err.println("Processing PDU");
-        final var payload = pdu.getPayload().get();
-        final var ipv4 = IpMessage.frame(payload).toIPv4();
-        final var udp = UdpMessage.frame(ipv4.getPayload());
-        final var address = new InetSocketAddress(ipv4.getDestinationIpAsString(), udp.getDestinationPort());
-        System.err.println("Sending to: " + address);
     }
 
     private static void processCreateSessionRequest(final GtpTunnel tunnel, final CreateSessionRequest request) {
