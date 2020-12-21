@@ -347,6 +347,11 @@ public class NettyReadableBuffer implements ReadableBuffer {
     }
 
     @Override
+    public String toHexString() {
+        throw new RuntimeException("not yet implemented");
+    }
+
+    @Override
     public boolean equalsIgnoreCase(final Object b) {
         throw new RuntimeException("not yet implemented");
     }

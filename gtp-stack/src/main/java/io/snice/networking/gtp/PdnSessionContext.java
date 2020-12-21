@@ -24,16 +24,20 @@ public interface PdnSessionContext {
     /**
      * Convenience method for getting the {@link Teid} off of the {@link #getDefaultLocalBearer()}
      */
-    default Teid getLocalTeid() {
+    default Teid getLocalBearerTeid() {
         return getDefaultLocalBearer().getTeid();
     }
+
+    Teid getLocalTeid();
 
     /**
      * Convenience method for getting the {@link Teid} off of the {@link #getDefaultRemoteBearer()}
      */
-    default Teid getRemoteTeid() {
+    default Teid getRemoteBearerTeid() {
         return getDefaultRemoteBearer().getTeid();
     }
+
+    Teid getRemoteTeid();
 
     /**
      * Get the PAA (PDN Address Allocation). I.e., the IP address that got

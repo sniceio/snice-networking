@@ -32,6 +32,9 @@ public class GtpControlTunnelFsm {
         open.transitionTo(OPEN).onEvent(GtpMessageReadEvent.class).withAction(GtpControlTunnelFsm::processRead);
         open.transitionTo(OPEN).onEvent(GtpMessageWriteEvent.class).withAction(GtpControlTunnelFsm::processWrite);
 
+        open.transitionTo(OPEN).onEvent(ConnectionActiveIOEvent.class);
+        open.transitionTo(OPEN).onEvent(ConnectionAttemptCompletedIOEvent.class).withAction(GtpControlTunnelFsm::processConnectionCompleted);
+
 
         // TODO: need to figure out what kills it. For now, just so that the FSM actually builds.
         // TODO: I believe there is a "termination" packet to send to the remote endpoint too...

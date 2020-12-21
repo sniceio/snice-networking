@@ -145,11 +145,15 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
                                             final ConnectionId id,
                                             final CompletableFuture<Connection<T>> connectionFuture,
                                             final long arrivalTime) {
-        return channels.computeIfAbsent(id, cId -> {
+        final boolean isInbound = connectionFuture == null;
+        final var udpConnection = new UdpConnection(ctx.channel(), id, vipAddress);
+
+        final var cCtx = channels.computeIfAbsent(id, cId -> {
+
+            System.err.println("Compute if absent " + id);
 
             // if we do not have a connection future then this connection was NOT initiated by
             // the application and as such, this is an "inbound" connection, as opposed to an "outbound"
-            final boolean isInbound = connectionFuture == null;
 
             final var connCtx = findContext(id);
             // only drop if this is an inbound connection attempt. For outbound, the user
@@ -162,31 +166,30 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
 
             try {
 
-                final var udpConnection = new UdpConnection(ctx.channel(), id, vipAddress);
-                final var cCtx = new DefaultChannelContext<T>(udpConnection, connCtx);
-
-                // TODO: need to re-work.
-                // These events are being fired to maintain the same contract as with
-                // connection oriented protocols, such as TCP and SCTP. However, the below
-                // approach is "dangerous" in that it takes place within the lock of
-                // the concurrent hash map and as such, if the user holds onto anything
-                // it has the potential of blocking network traffic.
-                //
-
-                final var connectionActiveIOEvent = ConnectionActiveIOEvent.create(cCtx, isInbound, arrivalTime);
-                ctx.fireUserEventTriggered(connectionActiveIOEvent);
-
-                // Note that for this inbound UDP "connection", there is no future waiting to be completed since
-                // this is not a connection the user initiated. However, the user may have specified a
-                // "save" function, which will be called by the NettyApplicationLayer in order to invoke the app.
-                final var e = ConnectionAttemptCompletedIOEvent.create(cCtx, connectionFuture, udpConnection, arrivalTime);
-                ctx.fireUserEventTriggered(e);
-                return cCtx;
+                return new DefaultChannelContext<T>(udpConnection, connCtx);
             } catch (final Throwable th) {
                 th.printStackTrace();
                 throw th;
             }
         });
+
+        // TODO: need to re-work.
+        // These events are being fired to maintain the same contract as with
+        // connection oriented protocols, such as TCP and SCTP. However, the below
+        // approach is "dangerous" in that it takes place within the lock of
+        // the concurrent hash map and as such, if the user holds onto anything
+        // it has the potential of blocking network traffic.
+        //
+
+        final var connectionActiveIOEvent = ConnectionActiveIOEvent.create(cCtx, isInbound, arrivalTime);
+        ctx.fireUserEventTriggered(connectionActiveIOEvent);
+
+        // Note that for this inbound UDP "connection", there is no future waiting to be completed since
+        // this is not a connection the user initiated. However, the user may have specified a
+        // "save" function, which will be called by the NettyApplicationLayer in order to invoke the app.
+        final var e = ConnectionAttemptCompletedIOEvent.create(cCtx, connectionFuture, udpConnection, arrivalTime);
+        ctx.fireUserEventTriggered(e);
+        return cCtx;
     }
 
     private static Buffer toBuffer(final DatagramPacket pkt) {

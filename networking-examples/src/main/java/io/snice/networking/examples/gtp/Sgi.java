@@ -1,6 +1,8 @@
 package io.snice.networking.examples.gtp;
 
 import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1Message;
+import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1MessageType;
+import io.snice.codecs.codec.gtp.gtpc.v1.impl.ImmutableGtp1Message;
 import io.snice.codecs.codec.internet.IpMessage;
 import io.snice.codecs.codec.transport.UdpMessage;
 import io.snice.networking.app.NetworkBootstrap;
@@ -12,6 +14,7 @@ import io.snice.networking.bundles.buffer.BufferReadEvent;
 import io.snice.networking.common.ConnectionEndpointId;
 import io.snice.networking.common.Transport;
 import io.snice.networking.gtp.GtpTunnel;
+import io.snice.networking.gtp.PdnSessionContext;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -59,7 +62,7 @@ public class Sgi extends BufferApplication<SgiConfig> {
      * @param tunnel
      * @param pdu
      */
-    public void processPdu(final GtpTunnel tunnel, final Gtp1Message pdu) {
+    public void processPdu(final GtpTunnel tunnel, final PdnSessionContext session, final Gtp1Message pdu) {
         final var payload = pdu.getPayload().get();
         final var ipv4 = IpMessage.frame(payload).toIPv4();
         final var udp = UdpMessage.frame(ipv4.getPayload());
@@ -72,7 +75,7 @@ public class Sgi extends BufferApplication<SgiConfig> {
             // completely in a timely fashion, or at all.
             final var connection = connect(ep);
             final var deviceEndpoint = ConnectionEndpointId.create(Transport.udp, ipv4.getSourceIp(), udp.getSourcePort());
-            return new NatEntry(tunnel, connection, deviceEndpoint, ep);
+            return new NatEntry(session, tunnel, connection, deviceEndpoint, ep);
         });
 
         natEntry.externalConnection.send(udp.getPayload());
@@ -88,11 +91,28 @@ public class Sgi extends BufferApplication<SgiConfig> {
 
 
     private void processBuffer(final BufferConnection connection, final BufferReadEvent msg) {
-        final var natEntry = nats.get(msg.getConnectionId().getRemoteConnectionEndpointId());
-        // TODO: construct a PDU and send it back to the device across the tunnel
+        final var remote = msg.getConnectionId().getRemoteConnectionEndpointId();
+        final var natEntry = nats.get(remote);
+
+        final var content = msg.getBuffer();
+        final var udp = UdpMessage.createUdpIPv4(content)
+                .withSourcePort(remote.getPort())
+                .withDestinationPort(natEntry.deviceEndpoint.getPort())
+                .withSourceIp(remote.getIpAddress())
+                .withDestinationIp(natEntry.deviceEndpoint.getIpAddress())
+                .withTTL(64) // TODO: should probably grab this from the incoming UDP packet.
+                .build();
+
+        final var gtpU = ImmutableGtp1Message.create(Gtp1MessageType.G_PDU)
+                .withTeid(natEntry.session.getDefaultRemoteBearer().getTeid())
+                .withPayload(udp.getBuffer())
+                .build();
+        natEntry.tunnel.send(gtpU);
     }
 
     private static class NatEntry {
+        public final PdnSessionContext session;
+
         /**
          * The GTP-U tunnel that is "pointing" back to the actual device on the GRX network
          */
@@ -108,10 +128,12 @@ public class Sgi extends BufferApplication<SgiConfig> {
         public final ConnectionEndpointId deviceEndpoint;
         public final ConnectionEndpointId remoteEndpoint;
 
-        private NatEntry(final GtpTunnel tunnel,
+        private NatEntry(final PdnSessionContext session,
+                         final GtpTunnel tunnel,
                          final BufferConnection externalConnection,
                          final ConnectionEndpointId deviceEndpoint,
                          final ConnectionEndpointId remoteEndpoint) {
+            this.session = session;
             this.tunnel = tunnel;
             this.externalConnection = externalConnection;
             this.deviceEndpoint = deviceEndpoint;

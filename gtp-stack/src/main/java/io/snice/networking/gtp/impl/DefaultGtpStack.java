@@ -119,8 +119,8 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
         });
     }
 
-    private void saveInboundConnection(final Connection<GtpEvent> connection, final Optional<Consumer<GtpTunnel>> userSaveFunction) {
-        System.err.println("Saving the inbound connection");
+    private void saveInboundConnection(final GtpTunnel tunnel, final Optional<Consumer<GtpTunnel>> userSaveFunction) {
+        userSaveFunction.ifPresent(f -> f.accept(tunnel));
     }
 
     private void processEvent(final ConnectionContext<GtpTunnel, GtpEvent> ctx, final GtpTunnel tunnel, final GtpEvent event) {
@@ -286,6 +286,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
                         "interface exists"));
         final var gtpStack = this;
         return nic.connect(Transport.udp, remoteAddress).thenApply(c -> {
+            System.err.println("Saving GTP-U tunnel " + c.id());
             tunnels.put(c.id(), c);
             return DefaultGtpUserTunnel.of(c.id(), gtpStack);
         });
