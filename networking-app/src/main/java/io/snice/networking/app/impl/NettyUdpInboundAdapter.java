@@ -1,12 +1,8 @@
 package io.snice.networking.app.impl;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.channel.socket.DatagramPacket;
-import io.snice.buffer.Buffer;
-import io.snice.buffer.Buffers;
 import io.snice.networking.app.ConnectionContext;
 import io.snice.networking.common.ChannelContext;
 import io.snice.networking.common.Connection;
@@ -165,8 +161,16 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
             }
 
             try {
+                final var channelCtx = new DefaultChannelContext<T>(udpConnection, connCtx);
+                final var connectionActiveIOEvent = ConnectionActiveIOEvent.create(channelCtx, isInbound, arrivalTime);
+                ctx.fireUserEventTriggered(connectionActiveIOEvent);
 
-                return new DefaultChannelContext<T>(udpConnection, connCtx);
+                // Note that for this inbound UDP "connection", there is no future waiting to be completed since
+                // this is not a connection the user initiated. However, the user may have specified a
+                // "save" function, which will be called by the NettyApplicationLayer in order to invoke the app.
+                final var e = ConnectionAttemptCompletedIOEvent.create(channelCtx, connectionFuture, udpConnection, arrivalTime);
+                ctx.fireUserEventTriggered(e);
+                return channelCtx;
             } catch (final Throwable th) {
                 th.printStackTrace();
                 throw th;
@@ -181,22 +185,21 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
         // it has the potential of blocking network traffic.
         //
 
-        final var connectionActiveIOEvent = ConnectionActiveIOEvent.create(cCtx, isInbound, arrivalTime);
-        ctx.fireUserEventTriggered(connectionActiveIOEvent);
+        // don't fire these events for inbound messages
+        // but we do want to fire them for the first time... ah!!!
+        // but now they are fired twice for the first time if it is an outbound connection!
+        // Ah! need to re-work this stuff...
+        if (!isInbound) {
+            final var connectionActiveIOEvent = ConnectionActiveIOEvent.create(cCtx, isInbound, arrivalTime);
+            ctx.fireUserEventTriggered(connectionActiveIOEvent);
 
-        // Note that for this inbound UDP "connection", there is no future waiting to be completed since
-        // this is not a connection the user initiated. However, the user may have specified a
-        // "save" function, which will be called by the NettyApplicationLayer in order to invoke the app.
-        final var e = ConnectionAttemptCompletedIOEvent.create(cCtx, connectionFuture, udpConnection, arrivalTime);
-        ctx.fireUserEventTriggered(e);
+            // Note that for this inbound UDP "connection", there is no future waiting to be completed since
+            // this is not a connection the user initiated. However, the user may have specified a
+            // "save" function, which will be called by the NettyApplicationLayer in order to invoke the app.
+            final var e = ConnectionAttemptCompletedIOEvent.create(cCtx, connectionFuture, udpConnection, arrivalTime);
+            ctx.fireUserEventTriggered(e);
+        }
         return cCtx;
-    }
-
-    private static Buffer toBuffer(final DatagramPacket pkt) {
-        final ByteBuf content = pkt.content();
-        final byte[] b = new byte[content.readableBytes()];
-        content.getBytes(0, b);
-        return Buffers.wrap(b);
     }
 
     private ConnectionContext<Connection<T>, T> findContext(final ConnectionId id) {

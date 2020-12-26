@@ -406,7 +406,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
             final var localPort = 7893;
             final var remoteBearer = ctx.getDefaultRemoteBearer();
             System.err.println("The IP Address in the remote bearer is: " + remoteBearer.getIPv4AddressAsString().get());
-            final var pgw = "52.90.72.87"; // TODO: have to fix this NAT issue.
+            final var pgw = "127.0.0.1"; // TODO: have to fix this NAT issue.
             final var remote = new InetSocketAddress(pgw, defaultGtpuPort);
             return establishUserPlane(remote).thenApply(tunnel ->
                     // TODO: need to save it away too...

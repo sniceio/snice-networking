@@ -91,7 +91,6 @@ public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D 
 
     @Override
     public void userEventTriggered(final ChannelHandlerContext ctx, final Object evt) throws Exception {
-        logger.info("UserEventTriggered: " + evt);
         final var ioEvent = (IOEvent<T>) evt;
         final var executionCtx = ensureExecutionContext(ioEvent, ctx);
         if (executionCtx != null) {

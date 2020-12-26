@@ -151,6 +151,6 @@ public class Pgw extends GtpApplication<GtpConfig> {
         final var sgi = new Sgi();
         final var pgw = new Pgw(sgi);
         sgi.run("SgiServerConfig.yml");
-        pgw.run("server", "networking-examples/src/main/resources/io/snice/networking/examples/pgw.yml");
+        pgw.run("pgw.yml");
     }
 }

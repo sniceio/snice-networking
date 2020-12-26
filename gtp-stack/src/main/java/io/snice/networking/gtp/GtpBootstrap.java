@@ -11,4 +11,5 @@ public interface GtpBootstrap<C extends GtpAppConfig> {
 
     ConnectionContext.Builder<GtpTunnel, GtpEvent, GtpEvent> onConnection(Predicate<ConnectionId> condition);
 
+    C getConfiguration();
 }

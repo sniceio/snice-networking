@@ -1,0 +1,31 @@
+networkInterfaces:
+  # the name of the nic will be used by the GTP config options
+  - name: gtpc
+    listen: gtp://0.0.0.0:3123
+    transport: udp
+    # vip address is currently not really supported so will have zero effect if you set it.
+    # vipAddress: 52.202.165.16
+
+  - name: gtpu
+    listen: gtp://0.0.0.0:3152
+    transport: udp
+    # vipAddress: 52.202.165.16
+
+gtp:
+  userPlane:
+    enable: true
+    # The name of hte network interface to use for GTP-U.
+    # If the name doesn't match, the stack will error out.
+    nic: gtpu
+
+  controlPlane:
+    enable: true
+    nic: gtpc
+
+hektor:
+  dispatchers:
+    my-dispatcher:
+      executor: worker-thread-executor
+      workerThreadExecutor:
+        noOfWorkers: 4
+      throughput: 75

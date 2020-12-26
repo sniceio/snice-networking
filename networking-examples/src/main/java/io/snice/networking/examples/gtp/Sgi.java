@@ -73,6 +73,7 @@ public class Sgi extends BufferApplication<SgiConfig> {
             // UDP and that completes right away, we are cheating here... In a real "SGi"
             // implementation you really cannot do this since if it e.g. is TCP, this may not
             // completely in a timely fashion, or at all.
+            System.err.println("New NAT Entry for endpoint: " + remoteEndpoint);
             final var connection = connect(ep);
             final var deviceEndpoint = ConnectionEndpointId.create(Transport.udp, ipv4.getSourceIp(), udp.getSourcePort());
             return new NatEntry(session, tunnel, connection, deviceEndpoint, ep);

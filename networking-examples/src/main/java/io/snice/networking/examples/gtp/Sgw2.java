@@ -1,6 +1,7 @@
 package io.snice.networking.examples.gtp;
 
 
+import io.hektor.core.Hektor;
 import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
 import io.snice.codecs.codec.MccMnc;
@@ -35,6 +36,7 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
      */
     private final AtomicReference<GtpControlTunnel> tunnel = new AtomicReference<>();
     private GtpEnvironment<GtpConfig> environment;
+    private Hektor hektor;
 
     /**
      * dns query for google.com. Grabbed from wireshark
@@ -52,6 +54,7 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
             b.match(GtpEvent::isCreateSessionResponse).map(GtpEvent::toGtp2Message).consume(Sgw2::processCreateSessionResponse);
             b.match(GtpEvent::isDeleteSessionResponse).map(GtpEvent::toGtp2Message).consume(Sgw2::processDeleteSessionResponse);
         });
+
     }
 
     private static void processPdu(final GtpTunnel tunnel, final Gtp1Message pdu) {
@@ -88,13 +91,15 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
     @Override
     public void run(final GtpConfig configuration, final GtpEnvironment<GtpConfig> environment) {
         this.environment = environment;
+        final var hektorConfig = environment.getConfig().getHektorConfig();
+        hektor = Hektor.withName("sgw").withConfiguration(hektorConfig).build();
 
         // If the PGW is behind a NAT, make sure you grab the public address (duh)
-        final var pgw = "52.90.72.87";
+        final var pgw = "127.0.0.1";
 
         // If you're behind a NAT, you want the NAT:ed address here. Otherwise, your
         // local NIC is fine. All depends where the PGW is...
-        final var sgw = "107.20.226.156";
+        final var sgw = "127.0.0.1";
         final var imsi = "999994000000642";
 
         final var csr = CreateSessionRequest.create()
@@ -150,6 +155,6 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
 
     public static void main(final String... args) throws Exception {
         final var sgw = new Sgw2();
-        sgw.run("server", "networking-examples/src/main/resources/io/snice/networking/examples/sgw.yml");
+        sgw.run("sgw.yml");
     }
 }

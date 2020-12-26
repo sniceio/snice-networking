@@ -12,9 +12,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.util.HashMap;
 import java.util.Optional;
 
 public class ConfigUtils {
@@ -60,10 +62,8 @@ public class ConfigUtils {
             return Optional.empty();
         }
         try {
-            final var path = Path.of(url.toURI());
-            if (path.toFile().exists() && path.toFile().canRead()) {
-                return Optional.of(path);
-            }
+            ensureFileSystem(url.toURI());
+            return Optional.of(Path.of(url.toURI()));
         } catch (final URISyntaxException e) {
             // ignore
         }
@@ -78,6 +78,21 @@ public class ConfigUtils {
             return Optional.of(path);
         }
         return Optional.empty();
+    }
+
+    public static FileSystem ensureFileSystem(final URI uri) {
+        try {
+            if ("jar".equals(uri.getScheme())) {
+                final var env = new HashMap<String, Object>();
+                env.put("create", "true");
+                return FileSystems.newFileSystem(uri, env);
+            }
+        } catch (final FileSystemAlreadyExistsException | IOException e) {
+            // ignore
+        }
+
+        return FileSystems.getDefault();
+
     }
 
     public static <C extends NetworkAppConfig> C loadConfiguration(final Class<C> cls,

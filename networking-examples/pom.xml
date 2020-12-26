@@ -72,6 +72,28 @@
             <artifactId>gtp-stack</artifactId>
         </dependency>
 
+        <!-- Hektor.io for FSM and Actor support -->
+        <dependency>
+            <groupId>io.hektor</groupId>
+            <artifactId>hektor-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.hektor</groupId>
+            <artifactId>hektor-actors</artifactId>
+        </dependency>
+
+
+        <dependency>
+            <groupId>io.hektor</groupId>
+            <artifactId>hektor-fsm</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.hektor</groupId>
+            <artifactId>hektor-actor-fsm</artifactId>
+        </dependency>
+
         <!-- For reading yaml files, which we'll use to load configuration
          from our yml files for the various examples
          -->
