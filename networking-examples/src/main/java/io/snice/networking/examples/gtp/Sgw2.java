@@ -41,7 +41,7 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
     /**
      * dns query for google.com. Grabbed from wireshark
      */
-    final static Buffer dnsQuery = Buffer.of(
+    public final static Buffer dnsQuery = Buffer.of(
             (byte) 0x5c, (byte) 0x79, (byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00,
             (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x03, (byte) 0x77, (byte) 0x77, (byte) 0x77,
             (byte) 0x06, (byte) 0x67, (byte) 0x6f, (byte) 0x6f, (byte) 0x67, (byte) 0x6c, (byte) 0x65, (byte) 0x03,

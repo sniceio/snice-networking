@@ -5,6 +5,7 @@
 		</encoder>
 	</appender>
 
+	<logger name="io.hektor" level="DEBUG" />
 	<logger name="io.snice" level="INFO" />
 	<logger name="io.netty" level="WARN" />
 

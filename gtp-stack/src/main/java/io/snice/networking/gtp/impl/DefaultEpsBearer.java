@@ -4,19 +4,18 @@ import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
 import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1MessageType;
 import io.snice.codecs.codec.gtp.gtpc.v1.impl.ImmutableGtp1Message;
-import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Paa;
+import io.snice.codecs.codec.gtp.gtpc.v2.type.PdnType;
 import io.snice.codecs.codec.transport.UdpMessage;
 import io.snice.networking.gtp.Bearer;
 import io.snice.networking.gtp.EpsBearer;
 import io.snice.networking.gtp.GtpUserTunnel;
 import io.snice.networking.gtp.PdnSessionContext;
-import io.snice.preconditions.PreConditions;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
 public class DefaultEpsBearer implements EpsBearer {
     private final GtpUserTunnel tunnel;
-    private final Paa paa;
+    private final Buffer assignedDeviceIp;
     private final Bearer localBearer;
     private final Bearer remoteBearer;
     private final int defaultLocalPort;
@@ -25,12 +24,27 @@ public class DefaultEpsBearer implements EpsBearer {
         assertNotNull(tunnel, "The GTP User Tunnel cannot be null");
         assertNotNull(ctx, "The PDN Session Context cannot be null");
         final var remoteBearer = ctx.getDefaultRemoteBearer();
-        return new DefaultEpsBearer(tunnel, ctx.getPaa(), ctx.getDefaultLocalBearer(), remoteBearer, defaultLocalPort);
+        final var paa = ctx.getPaa().getValue();
+        if (paa.getPdnType().getType() == PdnType.Type.IPv6) {
+            throw new IllegalArgumentException("Sorry, can only do IPv4 addresses right now");
+        }
+
+        final var assignedIpAddress = paa.getIPv4Address().get();
+        return new DefaultEpsBearer(tunnel, assignedIpAddress, ctx.getDefaultLocalBearer(), remoteBearer, defaultLocalPort);
     }
 
-    private DefaultEpsBearer(final GtpUserTunnel tunnel, final Paa paa, final Bearer localBearer, final Bearer remoteBearer, final int defaultLocalPort) {
+    public static EpsBearer create(final GtpUserTunnel tunnel, final Buffer assignedDeviceIp, final Bearer localBearer, final Bearer remoteBearer, final int defaultLocalPort) {
+        assertNotNull(tunnel, "The GTP User Tunnel cannot be null");
+        Buffers.assertNotEmpty(assignedDeviceIp, "The assigned IP Address to the device cannot be null or the empty buffer");
+        assertNotNull(localBearer, "The local Bearer cannot be null");
+        assertNotNull(remoteBearer, "The remote Bearer cannot be null");
+
+        return new DefaultEpsBearer(tunnel, assignedDeviceIp, localBearer, remoteBearer, defaultLocalPort);
+    }
+
+    private DefaultEpsBearer(final GtpUserTunnel tunnel, final Buffer assignedDeviceIp, final Bearer localBearer, final Bearer remoteBearer, final int defaultLocalPort) {
         this.tunnel = tunnel;
-        this.paa = paa;
+        this.assignedDeviceIp = assignedDeviceIp;
         this.localBearer = localBearer;
         this.remoteBearer = remoteBearer;
         this.defaultLocalPort = defaultLocalPort;
@@ -43,7 +57,7 @@ public class DefaultEpsBearer implements EpsBearer {
                 .withSourcePort(defaultLocalPort)
                 .withTTL(64)
                 .withDestinationIp(remoteAddress)
-                .withSourceIp(paa.getValue().getIPv4Address().get())
+                .withSourceIp(assignedDeviceIp)
                 .build();
 
         final var gtpU = ImmutableGtp1Message.create(Gtp1MessageType.G_PDU)

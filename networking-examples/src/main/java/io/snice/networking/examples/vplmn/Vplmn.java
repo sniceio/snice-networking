@@ -3,11 +3,14 @@ package io.snice.networking.examples.vplmn;
 
 import io.hektor.core.Hektor;
 import io.snice.networking.examples.gtp.GtpConfig;
+import io.snice.networking.examples.gtp.Sgw2;
 import io.snice.networking.gtp.GtpApplication;
 import io.snice.networking.gtp.GtpBootstrap;
 import io.snice.networking.gtp.GtpEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
@@ -17,7 +20,7 @@ public class Vplmn extends GtpApplication<GtpConfig> {
     private static final Logger logger = LoggerFactory.getLogger(Vplmn.class);
 
     private GtpEnvironment<GtpConfig> environment;
-    private DeviceManager deviceManager;
+    private final AtomicReference<DeviceManager> deviceManager = new AtomicReference<>();
     private Hektor hektor;
 
     @Override
@@ -36,8 +39,21 @@ public class Vplmn extends GtpApplication<GtpConfig> {
         this.environment = environment;
         final var hektorConfig = environment.getConfig().getHektorConfig();
         hektor = Hektor.withName("vplmn").withConfiguration(hektorConfig).build();
-        deviceManager = DeviceManager.of(hektor, environment);
-        deviceManager.addDevice("12354098098098").thenAccept(result -> result.accept(Vplmn::processDeviceError, Vplmn::processNewDevice));
+
+        final var pgw = "127.0.0.1";
+        final var port = 2123;
+        environment.establishControlPlane(pgw, port).thenAccept(tunnel -> {
+            deviceManager.set(DeviceManager.of(hektor, environment, tunnel));
+            deviceManager.get().addDevice("12354098098098").thenAccept(result -> result.accept(Vplmn::processDeviceError, Vplmn::processNewDevice));
+            deviceManager.get().addDevice("00000000000000").thenAccept(result -> result.accept(Vplmn::processDeviceError, Vplmn::processNewDevice));
+            deviceManager.get().addDevice("11111111111111").thenAccept(result -> result.accept(Vplmn::processDeviceError, Vplmn::processNewDevice));
+        }).exceptionally(t -> {
+            t.printStackTrace();
+            System.err.println("Unable to establish GTP Control Tunnel, bailing out");
+            System.exit(1); // hehe, yeah no...
+            return null;
+        });
+
     }
 
     private static void processDeviceError(final Error error) {
@@ -46,6 +62,14 @@ public class Vplmn extends GtpApplication<GtpConfig> {
 
     private static void processNewDevice(final Device device) {
         device.goOnline();
+
+        // TODO: need some way to know if we are in the right state.
+        try {
+            Thread.sleep(200);
+        } catch (final InterruptedException e) {
+            e.printStackTrace();
+        }
+        device.sendData(Sgw2.dnsQuery, "8.8.8.8", 53);
     }
 
 
