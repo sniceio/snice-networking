@@ -1,19 +1,23 @@
-package io.snice.networking.examples.vplmn.fsm.device;
+package io.snice.networking.examples.vplmn.fsm.devices.device;
 
 import io.hektor.actors.fsm.FsmActorContextSupport;
 import io.hektor.fsm.Context;
 import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
+import io.snice.codecs.codec.Imei;
 import io.snice.codecs.codec.gtp.GtpMessage;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionResponse;
 import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Paa;
+import io.snice.networking.examples.vplmn.SimCard;
 import io.snice.networking.gtp.Bearer;
 import io.snice.networking.gtp.PdnSessionContext;
 
 public interface DeviceContext extends Context, FsmActorContextSupport {
 
-    String getImei();
+    Imei getImei();
+
+    SimCard getSimCard();
 
     DeviceConfiguration getConfiguration();
 
@@ -49,7 +53,7 @@ public interface DeviceContext extends Context, FsmActorContextSupport {
      * be converted into a {@link Buffer} and then {@link #establishBearer(Bearer, Bearer, Buffer, int)}
      * will be called.
      */
-    default void establishBearer(Bearer local, Bearer remote, String assignedIpAddress, int localPort) {
+    default void establishBearer(final Bearer local, final Bearer remote, final String assignedIpAddress, final int localPort) {
         establishBearer(local, remote, Buffers.wrapAsIPv4(assignedIpAddress), localPort);
     }
 

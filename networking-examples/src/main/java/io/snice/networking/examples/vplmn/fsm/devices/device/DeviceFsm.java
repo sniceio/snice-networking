@@ -1,4 +1,4 @@
-package io.snice.networking.examples.vplmn.fsm.device;
+package io.snice.networking.examples.vplmn.fsm.devices.device;
 
 import io.hektor.fsm.Definition;
 import io.hektor.fsm.FSM;
@@ -16,14 +16,14 @@ import io.snice.networking.gtp.EpsBearer;
 import io.snice.networking.gtp.PdnSessionContext;
 
 import static io.snice.codecs.codec.gtp.gtpc.v2.type.PdnType.Type.IPv4;
-import static io.snice.networking.examples.vplmn.fsm.device.DeviceState.ATTACHED;
-import static io.snice.networking.examples.vplmn.fsm.device.DeviceState.AUTHENTICATED;
-import static io.snice.networking.examples.vplmn.fsm.device.DeviceState.DEAD;
-import static io.snice.networking.examples.vplmn.fsm.device.DeviceState.ESTABLISHING_BEARER;
-import static io.snice.networking.examples.vplmn.fsm.device.DeviceState.INITIATE_SESSION;
-import static io.snice.networking.examples.vplmn.fsm.device.DeviceState.OFFLINE;
-import static io.snice.networking.examples.vplmn.fsm.device.DeviceState.ONLINE;
-import static io.snice.networking.examples.vplmn.fsm.device.DeviceState.SESSION_ESTABLISHED;
+import static io.snice.networking.examples.vplmn.fsm.devices.device.DeviceState.ATTACHED;
+import static io.snice.networking.examples.vplmn.fsm.devices.device.DeviceState.AUTHENTICATED;
+import static io.snice.networking.examples.vplmn.fsm.devices.device.DeviceState.DEAD;
+import static io.snice.networking.examples.vplmn.fsm.devices.device.DeviceState.ESTABLISHING_BEARER;
+import static io.snice.networking.examples.vplmn.fsm.devices.device.DeviceState.INITIATE_SESSION;
+import static io.snice.networking.examples.vplmn.fsm.devices.device.DeviceState.OFFLINE;
+import static io.snice.networking.examples.vplmn.fsm.devices.device.DeviceState.ONLINE;
+import static io.snice.networking.examples.vplmn.fsm.devices.device.DeviceState.SESSION_ESTABLISHED;
 
 public class DeviceFsm {
 

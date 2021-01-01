@@ -1,4 +1,4 @@
-package io.snice.networking.examples.vplmn.fsm.device;
+package io.snice.networking.examples.vplmn.fsm.devices.device;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;

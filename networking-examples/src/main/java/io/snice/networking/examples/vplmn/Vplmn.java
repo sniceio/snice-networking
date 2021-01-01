@@ -21,6 +21,7 @@ public class Vplmn extends GtpApplication<GtpConfig> {
 
     private GtpEnvironment<GtpConfig> environment;
     private final AtomicReference<DeviceManager> deviceManager = new AtomicReference<>();
+    private final AtomicReference<UserManager> userManager = new AtomicReference<>();
     private Hektor hektor;
 
     @Override
@@ -43,10 +44,22 @@ public class Vplmn extends GtpApplication<GtpConfig> {
         final var pgw = "127.0.0.1";
         final var port = 2123;
         environment.establishControlPlane(pgw, port).thenAccept(tunnel -> {
-            deviceManager.set(DeviceManager.of(hektor, environment, tunnel));
-            deviceManager.get().addDevice("12354098098098").thenAccept(result -> result.accept(Vplmn::processDeviceError, Vplmn::processNewDevice));
-            deviceManager.get().addDevice("00000000000000").thenAccept(result -> result.accept(Vplmn::processDeviceError, Vplmn::processNewDevice));
-            deviceManager.get().addDevice("11111111111111").thenAccept(result -> result.accept(Vplmn::processDeviceError, Vplmn::processNewDevice));
+            final var devices = DeviceManager.of(hektor, environment, tunnel);
+            final var simCards = SimCardManager.of();
+            final var users = UserManager.of(hektor, devices, simCards);
+            deviceManager.set(devices);
+            userManager.set(users);
+            users.addUser("Alice", User.ALICE).thenAccept(either -> {
+                System.err.println("Going online");
+                try {
+                    either.get().getDevice().goOnline();
+                } catch (final Throwable t) {
+                    t.printStackTrace();;
+                }
+            });
+            // deviceManager.get().addDevice("12354098098098").thenAccept(result -> result.accept(Vplmn::processDeviceError, Vplmn::processNewDevice));
+            // deviceManager.get().addDevice("00000000000000").thenAccept(result -> result.accept(Vplmn::processDeviceError, Vplmn::processNewDevice));
+            // deviceManager.get().addDevice("11111111111111").thenAccept(result -> result.accept(Vplmn::processDeviceError, Vplmn::processNewDevice));
         }).exceptionally(t -> {
             t.printStackTrace();
             System.err.println("Unable to establish GTP Control Tunnel, bailing out");
