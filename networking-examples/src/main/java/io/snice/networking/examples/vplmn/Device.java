@@ -1,6 +1,7 @@
 package io.snice.networking.examples.vplmn;
 
 import io.snice.buffer.Buffer;
+import io.snice.buffer.Buffers;
 import io.snice.codecs.codec.Imei;
 
 public interface Device {
@@ -26,6 +27,10 @@ public interface Device {
      * will be silently ignored.
      */
     void sendData(final Buffer data, final String remoteIp, int remotePort);
+
+    default void sendData(final String data, final String remoteIp, int remotePort) {
+        sendData(Buffers.wrap(data), remoteIp, remotePort);
+    }
 
     enum Type {
         IPHONE, ANDROID, BG96;

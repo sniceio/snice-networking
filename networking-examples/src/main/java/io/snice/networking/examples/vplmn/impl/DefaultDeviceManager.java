@@ -1,5 +1,6 @@
 package io.snice.networking.examples.vplmn.impl;
 
+import io.hektor.actors.events.subscription.SubscribeEvent;
 import io.hektor.actors.fsm.FsmActor;
 import io.hektor.actors.fsm.OnStartFunction;
 import io.hektor.core.ActorPath;
@@ -29,16 +30,20 @@ import io.snice.networking.gtp.impl.DefaultEpsBearer;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
 
-public class DefaultDeviceManager implements DeviceManager {
+public class DefaultDeviceManager implements InternalDeviceManager {
 
     private final Hektor hektor;
     private final ActorPath rootDevicePath;
     private final GtpEnvironment<GtpConfig> environment;
     private final GtpControlTunnel tunnel;
+
+    private final ConcurrentMap<Imei, DefaultDevice> devices = new ConcurrentHashMap<>();
 
     public static DeviceManager of(final Hektor hektor, final GtpEnvironment<GtpConfig> environment, final GtpControlTunnel tunnel) {
         assertNotNull(hektor);
@@ -97,7 +102,15 @@ public class DefaultDeviceManager implements DeviceManager {
 
         final var deviceRef = hektor.actorOf(rootDevicePath, imei.toString(), props);
         final var device = new DefaultDevice(deviceRef, imei, sim);
+        devices.put(imei, device);
         return CompletableFuture.completedFuture(Either.right(device));
+    }
+
+    @Override
+    public void claim(final Imei imei, final ActorRef owner) {
+        final var device = devices.get(imei);
+        assertNotNull(device, "No such device");
+        device.self.tell(SubscribeEvent.subscriber(owner));
     }
 
     private static class DefaultDeviceCtx implements DeviceContext {
@@ -137,6 +150,11 @@ public class DefaultDeviceManager implements DeviceManager {
         }
 
         @Override
+        public void deviceIsOnline() {
+            tellSubscribers(DeviceEvent.Online.fullService(imei));
+        }
+
+        @Override
         public void send(final GtpMessage msg) {
             if (msg.isGtpVersion2() && msg.isRequest()) {
                 final var request = msg.toGtp2Request();
@@ -168,17 +186,16 @@ public class DefaultDeviceManager implements DeviceManager {
             // TODO: we will probably do more here...
             return PdnSessionContext.of(req, resp);
         }
-
     }
 
     private static class DefaultDevice implements Device {
 
-        private final ActorRef me;
+        private final ActorRef self;
         private final Imei imei;
         private final SimCard simCard;
 
-        private DefaultDevice(final ActorRef me, final Imei imei, final SimCard simCard) {
-            this.me = me;
+        private DefaultDevice(final ActorRef self, final Imei imei, final SimCard simCard) {
+            this.self = self;
             this.imei = imei;
             this.simCard = simCard;
         }
@@ -195,9 +212,9 @@ public class DefaultDeviceManager implements DeviceManager {
 
         @Override
         public void goOnline() {
-            me.tell(DeviceEvent.PRE_AUTHED);
-            me.tell(DeviceEvent.PRE_ATTACHED);
-            me.tell(DeviceEvent.INITIATE_SESSION);
+            self.tell(DeviceEvent.PRE_AUTHED);
+            self.tell(DeviceEvent.PRE_ATTACHED);
+            self.tell(DeviceEvent.INITIATE_SESSION);
         }
 
         @Override
@@ -209,7 +226,7 @@ public class DefaultDeviceManager implements DeviceManager {
         @Override
         public void sendData(final Buffer data, final String remoteIp, final int remotePort) {
             final var dataEvt = new DeviceEvent.SendDataEvent(data, remoteIp, remotePort);
-            me.tell(dataEvt);
+            self.tell(dataEvt);
         }
     }
 

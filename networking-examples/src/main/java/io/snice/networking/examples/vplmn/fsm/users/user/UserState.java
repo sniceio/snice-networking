@@ -15,6 +15,12 @@ public enum UserState {
     IDLE,
 
     /**
+     * The user is booting up their device, which may or may not succeed and will also
+     * take an arbitrary amount of time depending on the device.
+     */
+    BOOTING,
+
+    /**
      * In offline mode the user has either turned their device off or
      * put it into airplane mode. Either or, the device is not connected
      * to the network.

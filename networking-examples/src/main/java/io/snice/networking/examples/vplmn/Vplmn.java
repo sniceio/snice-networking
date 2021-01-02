@@ -49,17 +49,8 @@ public class Vplmn extends GtpApplication<GtpConfig> {
             final var users = UserManager.of(hektor, devices, simCards);
             deviceManager.set(devices);
             userManager.set(users);
-            users.addUser("Alice", User.ALICE).thenAccept(either -> {
-                System.err.println("Going online");
-                try {
-                    either.get().getDevice().goOnline();
-                } catch (final Throwable t) {
-                    t.printStackTrace();;
-                }
-            });
-            // deviceManager.get().addDevice("12354098098098").thenAccept(result -> result.accept(Vplmn::processDeviceError, Vplmn::processNewDevice));
-            // deviceManager.get().addDevice("00000000000000").thenAccept(result -> result.accept(Vplmn::processDeviceError, Vplmn::processNewDevice));
-            // deviceManager.get().addDevice("11111111111111").thenAccept(result -> result.accept(Vplmn::processDeviceError, Vplmn::processNewDevice));
+            users.addUser("Alice", User.ALICE);
+            users.addUser("Bob", User.ALICE);
         }).exceptionally(t -> {
             t.printStackTrace();
             System.err.println("Unable to establish GTP Control Tunnel, bailing out");

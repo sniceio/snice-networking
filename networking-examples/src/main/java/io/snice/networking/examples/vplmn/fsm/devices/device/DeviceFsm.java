@@ -47,7 +47,7 @@ public class DeviceFsm {
         final var authenticated = builder.withState(AUTHENTICATED);
         // final var attaching = builder.withState(ATTACHING);
         final var attached = builder.withState(ATTACHED);
-        final var online = builder.withState(ONLINE);
+        final var online = builder.withState(ONLINE).withEnterAction(DeviceFsm::onEnterOnline);
         final var dead = builder.withFinalState(DEAD);
 
         /**
@@ -115,6 +115,10 @@ public class DeviceFsm {
         online.transitionTo(DEAD).onEvent(String.class).withGuard("die"::equals);
 
         definition = builder.build();
+    }
+
+    private static void onEnterOnline(final DeviceContext ctx, final DeviceData data) {
+        ctx.deviceIsOnline();
     }
 
     private static void initiatePdnSession(final DeviceEvent evt, final DeviceContext ctx, final DeviceData data) {

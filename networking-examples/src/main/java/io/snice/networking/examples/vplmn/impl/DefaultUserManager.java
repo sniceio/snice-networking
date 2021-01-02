@@ -7,7 +7,6 @@ import io.hektor.core.ActorRef;
 import io.hektor.core.Hektor;
 import io.snice.functional.Either;
 import io.snice.networking.examples.vplmn.Device;
-import io.snice.networking.examples.vplmn.DeviceManager;
 import io.snice.networking.examples.vplmn.Error;
 import io.snice.networking.examples.vplmn.SimCard;
 import io.snice.networking.examples.vplmn.SimCardManager;
@@ -16,6 +15,7 @@ import io.snice.networking.examples.vplmn.UserManager;
 import io.snice.networking.examples.vplmn.fsm.users.user.AliceFsm;
 import io.snice.networking.examples.vplmn.fsm.users.user.UserContext;
 import io.snice.networking.examples.vplmn.fsm.users.user.UserData;
+import io.snice.networking.examples.vplmn.fsm.users.user.UserEvent;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -26,31 +26,18 @@ import static io.snice.preconditions.PreConditions.assertNotNull;
 public class DefaultUserManager implements UserManager {
 
     private final Hektor hektor;
-    private final DeviceManager deviceManager;
+    private final InternalDeviceManager deviceManager;
     private final SimCardManager simCardManager;
     private final ActorPath rootUserPath;
 
-    public static UserManager of(final Hektor hektor, final DeviceManager deviceManager, final SimCardManager simCardManager) {
+    public static UserManager of(final Hektor hektor, final InternalDeviceManager deviceManager, final SimCardManager simCardManager) {
         assertNotNull(hektor);
         assertNotNull(deviceManager);
         assertNotNull(simCardManager);
-
-        /*
-        final Function<ActorRef, UserManagerContext> ctxFactory = (ref) -> new DefaultUserManagerContext(ref, deviceManager, simCardManager);
-
-        final var props = FsmActor.of(UserManagerFsm.definition)
-                .withContext(ctxFactory)
-                .withData(() -> new UserManagerData())
-                .build();
-
-        final var actorRef = hektor.actorOf("users", props);
-        actorRef.tell(new UserManagerEvent.Init());
-         */
-        final var manager = new DefaultUserManager(hektor, deviceManager, simCardManager);
-        return manager;
+        return new DefaultUserManager(hektor, deviceManager, simCardManager);
     }
 
-    public DefaultUserManager(final Hektor hektor, final DeviceManager deviceManager, final SimCardManager simCardManager) {
+    private DefaultUserManager(final Hektor hektor, final InternalDeviceManager deviceManager, final SimCardManager simCardManager) {
         this.hektor = hektor;
         this.deviceManager = deviceManager;
         this.simCardManager = simCardManager;
@@ -78,9 +65,10 @@ public class DefaultUserManager implements UserManager {
 
     private CompletionStage<Either<Error, User>> createUser(final String name, final User.Profile profile, final Device device) {
 
-        final Function<ActorRef, UserContext> ctxFactory = (ref) -> null;
+        final Function<ActorRef, UserContext> ctxFactory = (ref) -> new DefaultUserContext(ref, device);
         final OnStartFunction<UserContext, UserData> startFunction = (actorCtx, ctx, data) -> {
-            actorCtx.self().tell("go");
+            deviceManager.claim(device.getImei(), actorCtx.self());
+            actorCtx.self().tell(UserEvent.TURN_ON);
         };
 
         final var props = FsmActor.of(AliceFsm.definition)
@@ -94,29 +82,20 @@ public class DefaultUserManager implements UserManager {
         return CompletableFuture.completedFuture(Either.right(user));
     }
 
-    /*
-    private static class DefaultUserManagerContext implements UserManagerContext {
+    private static class DefaultUserContext implements UserContext {
 
+        private final Device device;
         private final ActorRef self;
-        private final DeviceManager deviceManager;
-        private final SimCardManager simCardManager;
 
-        private DefaultUserManagerContext(final ActorRef self, final DeviceManager deviceManager, final SimCardManager simCardManager) {
+        private DefaultUserContext(final ActorRef self, final Device device) {
             this.self = self;
-            this.deviceManager = deviceManager;
-            this.simCardManager = simCardManager;
+            this.device = device;
         }
 
         @Override
-        public DeviceManager getDeviceManager() {
-            return deviceManager;
-        }
-
-        @Override
-        public SimCardManager getSimCardManager() {
-            return simCardManager;
+        public Device getDevice() {
+            return device;
         }
     }
 
-     */
 }

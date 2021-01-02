@@ -2,9 +2,12 @@ package io.snice.networking.examples.vplmn.fsm.devices.device;
 
 import io.snice.buffer.Buffer;
 import io.snice.buffer.Buffers;
+import io.snice.codecs.codec.Imei;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Response;
 import io.snice.networking.gtp.EpsBearer;
 import io.snice.networking.gtp.Transaction;
+
+import static io.snice.preconditions.PreConditions.assertNotNull;
 
 /**
  * Various events for a {@link DeviceFsm}
@@ -47,6 +50,39 @@ public interface DeviceEvent {
             return "INITIATE_SESSION";
         }
     };
+
+    enum Service {
+        MESSAGING, VOICE, INTERNET;
+    }
+
+    /**
+     * Indicates that the device is online and what services are available.
+     */
+    class Online implements DeviceEvent {
+        private final Imei imei;
+
+        public static Online fullService(final Imei imei) {
+            assertNotNull(imei);
+            return new Online(imei);
+        }
+
+        private Online(final Imei imei) {
+            this.imei = imei;
+        }
+
+        /**
+         * Check whether we are in limited service mode, which typically means
+         * we do not have any "internet" connection.
+         */
+        public boolean isLimitedService() {
+            return false;
+        }
+
+        public boolean isFullService() {
+            return !isLimitedService();
+        }
+
+    }
 
     class SendDataEvent {
         public final Buffer data;

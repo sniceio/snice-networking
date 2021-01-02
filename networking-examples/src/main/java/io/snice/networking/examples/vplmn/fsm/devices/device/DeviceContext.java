@@ -22,6 +22,12 @@ public interface DeviceContext extends Context, FsmActorContextSupport {
     DeviceConfiguration getConfiguration();
 
     /**
+     * Signal to any watchers/subscribers that the device is
+     * now online with full services.
+     */
+    void deviceIsOnline();
+
+    /**
      * Send the given {@link GtpMessage} and if this is a request, its corresponding
      * response will be wrapped and delivered to the FSM that sent it through the
      * event {@link DeviceEvent.GtpResponseEvent}.
