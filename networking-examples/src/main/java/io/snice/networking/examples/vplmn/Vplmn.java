@@ -51,6 +51,8 @@ public class Vplmn extends GtpApplication<GtpConfig> {
             userManager.set(users);
             users.addUser("Alice", User.ALICE);
             users.addUser("Bob", User.ALICE);
+            // users.addUser("Carol", User.ALICE);
+            // users.addUser("Dave", User.ALICE);
         }).exceptionally(t -> {
             t.printStackTrace();
             System.err.println("Unable to establish GTP Control Tunnel, bailing out");

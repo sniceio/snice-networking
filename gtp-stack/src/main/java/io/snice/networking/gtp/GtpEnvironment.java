@@ -22,9 +22,9 @@ public interface GtpEnvironment<C extends GtpAppConfig> extends Environment<GtpT
         return establishControlPlane(new InetSocketAddress(remoteHost, remoteIp));
     }
 
-    CompletionStage<GtpUserTunnel> establishUserPlane(final InetSocketAddress remoteAddress);
+    GtpUserTunnel establishUserPlane(final InetSocketAddress remoteAddress);
 
-    default CompletionStage<GtpUserTunnel> establishUserPlane(final String remoteHost, final int remoteIp) {
+    default GtpUserTunnel establishUserPlane(final String remoteHost, final int remoteIp) {
         assertNotEmpty(remoteHost, "The remote host cannot be null or the empty string");
         return establishUserPlane(new InetSocketAddress(remoteHost, remoteIp));
     }

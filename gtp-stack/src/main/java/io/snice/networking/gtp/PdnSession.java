@@ -34,7 +34,7 @@ public interface PdnSession extends Session {
      *
      * @return
      */
-    CompletionStage<EpsBearer> establishDefaultBearer();
+    EpsBearer establishDefaultBearer();
 
     interface Builder<C extends GtpAppConfig> {
 

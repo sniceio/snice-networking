@@ -32,7 +32,7 @@ public interface GtpStack<C extends GtpAppConfig> extends ProtocolBundle<Connect
      */
     CompletionStage<GtpControlTunnel> establishControlPlane(InetSocketAddress remoteAddress);
 
-    CompletionStage<GtpUserTunnel> establishUserPlane(InetSocketAddress remoteAddress);
+    GtpUserTunnel establishUserPlane(InetSocketAddress remoteAddress);
 
     PdnSession.Builder<C> initiateNewPdnSession(final CreateSessionRequest createSessionRequest);
 

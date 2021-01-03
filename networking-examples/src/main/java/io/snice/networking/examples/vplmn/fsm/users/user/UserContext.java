@@ -16,7 +16,7 @@ public interface UserContext extends Context, FsmActorContextSupport {
      * @return the {@link Duration} in which we'll stay idle.
      */
     default Duration getIdleTime() {
-        return Duration.ofMillis(500);
+        return Duration.ofMillis(5000);
     }
 
     Device getDevice();

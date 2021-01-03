@@ -4,6 +4,7 @@
 package io.snice.networking.core;
 
 import io.snice.networking.common.Connection;
+import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
 
 import java.net.InetSocketAddress;
@@ -57,6 +58,16 @@ public interface ListeningPoint<T> {
      * @return
      */
     CompletableFuture<Connection<T>> connect(final InetSocketAddress remoteAddress);
+
+    /**
+     * See explanation for what this one does on {@link NetworkInterface#connectDirect(Transport, InetSocketAddress)}
+     *
+     * @param remoteAddress
+     * @return
+     */
+    default Connection<T> connectDirect(final InetSocketAddress remoteAddress) throws IllegalTransportException {
+        throw new IllegalTransportException("Only UDP supports \"connect direct\" method");
+    }
 
     // because you can't override toString
     default String toStringRepresentation() {

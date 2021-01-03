@@ -140,7 +140,7 @@ public class Sgw2 extends GtpApplication<GtpConfig> {
                     final var t = new Thread(() -> {
                         try {
                             Thread.sleep(100);
-                            final var bearer = session.establishDefaultBearer().toCompletableFuture().get();
+                            final var bearer = session.establishDefaultBearer();
                             // bearer.send("165.227.89.76", 52483, "hello world");
                             bearer.send("8.8.8.8", 53, dnsQuery);
                             Thread.sleep(4000);

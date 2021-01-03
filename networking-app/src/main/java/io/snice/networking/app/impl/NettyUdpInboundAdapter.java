@@ -19,7 +19,11 @@ import io.snice.time.Clock;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -146,7 +150,7 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
 
         final var cCtx = channels.computeIfAbsent(id, cId -> {
 
-            System.err.println("Compute if absent " + id);
+            System.err.println("NettyUdpInboundAdapter: Compute if absent " + id);
 
             // if we do not have a connection future then this connection was NOT initiated by
             // the application and as such, this is an "inbound" connection, as opposed to an "outbound"
@@ -280,8 +284,6 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
      */
     @Override
     public void channelUnregistered(final ChannelHandlerContext ctx) throws Exception {
-        // TODO: the FlowActor should transition to the CLOSED state.
-        // System.err.println("UDP Decoder: Channel un-registered " + ctx.channel());
     }
     /**
      * From ChannelInboundHandler
@@ -307,7 +309,6 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
      */
     @Override
     public void channelWritabilityChanged(final ChannelHandlerContext ctx) throws Exception {
-        System.err.println("UDP Decoder: Channel writability changed");
         // ctx.fireChannelWritabilityChanged();
     }
 }

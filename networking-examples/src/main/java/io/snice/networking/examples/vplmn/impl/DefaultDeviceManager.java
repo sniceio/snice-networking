@@ -171,14 +171,10 @@ public class DefaultDeviceManager implements InternalDeviceManager {
             final var remoteIp = remote.getIPv4AddressAsString().get();
             // TODO: if there is a NAT between us and e.g. the PGW, we need to
             // NAT the IP...
-            environment.establishUserPlane(remoteIp, defaultGtpuPort).thenAccept(tunnel -> {
-                final var epsBearer = DefaultEpsBearer.create(tunnel, assignedIpAddress, local, remote, localPort);
-                final var evt = new DeviceEvent.EpsBearerEstablished(epsBearer);
-                self.tell(evt);
-            }).exceptionally(t -> {
-                // TODO: issue a failed eps bearer event so the FSM can handle it.
-                return null;
-            });
+            final var tunnel = environment.establishUserPlane(remoteIp, defaultGtpuPort);
+            final var epsBearer = DefaultEpsBearer.create(tunnel, assignedIpAddress, local, remote, localPort);
+            final var evt = new DeviceEvent.EpsBearerEstablished(epsBearer);
+            self.tell(evt);
         }
 
         @Override

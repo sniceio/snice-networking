@@ -42,8 +42,7 @@ public class AliceFsm {
          */
         booting.transitionTo(IDLE).onEvent(DeviceEvent.Online.class);
 
-        idle.withInitialEnterAction(AliceFsm::onEnterIdle);
-
+        idle.withEnterAction(AliceFsm::onEnterIdle);
         idle.transitionTo(SURFING).onEvent(UserEvent.Surf.class).withAction(AliceFsm::onSurf);
         idle.transitionTo(DONE).onEvent(UserEvent.Bye.class);
 
@@ -74,7 +73,7 @@ public class AliceFsm {
     }
 
     private static void onSurf(final UserEvent.Surf surf, final UserContext ctx, final UserData data) {
-        ctx.getDevice().sendData(Sgw2.dnsQuery, "8.8.8.8", 53);
+        ctx.getDevice().sendData(Sgw2.dnsQuery, "165.227.89.76", 53);
         ctx.getScheduler().schedule(surf.decrement(), surf.getTimeInBetween());
     }
 }

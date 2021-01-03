@@ -152,20 +152,28 @@ public abstract class NettyListeningPoint<T> implements ListeningPoint<T> {
         @Override
         public CompletableFuture<Connection<T>> connect(final InetSocketAddress remoteAddress) {
             final var f = new CompletableFuture();
+            internalConnect(f, remoteAddress);
+            return f;
+        }
 
+        @Override
+        public Connection<T> connectDirect(final InetSocketAddress remoteAddress) {
+            return internalConnect(new CompletableFuture<>(), remoteAddress);
+        }
+
+        private Connection<T> internalConnect(final CompletableFuture<Connection<T>> future, final InetSocketAddress remoteAddress) {
             // Since we don't actually connect when using UDP we will be firing off
             // a success event right away and then we have to rely on the NettyUdpInboundAdapter
             // to do the right thing. It will also have to complete the future we created
             // above.
             final Channel channel = udpChannel.get();
             final ChannelHandlerContext ctx = channel.pipeline().firstContext();
-            final Connection<T> c = new UdpConnection(channel, remoteAddress, getVipAddress());
+            final Connection<T> connection = new UdpConnection(channel, remoteAddress, getVipAddress());
             final Long arrivalTime = clock.getCurrentTimeMillis();
 
-            final var evt = ConnectionAttempt.success(f, c, arrivalTime);
+            final var evt = ConnectionAttempt.success(future, connection, arrivalTime);
             ctx.pipeline().firstContext().fireUserEventTriggered(evt);
-
-            return f;
+            return connection;
         }
     }
 
