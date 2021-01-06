@@ -45,9 +45,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <snice-commons.version>0.1.7-SNAPSHOT</snice-commons.version>
-        <snice-codecs.version>0.0.7-SNAPSHOT</snice-codecs.version>
-        <hektor.version>0.0.4-SNAPSHOT</hektor.version>
+        <snice-commons.version>0.1.8</snice-commons.version>
+        <snice-codecs.version>0.0.7</snice-codecs.version>
+        <hektor.version>0.0.4</hektor.version>
         <netty.version>4.1.43.Final</netty.version>
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
