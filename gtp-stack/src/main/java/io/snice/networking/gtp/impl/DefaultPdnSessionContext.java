@@ -104,6 +104,16 @@ public class DefaultPdnSessionContext implements PdnSessionContext {
     }
 
     @Override
+    public Teid getLocalTeid() {
+        return localTeid;
+    }
+
+    @Override
+    public Teid getRemoteTeid() {
+        return remoteTeid;
+    }
+
+    @Override
     public Paa getPaa() {
         return paa;
     }

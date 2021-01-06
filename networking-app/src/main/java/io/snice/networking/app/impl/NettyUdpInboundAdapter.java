@@ -1,20 +1,15 @@
 package io.snice.networking.app.impl;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.channel.socket.DatagramPacket;
-import io.snice.buffer.Buffer;
-import io.snice.buffer.Buffers;
 import io.snice.networking.app.ConnectionContext;
+import io.snice.networking.common.ChannelContext;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
 import io.snice.networking.common.event.ConnectionActiveIOEvent;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
-import io.snice.networking.common.event.ConnectionIOEvent;
 import io.snice.networking.common.event.MessageIOEvent;
 import io.snice.networking.core.event.ConnectionAttemptSuccess;
 import io.snice.networking.core.event.NetworkEvent;
@@ -24,8 +19,12 @@ import io.snice.time.Clock;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
-import java.util.*;
-import java.util.function.BiFunction;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Adapter to handle all incoming UDP traffic for a particular channel. Since
@@ -46,7 +45,7 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
     private final UUID uuid = UUID.randomUUID();
     private final List<ConnectionContext> ctxs;
 
-    private final Map<ConnectionId, ConnectionAdapter<UdpConnection<T>, T>> adapters;
+    private final Map<ConnectionId, ChannelContext<T>> channels;
 
     private final ConnectionContext defaultCtx;
 
@@ -57,7 +56,7 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
         this.vipAddress = vipAddress;
         this.ctxs = ctxs;
 
-        adapters = allocateInitialMapSize();
+        channels = allocateInitialMapSize();
 
         // TODO
         defaultCtx = null;
@@ -80,14 +79,14 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
     /**
      * We really do not want to re-hash the connection map so it is important
      * that you can configure the initial size of this map from the beginning.
-     *
+     * <p>
      * Also, unlike e.g. TCP, the UDP connections do not have a "natural" end so they
      * will have to be purged somehow... perhaps I shouldn't store them and just
      * create them everytime. Wonder what is more expensive...
-     *
+     * <p>
      * TODO: pass in some configuration object...
      */
-    private Map<ConnectionId, ConnectionAdapter<UdpConnection<T>, T>> allocateInitialMapSize() {
+    private Map<ConnectionId, ChannelContext<T>> allocateInitialMapSize() {
         return new HashMap<>();
     }
 
@@ -104,41 +103,111 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
         final var udp = (UdpReadEvent<T>) msg;
         final var remote = udp.getRaw().sender();
 
-        // TODO: if this is an IPv6 address, it'll blow up...
-        final var id = ConnectionId.create(Transport.udp, udp.getRaw().recipient(), remote);
-
-        // TODO: store away the connection instead so we don't have to find the
-        // context on every incoming packet! See SNICE-28
-        final var connCtx = findContext(id);
-        if (connCtx.isDrop()) {
-            ctx.close();
-            return;
-        }
 
         try {
-            final var connection = new UdpConnection<T>(ctx.channel(), remote, vipAddress);
-            final var channelContext = new DefaultChannelContext<T>(connection, connCtx);
+
+            final var id = ConnectionId.create(Transport.udp, udp.getRaw().recipient(), remote);
+            final var channelContext = ensureContext(ctx, id, null, udp.getArrivalTime());
+
+            // null context if e.g. the user has decided to drop the connection.
+            // TODO: if the user has a function to run on the drop, it isn't being executed right tnow...
+            // TODO: should return an object instead so it is more obvious
+            if (channelContext == null) {
+                return;
+            }
+
             final var evt = MessageIOEvent.create(channelContext, clock.getCurrentTimeMillis(), udp.getMessage());
             ctx.fireChannelRead(evt);
+        } catch (final ArrayIndexOutOfBoundsException e) {
+            // TODO: because the ConnectionId.create assumes it's an IPv4 address.
+            throw new RuntimeException("Sorry, currently the internal ConnectionId assumes everything is IPv4 and as such " +
+                    "this isn't working. Please restart your application with the JVM argument " +
+                    "\"-Djava.net.preferIPv4Stack=true\" and it'll be fine");
         } catch (final ClassCastException e) {
             // TODO: this means that the underlying decoder isn't doing it's job...
             e.printStackTrace();
         }
     }
 
-    private static Buffer toBuffer(final DatagramPacket pkt) {
-        final ByteBuf content = pkt.content();
-        final byte[] b = new byte[content.readableBytes()];
-        content.getBytes(0, b);
-        return Buffers.wrap(b);
+    /**
+     * A "connection" can be created in two ways. Either based on incoming traffic or, based on a user
+     * requesting to create an "outbound" connection. Either or, they are both representing the exact same
+     * connection and as such, we need to ensure we do not end up creating the same connection twice just because
+     * a user, and incoming traffic, happened to come in at once (and from the same remote ip:port).
+     *
+     * @param ctx
+     * @param id
+     * @param connectionFuture
+     * @param arrivalTime
+     * @return
+     */
+    private ChannelContext<T> ensureContext(final ChannelHandlerContext ctx,
+                                            final ConnectionId id,
+                                            final CompletableFuture<Connection<T>> connectionFuture,
+                                            final long arrivalTime) {
+        final boolean isInbound = connectionFuture == null;
+        final var udpConnection = new UdpConnection(ctx.channel(), id, vipAddress);
+
+        final var cCtx = channels.computeIfAbsent(id, cId -> {
+
+            System.err.println("NettyUdpInboundAdapter: Compute if absent " + id);
+
+            // if we do not have a connection future then this connection was NOT initiated by
+            // the application and as such, this is an "inbound" connection, as opposed to an "outbound"
+
+            final var connCtx = findContext(id);
+            // only drop if this is an inbound connection attempt. For outbound, the user
+            // obviously requested it so we need to let it through.
+            if (isInbound && connCtx.isDrop()) {
+                ctx.close();
+                // Dead adapter so we stop other attempts?
+                return null;
+            }
+
+            try {
+                final var channelCtx = new DefaultChannelContext<T>(udpConnection, connCtx);
+                final var connectionActiveIOEvent = ConnectionActiveIOEvent.create(channelCtx, isInbound, arrivalTime);
+                ctx.fireUserEventTriggered(connectionActiveIOEvent);
+
+                // Note that for this inbound UDP "connection", there is no future waiting to be completed since
+                // this is not a connection the user initiated. However, the user may have specified a
+                // "save" function, which will be called by the NettyApplicationLayer in order to invoke the app.
+                final var e = ConnectionAttemptCompletedIOEvent.create(channelCtx, connectionFuture, udpConnection, arrivalTime);
+                ctx.fireUserEventTriggered(e);
+                return channelCtx;
+            } catch (final Throwable th) {
+                th.printStackTrace();
+                throw th;
+            }
+        });
+
+        // TODO: need to re-work.
+        // These events are being fired to maintain the same contract as with
+        // connection oriented protocols, such as TCP and SCTP. However, the below
+        // approach is "dangerous" in that it takes place within the lock of
+        // the concurrent hash map and as such, if the user holds onto anything
+        // it has the potential of blocking network traffic.
+        //
+
+        // don't fire these events for inbound messages
+        // but we do want to fire them for the first time... ah!!!
+        // but now they are fired twice for the first time if it is an outbound connection!
+        // Ah! need to re-work this stuff...
+        if (!isInbound) {
+            final var connectionActiveIOEvent = ConnectionActiveIOEvent.create(cCtx, isInbound, arrivalTime);
+            ctx.fireUserEventTriggered(connectionActiveIOEvent);
+
+            // Note that for this inbound UDP "connection", there is no future waiting to be completed since
+            // this is not a connection the user initiated. However, the user may have specified a
+            // "save" function, which will be called by the NettyApplicationLayer in order to invoke the app.
+            final var e = ConnectionAttemptCompletedIOEvent.create(cCtx, connectionFuture, udpConnection, arrivalTime);
+            ctx.fireUserEventTriggered(e);
+        }
+        return cCtx;
     }
 
     private ConnectionContext<Connection<T>, T> findContext(final ConnectionId id) {
         return ctxs.stream().filter(ctx -> ctx.test(id)).findFirst().orElse(defaultCtx);
-    }
-
-    private ConnectionAdapter<UdpConnection<T>, T> ensureConnection(final Channel channel, final ConnectionId id, final ConnectionContext<Connection<T>, T> connCtx) {
-        return adapters.computeIfAbsent(id, cId -> new ConnectionAdapter(new UdpConnection(channel, id, vipAddress), connCtx));
     }
 
     @Override
@@ -185,15 +254,8 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
         // TODO: store that away so we don't do this every time...
         // Also, if we did that then we would also be able to keep track of inbound "connections"
         final var connection = evt.getConnection();
-        final var connectionContext = findContext(connection.id());
-        final var channelContext = new DefaultChannelContext<T>(connection, connectionContext);
-
-        final var isInboundConnection = evt.getUserConnectionFuture() == null;
-        final var connectionActiveIOEvent = ConnectionActiveIOEvent.create(channelContext, isInboundConnection, evt.getArrivalTime());
-        ctx.fireUserEventTriggered(connectionActiveIOEvent);
-
-        final var e = ConnectionAttemptCompletedIOEvent.create(channelContext, evt.getUserConnectionFuture(), connection, evt.getArrivalTime());
-        ctx.fireUserEventTriggered(e);
+        final var id = connection.id();
+        ensureContext(ctx, id, evt.getUserConnectionFuture(), evt.getArrivalTime());
     }
 
     @Override
@@ -217,20 +279,11 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
         log("Channel Registered");
     }
 
-    private ConnectionIOEvent create(final ChannelHandlerContext ctx, final BiFunction<Connection, Long, ConnectionIOEvent> f) {
-        final Channel channel = ctx.channel();
-        System.out.println("UDP Adapter: create " + Thread.currentThread().getName() + " Local: " + channel.localAddress() + " Remote: " + channel.remoteAddress());
-        final Connection connection = new UdpConnection(channel, (InetSocketAddress) channel.remoteAddress(), vipAddress);
-        final Long arrivalTime = clock.getCurrentTimeMillis();
-        return f.apply(connection, arrivalTime);
-    }
     /**
      * From ChannelInboundHandler
      */
     @Override
     public void channelUnregistered(final ChannelHandlerContext ctx) throws Exception {
-        // TODO: the FlowActor should transition to the CLOSED state.
-        // System.err.println("UDP Decoder: Channel un-registered " + ctx.channel());
     }
     /**
      * From ChannelInboundHandler
@@ -256,7 +309,6 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
      */
     @Override
     public void channelWritabilityChanged(final ChannelHandlerContext ctx) throws Exception {
-        System.err.println("UDP Decoder: Channel writability changed");
         // ctx.fireChannelWritabilityChanged();
     }
 }

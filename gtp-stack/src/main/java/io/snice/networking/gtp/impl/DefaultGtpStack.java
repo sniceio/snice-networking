@@ -13,10 +13,21 @@ import io.snice.networking.app.NetworkStack;
 import io.snice.networking.app.impl.GenericBootstrap;
 import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
+import io.snice.networking.common.ConnectionEndpointId;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
 import io.snice.networking.common.fsm.FsmFactory;
-import io.snice.networking.gtp.*;
+import io.snice.networking.core.NetworkInterface;
+import io.snice.networking.gtp.EpsBearer;
+import io.snice.networking.gtp.GtpApplication;
+import io.snice.networking.gtp.GtpBootstrap;
+import io.snice.networking.gtp.GtpControlTunnel;
+import io.snice.networking.gtp.GtpTunnel;
+import io.snice.networking.gtp.GtpUserTunnel;
+import io.snice.networking.gtp.IllegalGtpMessageException;
+import io.snice.networking.gtp.PdnSession;
+import io.snice.networking.gtp.PdnSessionContext;
+import io.snice.networking.gtp.Transaction;
 import io.snice.networking.gtp.conf.ControlPlaneConfig;
 import io.snice.networking.gtp.conf.GtpAppConfig;
 import io.snice.networking.gtp.conf.UserPlaneConfig;
@@ -42,6 +53,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
@@ -64,8 +76,24 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
     private UserPlaneConfig userPlaneConfig;
     private ControlPlaneConfig controlPlaneConfig;
 
-    private ConcurrentMap<ConnectionId, Connection<GtpEvent>> controlPlaneConnections;
-    private ConcurrentMap<ConnectionId, Connection<GtpEvent>> userPlaneConnections;
+    /**
+     * If we are configured to handle GTP-U, this will be the network interface
+     * we are doing it over.
+     */
+    private NetworkInterface<GtpEvent> gtpuNic;
+
+    private NetworkInterface<GtpEvent> gtpcNic;
+
+    /**
+     * Keep track of all tunnels based on to where they are "connected".
+     * <p>
+     * Note that since we only support a single NIC per tunnel "type" (so GTP-U v.s.
+     * GTP-C) it is safe to only use the remote endpoint as the key into this map.
+     * If that were to change, we would have to change this.
+     */
+    private ConcurrentMap<ConnectionEndpointId, Connection<GtpEvent>> gtpuTunnels;
+
+    private ConcurrentMap<ConnectionEndpointId, Connection<GtpEvent>> gtpcTunnels;
 
     public DefaultGtpStack() {
         final var udpEncoder = ProtocolHandler.of("gtp-codec-encoder")
@@ -92,10 +120,10 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
         sessionFactory = new GtpSessionFsmFactory(config, clock);
 
         userPlaneConfig = config.getConfig().getUserPlane();
-        userPlaneConnections = new ConcurrentHashMap<>(); // TODO: make the default size configurable
-
         controlPlaneConfig = config.getConfig().getControlPlane();
-        controlPlaneConnections = new ConcurrentHashMap<>(); // TODO: make the default size configurable
+
+        gtpcTunnels = new ConcurrentHashMap<>(controlPlaneConfig.getInitialTunnelStoreSize());
+        gtpuTunnels = new ConcurrentHashMap<>(userPlaneConfig.getInitialTunnelStoreSize());
     }
 
     /**
@@ -111,11 +139,17 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
             if (rule.isDrop()) {
                 b.drop(rule.getDropFunction().get());
             } else {
+                final var saveFunction = rule.getSaveAction();
+                b.save(tunnel -> saveInboundConnection(tunnel, saveFunction));
                 b.accept(builder -> {
                     builder.match(e -> true).consume((peer, event) -> processEvent(rule, peer, event));
                 });
             }
         });
+    }
+
+    private void saveInboundConnection(final GtpTunnel tunnel, final Optional<Consumer<GtpTunnel>> userSaveFunction) {
+        userSaveFunction.ifPresent(f -> f.accept(tunnel));
     }
 
     private void processEvent(final ConnectionContext<GtpTunnel, GtpEvent> ctx, final GtpTunnel tunnel, final GtpEvent event) {
@@ -160,6 +194,21 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
     public CompletionStage<ProtocolBundle<Connection<GtpEvent>, GtpEvent, C>> start(final NetworkStack<Connection<GtpEvent>, GtpEvent, C> stack) {
         logger.info("Starting GTP Stack");
         this.stack = stack;
+
+        if (userPlaneConfig.isEnable()) {
+            gtpuNic = stack.getNetworkInterface(userPlaneConfig.getNic()).orElseThrow(() ->
+                    new IllegalArgumentException("Unable to find the Network Interface to use for the User Plane. " +
+                            "The configuration says to use \"" + userPlaneConfig.getNic() + "\" but no such" +
+                            "interface exists"));
+        }
+
+        if (controlPlaneConfig.isEnable()) {
+            gtpcNic = stack.getNetworkInterface(controlPlaneConfig.getNic()).orElseThrow(() ->
+                    new IllegalArgumentException("Unable to find the Network Interface to use for the Control Plane. " +
+                            "The configuration says to use \"" + controlPlaneConfig.getNic() + "\" but no such" +
+                            "interface exists"));
+        }
+
         return CompletableFuture.completedFuture(this);
     }
 
@@ -190,9 +239,12 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
 
     @Override
     public Connection<GtpEvent> wrapConnection(final Connection<GtpEvent> connection) {
-        // TODO: may actually be either Control or User Plane. We need to match this
-        // against which NIC it comes over.
-        return DefaultGtpControlTunnel.of(connection.id(), this);
+        // Note: you cannot SAVE this connection for future use, ever!
+        // The reason is that the underlying network layer needs to be in control and will
+        // typically for incoming messages wrap a fake connection so it buffers up all
+        // messages that are to be processed after the invocation of the application
+        // returns...
+        return DirectGtpControlTunnel.of(connection, this);
     }
 
     @Override
@@ -236,14 +288,15 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
     }
 
     private Connection<GtpEvent> findConnection(final GtpMessage msg, final ConnectionId id) {
-        // TODO: split the two tunnels. Already started to split with the InternalGtpXxxTunnel etc so make use of it...
-        //
-        // TODO: not entirely correct but since we haven't implemented GTPv1 right now other than GTP-U it is correct for now.
-        // Also, perhaps we should just put everything in one map and then a thin wrapper class/holder that
-        // tells us if this is a GTP-U or GTP-C tunnel. And perhaps the version even though that is not really
-        // something that is currently exposed as far as indicating what the tunnel will be used for (GTPv1 v.s. GTPv2 over the
-        // control tunnel).
-        final var connection = msg.isGtpVersion2() ? controlPlaneConnections.get(id) : userPlaneConnections.get(id);
+        final var remoteEndpoint = id.getRemoteConnectionEndpointId();
+        final Connection<GtpEvent> connection;
+        if (msg.isGtpVersion2()) {
+            connection = gtpcTunnels.get(remoteEndpoint);
+        } else {
+            // TODO: not entirely correct but we only support GTP-U right now so good enough
+            connection = gtpuTunnels.get(remoteEndpoint);
+        }
+
         if (connection == null) {
             throw new IllegalArgumentException("There is no existing connection for " + id);
         }
@@ -262,32 +315,28 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
         }
 
         assertNotNull(remoteAddress, "The remote address cannot be null");
-        final var nic = stack.getNetworkInterface(controlPlaneConfig.getNic()).orElseThrow(() ->
-                new IllegalArgumentException("Unable to find the Network Interface to use for the Control Plane. " +
-                        "The configuration says to use \"" + controlPlaneConfig.getNic() + "\" but no such" +
-                        "interface exists"));
         final var gtpStack = this;
-        return nic.connect(Transport.udp, remoteAddress).thenApply(c -> {
-            controlPlaneConnections.put(c.id(), c);
+        return gtpcNic.connect(Transport.udp, remoteAddress).thenApply(c -> {
+            // System.err.println("Saving GTP-C tunnel " + c.id());
+            gtpcTunnels.put(c.id().getRemoteConnectionEndpointId(), c);
             return DefaultGtpControlTunnel.of(c.id(), gtpStack);
         });
     }
 
     @Override
-    public CompletionStage<GtpUserTunnel> establishUserPlane(final InetSocketAddress remoteAddress) {
+    public GtpUserTunnel establishUserPlane(final InetSocketAddress remoteAddress) {
         if (!userPlaneConfig.isEnable()) {
             throw new IllegalArgumentException("The User Plane is not configured for this application");
         }
         assertNotNull(remoteAddress, "The remote address cannot be null");
-        final var nic = stack.getNetworkInterface(userPlaneConfig.getNic()).orElseThrow(() ->
-                new IllegalArgumentException("Unable to find the Network Interface to use for the User Plane. " +
-                        "The configuration says to use \"" + userPlaneConfig.getNic() + "\" but no such" +
-                        "interface exists"));
-        final var gtpStack = this;
-        return nic.connect(Transport.udp, remoteAddress).thenApply(c -> {
-            userPlaneConnections.put(c.id(), c);
-            return DefaultGtpUserTunnel.of(c.id(), gtpStack);
+
+        final var remoteConnectionId = ConnectionEndpointId.create(Transport.udp, remoteAddress);
+        final var tunnel = gtpuTunnels.computeIfAbsent(remoteConnectionId, key -> {
+            // System.err.println("Saving GTP-U tunnel " + remoteConnectionId);
+            return gtpuNic.connectDirect(Transport.udp, remoteAddress);
         });
+
+        return DefaultGtpUserTunnel.of(tunnel.id(), this);
     }
 
     @Override
@@ -295,13 +344,6 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
         assertNotNull(createSessionRequest, "The Create Session Request cannot be null");
         return new PdnSessionBuilder<C>(createSessionRequest);
     }
-
-    /*
-    @Override
-    public PdnSession.Builder initiateNewPdnSession(final Gtp2MessageBuilder<Gtp2Request> createSessionRequest) {
-        throw new RuntimeException("Sorry, not yet implemented");
-    }
-     */
 
     private class GtpBootstrapImpl<C extends GtpAppConfig> extends GenericBootstrap<GtpTunnel, GtpEvent, C> implements GtpBootstrap<C> {
         public GtpBootstrapImpl(final C config) {
@@ -400,16 +442,15 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
         }
 
         @Override
-        public CompletionStage<EpsBearer> establishDefaultBearer() {
+        public EpsBearer establishDefaultBearer() {
             final var localPort = 7893;
             final var remoteBearer = ctx.getDefaultRemoteBearer();
-            System.err.println("The IP Address in the remote bearer is: " + remoteBearer.getIPv4AddressAsString().get());
-            final var pgw = "52.90.72.87"; // TODO: have to fix this NAT issue.
+            // System.err.println("The IP Address in the remote bearer is: " + remoteBearer.getIPv4AddressAsString().get());
+            final var pgw = "127.0.0.1"; // TODO: have to fix this NAT issue.
             final var remote = new InetSocketAddress(pgw, defaultGtpuPort);
-            return establishUserPlane(remote).thenApply(tunnel ->
-                    // TODO: need to save it away too...
-                    DefaultEpsBearer.create(tunnel, ctx, localPort)
-            );
+            final var tunnel = establishUserPlane(remote);
+            // TODO: need to save it away too...
+            return DefaultEpsBearer.create(tunnel, ctx, localPort);
         }
     }
 

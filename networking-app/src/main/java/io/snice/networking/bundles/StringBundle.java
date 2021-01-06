@@ -13,6 +13,8 @@ import io.snice.networking.app.impl.UdpReadEvent;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.Transport;
 import io.snice.networking.netty.ProtocolHandler;
+import io.snice.time.Clock;
+import io.snice.time.SystemClock;
 
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -72,20 +74,23 @@ public class StringBundle<C extends NetworkAppConfig> extends BundleSupport<Conn
     @ChannelHandler.Sharable
     private static class StringDatagramDecoder extends MessageToMessageDecoder<DatagramPacket> {
         private final Charset charset;
+        private final Clock clock;
 
         private StringDatagramDecoder(final Charset charset) {
             this.charset = charset;
+            this.clock = new SystemClock();
         }
 
         @Override
         protected void decode(final ChannelHandlerContext ctx, final DatagramPacket udp, final List<Object> list) throws Exception {
+            final long arrivalTime = clock.getCurrentTimeMillis();
             final var content = udp.content();
 
             final byte[] b = new byte[content.readableBytes()];
             content.getBytes(0, b);
 
             final var str = new String(b, charset);
-            list.add(UdpReadEvent.create(ctx, udp, str));
+            list.add(UdpReadEvent.create(ctx, udp, str, arrivalTime));
         }
     }
 

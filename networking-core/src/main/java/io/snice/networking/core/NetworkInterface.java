@@ -46,6 +46,21 @@ public interface NetworkInterface<T> {
     CompletionStage<Connection<T>> connect(Transport transport, InetSocketAddress remoteAddress)
             throws IllegalTransportException;
 
+    /**
+     * If the underlying transport is UDP, there is no "connect" per say but that method returns
+     * directly and as such, no need to have a {@link CompletionStage} etc. Trying to use this
+     * method on any other type of transport that doesn't support this "direct" connection method
+     * will blow up on an {@link IllegalTransportException}.
+     *
+     * @param transport
+     * @param remoteAddress
+     * @return
+     * @throws IllegalTransportException in case you try to use this direct connect method with a transport
+     *                                   that doesn't support the "direct" connection mode, which is essentially any connection oriented transport.
+     *                                   I.e., really only UDP is supporting this.
+     */
+    Connection<T> connectDirect(Transport transport, InetSocketAddress remoteAddress) throws IllegalTransportException;
+
     ListeningPoint getListeningPoint(Transport transport);
 
     /**

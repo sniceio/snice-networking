@@ -80,8 +80,19 @@ public abstract class NetworkApplication<E extends Environment<K, T, C>, K exten
         // TODO: actually call a bootstrap method here that allows the app
         // to register the AppBundle (rename it to NetworkStackBundle or something)
 
+        // killing the first arg but to be backwards compatible, let's see
+        // if there are 1 or two args.
+        final String confFile;
+        if (args.length == 1) {
+            confFile = args[0];
+        } else if (args.length == 2 && "server".equalsIgnoreCase(args[0])) {
+            confFile = args[1];
+        } else {
+            throw new IllegalArgumentException("Unable to determine which one of the arguments is the configuration file");
+        }
+
         final Class<C> cls = getConfigurationClass(getClass());
-        final C config = loadConfiguration(cls, bundle, args[1]);
+        final C config = loadConfiguration(cls, bundle, confFile);
         run(config, args);
     }
 

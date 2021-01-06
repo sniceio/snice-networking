@@ -8,6 +8,7 @@ import io.snice.networking.common.ConnectionId;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -32,14 +33,6 @@ public class GenericBootstrap<K extends Connection<T>, T, C extends NetworkAppCo
         return config;
     }
 
-    /*
-    @Override
-    public void registerSerializationFactory(final SerializationFactory<T> serializationFactory) {
-        assertNotNull(serializationFactory, "The serializationFactory cannot be null");
-        this.serializationFactory = serializationFactory;
-    }
-     */
-
     @Override
     public ConnectionContext.Builder<K, T, T> onConnection(final Predicate<ConnectionId> condition) {
         assertNotNull(condition, "The condition cannot be null");
@@ -47,5 +40,4 @@ public class GenericBootstrap<K extends Connection<T>, T, C extends NetworkAppCo
         rules.add(builder);
         return builder;
     }
-
 }

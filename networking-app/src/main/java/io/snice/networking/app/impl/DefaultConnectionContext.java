@@ -7,6 +7,7 @@ import io.snice.networking.common.ConnectionId;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -16,14 +17,19 @@ public class DefaultConnectionContext<K extends Connection<T>, T> implements Con
 
     private final Optional<Function<K, T>> dropFunction;
 
+    private final Optional<Consumer<K>> saveAction;
+
     final List<MessagePipe<K, T, ?>> rules;
 
     final List<MessagePipe<K, Object, ?>> eventRules;
 
-    public DefaultConnectionContext(final Predicate<ConnectionId> condition, final Function<K, T> dropFunction,
+    public DefaultConnectionContext(final Predicate<ConnectionId> condition,
+                                    final Consumer<K> saveAction,
+                                    final Function<K, T> dropFunction,
                                     final List<MessagePipe<K, T, ?>> rules,
                                     final List<MessagePipe<K, Object, ?>> eventRules) {
         this.condition = condition;
+        this.saveAction = Optional.ofNullable(saveAction);
         this.dropFunction = Optional.ofNullable(dropFunction);
         this.rules = rules;
         this.eventRules = eventRules;
@@ -53,6 +59,11 @@ public class DefaultConnectionContext<K extends Connection<T>, T> implements Con
     @Override
     public Optional<Function<K, T>> getDropFunction() {
         return dropFunction;
+    }
+
+    @Override
+    public Optional<Consumer<K>> getSaveAction() {
+        return saveAction;
     }
 
     @Override

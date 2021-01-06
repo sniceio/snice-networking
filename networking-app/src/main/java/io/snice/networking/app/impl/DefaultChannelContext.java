@@ -1,12 +1,11 @@
 package io.snice.networking.app.impl;
 
 import io.snice.networking.app.ConnectionContext;
-import io.snice.networking.common.ChannelContext;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.event.IOEvent;
 
-public class DefaultChannelContext<T> implements ChannelContext<T> {
+public class DefaultChannelContext<T> implements InternalChannelContext<T> {
 
     private final Connection<T> connection;
     private final ConnectionContext<Connection<T>, T> ctx;
@@ -21,6 +20,7 @@ public class DefaultChannelContext<T> implements ChannelContext<T> {
         return connection.id();
     }
 
+    @Override
     public ConnectionContext<Connection<T>, T> getConnectionContext() {
         return ctx;
     }

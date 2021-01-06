@@ -1,10 +1,13 @@
 package io.snice.networking.common;
 
 
+import io.snice.buffer.Buffer;
+
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 
 import static io.snice.net.IPv4.convertToStringIP;
+import static io.snice.preconditions.PreConditions.assertArgument;
 import static io.snice.preconditions.PreConditions.ensureNotNull;
 
 /**
@@ -70,6 +73,13 @@ public interface ConnectionEndpointId {
     static ConnectionEndpointId create(final Transport transport, final byte[] rawAddress, final int port) {
         final InetSocketAddress address = new InetSocketAddress(convertToStringIP(rawAddress), port);
         return new IPv4ConnectionEndpointId(transport, address, rawAddress, port);
+    }
+
+    static ConnectionEndpointId create(final Transport transport, final Buffer rawAddress, final int port) {
+        // Note: this only assumes IPv4 addresses.
+        assertArgument(rawAddress != null && rawAddress.capacity() == 4, "The raw address cannot be null and must be exactly 4 bytes");
+        final InetSocketAddress address = new InetSocketAddress(rawAddress.toIPv4String(0), port);
+        return new IPv4ConnectionEndpointId(transport, address, rawAddress.getContent(), port);
     }
 
     static ConnectionEndpointId create(final Transport transport,

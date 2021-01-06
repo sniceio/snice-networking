@@ -3,7 +3,11 @@ package io.snice.networking.gtp.impl;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
-import io.snice.networking.gtp.*;
+import io.snice.networking.gtp.GtpControlTunnel;
+import io.snice.networking.gtp.GtpEnvironment;
+import io.snice.networking.gtp.GtpTunnel;
+import io.snice.networking.gtp.GtpUserTunnel;
+import io.snice.networking.gtp.PdnSession;
 import io.snice.networking.gtp.conf.ControlPlaneConfig;
 import io.snice.networking.gtp.conf.GtpAppConfig;
 import io.snice.networking.gtp.conf.UserPlaneConfig;
@@ -34,7 +38,7 @@ public class DefaultGtpEnvironment<C extends GtpAppConfig> implements GtpEnviron
     }
 
     @Override
-    public CompletionStage<GtpUserTunnel> establishUserPlane(final InetSocketAddress remoteAddress) {
+    public GtpUserTunnel establishUserPlane(final InetSocketAddress remoteAddress) {
         return stack.establishUserPlane(remoteAddress);
     }
 

@@ -152,59 +152,16 @@ public final class NettyNetworkInterface<T> implements NetworkInterface<T>, Chan
         }
 
         return lp.connect(remoteAddress);
+    }
 
-
-        // if (transport == Transport.udp || transport == null) {
-        // final ListeningPoint lp2 = listeningPointsByTransport[Transport.udp.ordinal()];
-        // return this.udpBootstrap.connect(remoteAddress, lp.getLocalAddress());
-        // return null;
-
-        // final UdpConnection connection = new UdpConnection(lp.getChannel(), remoteAddress);
-        // final ChannelFuture future = lp.getChannel().newSucceededFuture();
-        // return future;
-
-            /*
-            f.addListener(new GenericFutureListener<ChannelFuture>(){
-
-                @Override
-                public void operationComplete(final ChannelFuture future) throws Exception {
-                    System.err.println("Future success " + future.isSuccess());
-                    final Channel channel = future.channel();
-                    System.err.println("Future completed so I guess I'm connected " + channel);
-                    System.err.println("Remote Address: " + channel.remoteAddress());
-                    System.err.println("Local Address: " + channel.localAddress());
-
-                }
-            });
-            */
-
-            /*
-            final InetSocketAddress remote2 = new InetSocketAddress("192.168.0.100", 8576);
-            final ChannelFuture f2 = lp.getChannel().connect(remote2);
-            f2.addListener(new GenericFutureListener<ChannelFuture>(){
-
-                @Override
-                public void operationComplete(final ChannelFuture future) throws Exception {
-                    System.err.println("Future2 success " + future.isSuccess());
-                    System.err.println("Future2 cause " + future.cause());
-                    final Channel channel = future.channel();
-                    System.err.println("Future2 completed so I guess I'm connected " + channel);
-                    System.err.println("Remote2 Address: " + channel.remoteAddress());
-                    System.err.println("Local2 Address: " + channel.localAddress());
-
-                }
-            });
-            */
-        // final UdpConnection connection = new UdpConnection(lp.getChannel(), remoteAddress);
-        // return this.udpBootstrap.group().next().newSucceededFuture(connection);
-        // }
-
-        // TODO: TCP
-        // TODO: TLS
-        // TODO: WS
-        // TODO: WSS
-
-        // throw new IllegalTransportException("Stack has not been configured for transport " + transport);
+    @Override
+    public Connection<T> connectDirect(final Transport transport, final InetSocketAddress remoteAddress) throws IllegalTransportException {
+        final ListeningPoint lp = listeningPointsByTransport[transport.ordinal()];
+        if (lp == null) {
+            final String msg = String.format("Interface \"%s\" is not listening on transport %s", name, transport);
+            throw new IllegalTransportException(msg);
+        }
+        return lp.connectDirect(remoteAddress);
     }
 
 

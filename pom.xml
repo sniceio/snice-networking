@@ -45,9 +45,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <snice-commons.version>0.1.6</snice-commons.version>
-        <snice-codecs.version>0.0.6</snice-codecs.version>
-        <hektor.version>0.0.3</hektor.version>
+        <snice-commons.version>0.1.8</snice-commons.version>
+        <snice-codecs.version>0.0.7</snice-codecs.version>
+        <hektor.version>0.0.4</hektor.version>
         <netty.version>4.1.43.Final</netty.version>
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.25</slf4j.version>
@@ -71,23 +71,23 @@
     <dependencyManagement>
         <dependencies>
 
-        <dependency>
-            <groupId>net.sourceforge.argparse4j</groupId>
-            <artifactId>argparse4j</artifactId>
-            <version>${argparse.version}</version>
-            <scope>compile</scope>
+            <dependency>
+                <groupId>net.sourceforge.argparse4j</groupId>
+                <artifactId>argparse4j</artifactId>
+                <version>${argparse.version}</version>
+                <scope>compile</scope>
                 <type>jar</type>
-        </dependency>
+            </dependency>
 
-        <!-- For rendering liquid template -->
+            <!-- For rendering liquid template -->
 
-        <dependency>
-            <groupId>nl.big-o</groupId>
-            <artifactId>liqp</artifactId>
-            <version>${liqp.version}</version>
-            <scope>compile</scope>
+            <dependency>
+                <groupId>nl.big-o</groupId>
+                <artifactId>liqp</artifactId>
+                <version>${liqp.version}</version>
+                <scope>compile</scope>
                 <type>jar</type>
-        </dependency>
+            </dependency>
 
 
             <dependency>
@@ -220,11 +220,36 @@
 
             <dependency>
                 <groupId>io.hektor</groupId>
+                <artifactId>hektor-core</artifactId>
+                <version>${hektor.version}</version>
+                <type>jar</type>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.hektor</groupId>
+                <artifactId>hektor-actors</artifactId>
+                <version>${hektor.version}</version>
+                <type>jar</type>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.hektor</groupId>
                 <artifactId>hektor-fsm</artifactId>
                 <version>${hektor.version}</version>
                 <type>jar</type>
                 <scope>compile</scope>
             </dependency>
+
+            <dependency>
+                <groupId>io.hektor</groupId>
+                <artifactId>hektor-actor-fsm</artifactId>
+                <version>${hektor.version}</version>
+                <type>jar</type>
+                <scope>compile</scope>
+            </dependency>
+
 
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -362,7 +387,9 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.1.1</version>
                 <configuration>
+                    <!--
                     <additionalparam>-Xdoclint:none</additionalparam>
+                    -->
                     <additionalJOption>-Xdoclint:none</additionalJOption>
                     <!-- See for why source 8: https://bugs.openjdk.java.net/browse/JDK-8212233 -->
                     <source>11</source>

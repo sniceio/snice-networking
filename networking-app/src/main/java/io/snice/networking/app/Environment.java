@@ -1,6 +1,7 @@
 package io.snice.networking.app;
 
 import io.snice.networking.common.Connection;
+import io.snice.networking.common.ConnectionEndpointId;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
 
@@ -8,6 +9,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.CompletionStage;
 
 import static io.snice.preconditions.PreConditions.assertNotEmpty;
+import static io.snice.preconditions.PreConditions.assertNotNull;
 
 /**
  * @author jonas@jonasborjesson.com
@@ -54,6 +56,15 @@ public interface Environment<K extends Connection<T>, T, C extends NetworkAppCon
             throws IllegalTransportException, IllegalArgumentException {
         assertNotEmpty(remoteHost, "The remote host cannot be null or the empty string");
         return connect(transport, new InetSocketAddress(remoteHost, remoteIp));
+    }
+
+    /**
+     * Attempt to connect to the remote endpoint as indicated by the given {@link ConnectionEndpointId}.
+     */
+    default CompletionStage<K> connect(ConnectionEndpointId remoteEndpoint)
+            throws IllegalTransportException, IllegalArgumentException {
+        assertNotNull(remoteEndpoint, "The remote endpoint cannot be null");
+        return connect(remoteEndpoint.getProtocol(), remoteEndpoint.getAddress());
     }
 
 

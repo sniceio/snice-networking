@@ -12,6 +12,8 @@ public interface ConnectionContext<C extends Connection<T>, T> extends Predicate
 
     Optional<Function<C, T>> getDropFunction();
 
+    Optional<Consumer<C>> getSaveAction();
+
     default boolean isDrop() {
         return getDropFunction().isPresent();
     }
@@ -32,6 +34,12 @@ public interface ConnectionContext<C extends Connection<T>, T> extends Predicate
          * right away without telling the far end anything...
          */
         void drop();
+
+        /**
+         * @param f
+         * @return
+         */
+        Builder<C, T, R> save(Consumer<C> f);
 
         // TODO: wrong. It's not a function, it's just a consumer!
         void drop(Function<C, T> f);

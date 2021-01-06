@@ -5,10 +5,11 @@
 		</encoder>
 	</appender>
 
-	<logger name="io.snice" level="DEBUG" />
+	<logger name="io.hektor" level="DEBUG" />
+	<logger name="io.snice" level="INFO" />
 	<logger name="io.netty" level="WARN" />
 
-	<root level="DEBUG">
+	<root level="INFO">
 		<appender-ref ref="STDOUT" />
 	</root>
 </configuration>

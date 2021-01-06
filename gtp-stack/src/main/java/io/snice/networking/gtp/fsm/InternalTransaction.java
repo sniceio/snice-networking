@@ -78,4 +78,8 @@ public class InternalTransaction {
         return isClientTransaction;
     }
 
+    @Override
+    public String toString() {
+        return "Transaction: [ID: " + id.dumpAsHex().strip() + " , Req: " + req + "]";
+    }
 }

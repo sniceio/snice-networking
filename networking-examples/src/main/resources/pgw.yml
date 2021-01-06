@@ -1,13 +1,13 @@
 networkInterfaces:
   # the name of the nic will be used by the GTP config options
   - name: gtpc
-    listen: gtp://0.0.0.0:2123
+    listen: gtp://127.0.0.1:2123
     transport: udp
     # vip address is currently not really supported so will have zero effect if you set it.
     # vipAddress: 52.202.165.16
 
   - name: gtpu
-    listen: gtp://0.0.0.0:2152
+    listen: gtp://127.0.0.1:2152
     transport: udp
     # vipAddress: 52.202.165.16
 

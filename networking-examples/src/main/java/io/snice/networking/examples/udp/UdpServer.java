@@ -2,14 +2,20 @@ package io.snice.networking.examples.udp;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
+import io.snice.networking.common.ConnectionId;
+import io.snice.networking.common.Transport;
 import io.snice.networking.examples.Utils;
 import io.snice.networking.netty.InboundOutboundHandlerAdapter;
 import io.snice.networking.netty.NettyNetworkLayer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A simple example of a UDP server
  */
 public class UdpServer extends InboundOutboundHandlerAdapter {
+
+    private static final Logger logger = LoggerFactory.getLogger(UdpServer.class);
 
     public static void main(final String... args) throws Exception {
         final UdpServerConfig config = Utils.loadConfiguration(UdpServerConfig.class, "UdpServerConfig.yml");
@@ -27,6 +33,9 @@ public class UdpServer extends InboundOutboundHandlerAdapter {
         final byte[] b = new byte[content.readableBytes()];
         content.getBytes(0, b);
 
+
+        final var id = ConnectionId.create(Transport.udp, udp.recipient(), udp.sender());
+        logger.info("[{}] Echoing packet back to {}", id, id.getRemoteConnectionEndpointId());
         final DatagramPacket pkt = new DatagramPacket(udp.content(), udp.sender());
         ctx.write(pkt);
     }

@@ -79,9 +79,7 @@ public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D 
      */
     @Override
     public void write(final ChannelHandlerContext ctx, final Object msg, final ChannelPromise promise) throws Exception {
-        // TODO: have to think about this one. Shouldn't be able to happen but we need to make sure.
         final var event = (T) msg;
-        // ensureExecutionContext(event, ctx);
         if (fsmExecutionContext == null) {
             logger.warn("Unable to write message because the execution context hasn't been created. Dropping write");
             return;
@@ -93,7 +91,6 @@ public class NettyFsmLayer<T, S extends Enum<S>, C extends NetworkContext<T>, D 
 
     @Override
     public void userEventTriggered(final ChannelHandlerContext ctx, final Object evt) throws Exception {
-        logger.info("UserEventTriggered: " + evt);
         final var ioEvent = (IOEvent<T>) evt;
         final var executionCtx = ensureExecutionContext(ioEvent, ctx);
         if (executionCtx != null) {
