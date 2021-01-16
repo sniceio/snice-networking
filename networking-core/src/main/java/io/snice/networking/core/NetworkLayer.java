@@ -38,10 +38,13 @@ public interface NetworkLayer<T> {
      */
     CompletionStage<Connection<T>> connect(Transport transport, InetSocketAddress address);
 
+    CompletionStage<Connection<T>> connect(Transport transport, int localPort, InetSocketAddress address);
+
+    // CompletionStage<NetworkInterface<T>> addNetworkInterface()
+
     /**
      * Return a {@link CompletionStage} that will complete once the {@link NetworkLayer} has
      * been shutdown.
-     *
      */
     CompletionStage<Void> sync();
 

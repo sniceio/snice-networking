@@ -145,13 +145,17 @@ public final class NettyNetworkInterface<T> implements NetworkInterface<T>, Chan
     @Override
     public CompletionStage<Connection<T>> connect(final Transport transport, final InetSocketAddress remoteAddress)
             throws IllegalTransportException {
+        final var lp = findListeningPoint(transport);
+        return lp.connect(remoteAddress);
+    }
+
+    private ListeningPoint<T> findListeningPoint(final Transport transport) throws IllegalTransportException {
         final ListeningPoint lp = listeningPointsByTransport[transport.ordinal()];
         if (lp == null) {
             final String msg = String.format("Interface \"%s\" is not listening on transport %s", name, transport);
             throw new IllegalTransportException(msg);
         }
-
-        return lp.connect(remoteAddress);
+        return lp;
     }
 
     @Override
@@ -225,7 +229,7 @@ public final class NettyNetworkInterface<T> implements NetworkInterface<T>, Chan
         }
 
         public NettyNetworkInterface build() {
-            ensureNotNull(this.latch, "Missing the latch");
+            ensureNotNull(latch, "Missing the latch");
             if (this.config.hasUDP()) {
                 ensureNotNull(this.udpBootstrap, "You must configure a connectionless bootstrap");
             }

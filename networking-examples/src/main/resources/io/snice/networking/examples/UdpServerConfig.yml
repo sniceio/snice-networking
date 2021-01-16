@@ -1,5 +1,5 @@
 
 network:
   name: default
-  listen: ws://0.0.0.0:53
+  listen: ws://0.0.0.0:9999
   transport: udp

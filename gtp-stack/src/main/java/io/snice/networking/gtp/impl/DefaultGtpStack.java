@@ -279,6 +279,9 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
 
     @Override
     public void send(final GtpMessage msg, final InternalGtpUserTunnel tunnel) {
+        // TODO: come up with a better idea of doing this. Good to have the separation
+        // of the "real" tunnel but these lookups all the time seems un-necessary.
+        // Perhaps a InternalGtpUserTunnel.getActualTunnel()
         findConnection(msg, tunnel.id()).send(GtpMessageWriteEvent.of(msg, tunnel.id()));
     }
 
@@ -336,6 +339,8 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
             return gtpuNic.connectDirect(Transport.udp, remoteAddress);
         });
 
+        // TODO: to make things more efficient, perhaps should actually store the "actual" tunnel
+        // after all. the findConnection of freaking everything seems annoying...
         return DefaultGtpUserTunnel.of(tunnel.id(), this);
     }
 

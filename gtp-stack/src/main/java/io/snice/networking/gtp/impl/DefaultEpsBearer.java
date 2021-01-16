@@ -51,6 +51,16 @@ public class DefaultEpsBearer implements EpsBearer {
     }
 
     @Override
+    public Bearer getLocalBearer() {
+        return localBearer;
+    }
+
+    @Override
+    public Bearer getRemoteBearer() {
+        return remoteBearer;
+    }
+
+    @Override
     public void send(final String remoteAddress, final int remotePort, final Buffer data) {
         final var ipv4 = UdpMessage.createUdpIPv4(data)
                 .withDestinationPort(remotePort)

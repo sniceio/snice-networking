@@ -5,7 +5,11 @@ package io.snice.networking.netty;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.*;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.sctp.SctpChannelOption;
 import io.netty.channel.sctp.nio.NioSctpChannel;
@@ -26,8 +30,18 @@ import io.snice.time.SystemClock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.*;
-import java.util.*;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -35,7 +49,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static io.snice.preconditions.PreConditions.*;
+import static io.snice.preconditions.PreConditions.assertNotNull;
+import static io.snice.preconditions.PreConditions.ensureNotEmpty;
+import static io.snice.preconditions.PreConditions.ensureNotNull;
 
 /**
  * The {@link NettyNetworkLayer} is the glue between the network (netty) and
@@ -65,12 +81,15 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
 
     private final NettyNetworkInterface defaultInterface;
 
+    private final Bootstraps bootstraps;
+
     /**
      *
      */
-    private NettyNetworkLayer(final CountDownLatch latch, final List<NettyNetworkInterface<T>> ifs) {
+    private NettyNetworkLayer(final CountDownLatch latch, final Bootstraps bootstraps, final List<NettyNetworkInterface<T>> ifs) {
         this.latch = latch;
         this.interfaces = ifs;
+        this.bootstraps = bootstraps;
 
         // TODO: make this configurable. For now, it is simply the
         // first one...
@@ -97,7 +116,52 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
 
     @Override
     public CompletionStage<Connection<T>> connect(final Transport transport, final InetSocketAddress address) {
-        return this.defaultInterface.connect(transport, address);
+        return defaultInterface.connect(transport, address);
+    }
+
+    @Override
+    public CompletionStage<Connection<T>> connect(final Transport transport, final int localPort, final InetSocketAddress address) {
+        System.err.println("Trying to connect over " + transport + " from local port: " + localPort + " to " + address);
+        if (localPort == 0) {
+            // TODO: not sure it should go here...
+            try {
+                System.err.println("Configuring new NIC");
+                final var nic = configureNewNetworkInterface(transport);
+                nic.up().toCompletableFuture().get();
+                System.err.println("NIC should be up");
+                return nic.connect(transport, address);
+            } catch (final Throwable e) {
+                e.printStackTrace();
+                throw new RuntimeException("oops", e);
+            }
+        }
+
+        final var lp = defaultInterface.getListeningPoint(transport);
+        if (lp != null && lp.getLocalPort() == localPort) {
+            return connect(transport, address);
+        }
+
+        throw new RuntimeException("Not yet fully implemented");
+    }
+
+    private NettyNetworkInterface<T> configureNewNetworkInterface(final Transport transport) {
+        try {
+            final var name = "testing";
+            final var listen = new URI("blah://0.0.0.0:0");
+            final var ifConfig = new NetworkInterfaceConfiguration(name, listen, null, List.of(transport));
+
+            final NettyNetworkInterface.Builder ifBuilder = NettyNetworkInterface.with(ifConfig);
+            ifBuilder.latch(new CountDownLatch(1)); // this doesn't seem to be used anymore...
+            ifBuilder.udpBootstrap(bootstraps.udpBootstrap);
+            ifBuilder.tcpBootstrap(bootstraps.tcpBootstrap);
+            ifBuilder.tcpServerBootstrap(bootstraps.tcpServerBootstrap);
+            ifBuilder.sctpBootstrap(bootstraps.sctpBootstrap);
+            ifBuilder.sctpServerBootstrap(bootstraps.sctpServerBootstrap);
+            return ifBuilder.build();
+        } catch (final URISyntaxException e) {
+            e.printStackTrace();
+            throw new RuntimeException("oops", e);
+        }
     }
 
     @Override
@@ -223,11 +287,7 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
          */
         private ServerBootstrap sctpServerBootstrap;
 
-        private final Channel udpListeningPoint = null;
-
         private final List<Handler> handlers = new ArrayList<>();
-        // private final List<ChannelHandler> handlers = new ArrayList<>();
-        // private final List<String> handlerNames = new ArrayList<>();
 
         private Builder(final List<NetworkInterfaceConfiguration> ifs) {
             this.ifs = ifs;
@@ -313,22 +373,29 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
 
             final Clock clock = this.clock != null ? this.clock : new SystemClock();
 
+            final var udpBootstrap = ensureUDPBootstrap();
+            final var tcpBootstrap = ensureTCPBootstrap();
+            final var sctpBootstrap = ensureSctpBootstrap();
+            final var tcpServerBootstrap = ensureTCPServerBootstrap();
+            final var sctpServerBootstrap = ensureSctpServerBootstrap();
+            final var bootstraps = new Bootstraps(udpBootstrap, tcpBootstrap, sctpBootstrap, tcpServerBootstrap, sctpServerBootstrap);
+
             final List<NettyNetworkInterface.Builder> builders = new ArrayList<>();
             final var interfaces = ifs.isEmpty() ? createDefaultNetworkInterfaceListeningPoint() : ifs;
             interfaces.forEach(i -> {
                 final NettyNetworkInterface.Builder ifBuilder = NettyNetworkInterface.with(i);
-                ifBuilder.udpBootstrap(ensureUDPBootstrap());
-                ifBuilder.tcpBootstrap(ensureTCPBootstrap());
-                ifBuilder.tcpServerBootstrap(ensureTCPServerBootstrap(clock, i.getVipAddress()));
-                ifBuilder.sctpBootstrap(ensureSctpBootstrap());
-                ifBuilder.sctpServerBootstrap(ensureSctpServerBootstrap(clock, i.getVipAddress()));
+                ifBuilder.udpBootstrap(udpBootstrap);
+                ifBuilder.tcpBootstrap(tcpBootstrap);
+                ifBuilder.tcpServerBootstrap(tcpServerBootstrap);
+                ifBuilder.sctpBootstrap(sctpBootstrap);
+                ifBuilder.sctpServerBootstrap(sctpServerBootstrap);
                 builders.add(ifBuilder);
             });
 
             final CountDownLatch latch = new CountDownLatch(builders.size());
             final List<NettyNetworkInterface> ifs = new ArrayList<>();
             builders.forEach(ifBuilder -> ifs.add(ifBuilder.latch(latch).build()));
-            return new NettyNetworkLayer(latch, Collections.unmodifiableList(ifs));
+            return new NettyNetworkLayer(latch, bootstraps, Collections.unmodifiableList(ifs));
         }
 
         private List<NetworkInterfaceConfiguration> createDefaultNetworkInterfaceListeningPoint() {
@@ -364,7 +431,7 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
                                         .filter(h -> h.hasTransport(Transport.udp))
                                         .forEach(h -> pipeline.addLast(h.getName(), h.getHandler()));
                             }
-                        });
+                        }).option(ChannelOption.SO_REUSEADDR, true);
 
                 // this allows you to setup connections from the
                 // same listening point
@@ -398,7 +465,7 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
             return sctpBootstrap;
         }
 
-        private ServerBootstrap ensureSctpServerBootstrap(final Clock clock, final URI vipAddress) {
+        private ServerBootstrap ensureSctpServerBootstrap() {
             if (sctpServerBootstrap == null) {
                 final ServerBootstrap b = new ServerBootstrap();
                 b.group(bossGroup, sctpGroup)
@@ -440,25 +507,25 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
             return tcpBootstrap;
         }
 
-        private ServerBootstrap ensureTCPServerBootstrap(final Clock clock, final URI vipAddress) {
+        private ServerBootstrap ensureTCPServerBootstrap() {
             if (this.serverBootstrap == null) {
                 final ServerBootstrap b = new ServerBootstrap();
 
                 b.group(this.bossGroup, this.workerGroup)
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    public void initChannel(final SocketChannel ch) throws Exception {
-                        final ChannelPipeline pipeline = ch.pipeline();
-                        handlers.stream()
-                                .filter(h -> h.hasTransport(Transport.tcp))
-                                .forEach(h -> pipeline.addLast(h.getName(), h.getHandler()));
-                    }
-                })
-                .option(ChannelOption.SO_BACKLOG, 128)
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
-                .childOption(ChannelOption.SO_KEEPALIVE, true)
-                .childOption(ChannelOption.TCP_NODELAY, true);
+                        .channel(NioServerSocketChannel.class)
+                        .childHandler(new ChannelInitializer<SocketChannel>() {
+                            @Override
+                            public void initChannel(final SocketChannel ch) throws Exception {
+                                final ChannelPipeline pipeline = ch.pipeline();
+                                handlers.stream()
+                                        .filter(h -> h.hasTransport(Transport.tcp))
+                                        .forEach(h -> pipeline.addLast(h.getName(), h.getHandler()));
+                            }
+                        })
+                        .option(ChannelOption.SO_BACKLOG, 128)
+                        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+                        .childOption(ChannelOption.SO_KEEPALIVE, true)
+                        .childOption(ChannelOption.TCP_NODELAY, true);
                 // TODO: should make all the above TCP options configurable
                 this.serverBootstrap = b;
             }
@@ -499,6 +566,28 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
             }
             return null;
         }
+    }
+
+    private static class Bootstraps {
+        final Bootstrap udpBootstrap;
+        final Bootstrap tcpBootstrap;
+        final Bootstrap sctpBootstrap;
+        final ServerBootstrap tcpServerBootstrap;
+        final ServerBootstrap sctpServerBootstrap;
+
+        private Bootstraps(
+                final Bootstrap udpBootstrap,
+                final Bootstrap tcpBootstrap,
+                final Bootstrap sctpBootstrap,
+                final ServerBootstrap tcpServerBootstrap,
+                final ServerBootstrap sctpServerBootstrap) {
+            this.udpBootstrap = udpBootstrap;
+            this.tcpBootstrap = tcpBootstrap;
+            this.sctpBootstrap = sctpBootstrap;
+            this.tcpServerBootstrap = tcpServerBootstrap;
+            this.sctpServerBootstrap = sctpServerBootstrap;
+        }
+
     }
 
 }

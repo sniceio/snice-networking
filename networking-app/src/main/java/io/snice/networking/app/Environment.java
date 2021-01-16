@@ -34,6 +34,10 @@ public interface Environment<K extends Connection<T>, T, C extends NetworkAppCon
     CompletionStage<K> connect(Transport transport, InetSocketAddress remoteAddress)
             throws IllegalTransportException;
 
+    default CompletionStage<K> connect(final Transport transport, final int localPort, final InetSocketAddress remoteAddress) throws IllegalTransportException {
+        throw new RuntimeException("Not implemented by the environment currently in use: " + getClass().getName());
+    }
+
     /**
      * Convenience method for connecting to a remote address and is the same as calling
      * <p>
@@ -61,7 +65,7 @@ public interface Environment<K extends Connection<T>, T, C extends NetworkAppCon
     /**
      * Attempt to connect to the remote endpoint as indicated by the given {@link ConnectionEndpointId}.
      */
-    default CompletionStage<K> connect(ConnectionEndpointId remoteEndpoint)
+    default CompletionStage<K> connect(final ConnectionEndpointId remoteEndpoint)
             throws IllegalTransportException, IllegalArgumentException {
         assertNotNull(remoteEndpoint, "The remote endpoint cannot be null");
         return connect(remoteEndpoint.getProtocol(), remoteEndpoint.getAddress());

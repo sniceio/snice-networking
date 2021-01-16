@@ -34,4 +34,10 @@ public class DefaultEnvironment <K extends Connection<T>, T, C extends NetworkAp
             throw th;
         }
     }
+
+    @Override
+    public CompletionStage<K> connect(final Transport transport, final int localPort, final InetSocketAddress remoteAddress) throws IllegalTransportException {
+        return (CompletionStage<K>) stack.connect(transport, localPort, remoteAddress);
+    }
+
 }

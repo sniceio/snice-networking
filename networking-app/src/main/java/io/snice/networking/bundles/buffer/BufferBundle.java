@@ -108,7 +108,11 @@ public class BufferBundle<C extends NetworkAppConfig> extends BundleSupport<Buff
 
         @Override
         protected void encode(final ChannelHandlerContext ctx, final BufferWriteEvent event, final List<Object> out) {
-            final var pkt = new DatagramPacket(toByteBuf(ctx.channel(), event), event.getConnectionId().getRemoteAddress());
+            // final var localAddress = event.getConnectionId().getLocalAddress();
+            final var localAddress = new InetSocketAddress(event.getConnectionId().getLocalIpAddress(), 23455);
+            final var remoteAddress = event.getConnectionId().getRemoteAddress();
+            System.err.println("Buffer encoder: " + localAddress + " -> " + remoteAddress);
+            final var pkt = new DatagramPacket(toByteBuf(ctx.channel(), event), remoteAddress, localAddress);
             out.add(pkt);
         }
 

@@ -7,7 +7,11 @@ import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.DeleteSessionRequest;
 import io.snice.networking.common.ConnectionId;
-import io.snice.networking.gtp.*;
+import io.snice.networking.gtp.GtpApplication;
+import io.snice.networking.gtp.GtpBootstrap;
+import io.snice.networking.gtp.GtpEnvironment;
+import io.snice.networking.gtp.GtpTunnel;
+import io.snice.networking.gtp.PdnSessionContext;
 import io.snice.networking.gtp.event.GtpEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,11 +80,11 @@ public class Pgw extends GtpApplication<GtpConfig> {
 
         final var localTeid = Teid.random();
         final var localBearerTeid = Teid.random();
-        // logger.info("Creating new Session with Local Sender TEID {} and Local Bearer TEID {}", localTeid, localBearerTeid);
+        logger.info("Creating new Session with Local Sender TEID {} and Local Bearer TEID {}", localTeid, localBearerTeid);
 
         final var response = request.createResponse()
                 .withTeid(remoteTeid) // the TEID of the remote end has to go in the header.
-                .withIPv4PdnAddressAllocation("20.30.40.50")
+                .withIPv4PdnAddressAllocation("100.64.0.10")
                 .withNewSenderControlPlaneFTeid()
                 .withTeid(localTeid) // Our local TEID, which, as you can see, goes in our GTP-C FTeid.
                 .withIPv4Address("127.0.0.1")
@@ -109,6 +113,7 @@ public class Pgw extends GtpApplication<GtpConfig> {
             // NOTE: the raw TEID should not be used like this. It should be in context
             // of the remote endpoint since a TEID is scoped to the other endpoint too
             // so we need to build up a "bigger" key for this.
+            System.err.println("Wtf - we had an already existing session");
         } else {
             // again, remember how the local/remote is flipped because the PDN Session isn't really
             // smart enough to see things from our perspective, which is from the PGW in this case.
@@ -125,6 +130,12 @@ public class Pgw extends GtpApplication<GtpConfig> {
         // TODO: should be defensive here. Or at least if this was a real PGW implementation and not an example!
         final var teid = request.getHeader().getTeid().get();
         final var session = pdnSessions.remove(teid);
+        if (session == null) {
+            logger.info("Session unknown " + teid);
+            // TODO: return error response.
+            return;
+        }
+
         final var sessionAgain = pdnSessions.remove(session.getRemoteBearerTeid());
 
         // yes, actually want to compare references. It is supposed to be the exact

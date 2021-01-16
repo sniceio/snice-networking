@@ -59,6 +59,10 @@ public interface ListeningPoint<T> {
      */
     CompletableFuture<Connection<T>> connect(final InetSocketAddress remoteAddress);
 
+    default CompletableFuture<Connection<T>> connect(final int localPort, final InetSocketAddress remoteAddress) {
+        throw new RuntimeException("Not implemented for the given listening point " + getClass().getName());
+    }
+
     /**
      * See explanation for what this one does on {@link NetworkInterface#connectDirect(Transport, InetSocketAddress)}
      *

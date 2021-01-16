@@ -390,7 +390,7 @@ public interface ConnectionId {
 
         @Override
         public InetSocketAddress getLocalAddress() {
-            return this.getLocalAddress();
+            return localAddress;
         }
 
         @Override
