@@ -106,21 +106,12 @@ public class Pgw extends GtpApplication<GtpConfig> {
         // v.s. the receiver. Perhaps this should be renamed. A bit confusing because the remote TEID
         // is actually the one I generated above and as such, it is my local one.
         final var pdnSession = PdnSessionContext.of(request, response);
-        final var previous = pdnSessions.putIfAbsent(localTeid, pdnSession);
-        pdnSessions.putIfAbsent(localBearerTeid, pdnSession);
-        if (previous != null) {
-            // not supposed to happen. We have a new CSR for an existing TEID. Clash?
-            // NOTE: the raw TEID should not be used like this. It should be in context
-            // of the remote endpoint since a TEID is scoped to the other endpoint too
-            // so we need to build up a "bigger" key for this.
-            System.err.println("Wtf - we had an already existing session");
-        } else {
-            // again, remember how the local/remote is flipped because the PDN Session isn't really
-            // smart enough to see things from our perspective, which is from the PGW in this case.
-            // The remote/local is from the initiator, i.e. e.g. the SGW. Will change this.
-            // logger.info("New PDN Session with Local TEID {},  Remote TEID {}, " +
-            // "Local Bearer {}, Remote Bearer {}", pdnSession.getRemoteTeid(), pdnSession.getLocalTeid(),
-            // pdnSession.getDefaultRemoteBearer().getTeid(), pdnSession.getDefaultLocalBearer().getTeid());
+       if (pdnSessions.putIfAbsent(localTeid, pdnSession) != null) {
+           System.err.println("WTF - There already exists a PDN Session under Local TEID: " + localTeid);
+       }
+
+        if (pdnSessions.putIfAbsent(localBearerTeid, pdnSession) != null) {
+            System.err.println("WTF - There already exists a PDN Session unde4r Local Bearer TEID: " + localBearerTeid);
         }
 
         tunnel.send(response);
@@ -130,6 +121,7 @@ public class Pgw extends GtpApplication<GtpConfig> {
         // TODO: should be defensive here. Or at least if this was a real PGW implementation and not an example!
         final var teid = request.getHeader().getTeid().get();
         final var session = pdnSessions.remove(teid);
+        sgi.deleteSession(session);
         if (session == null) {
             logger.info("Session unknown " + teid);
             // TODO: return error response.

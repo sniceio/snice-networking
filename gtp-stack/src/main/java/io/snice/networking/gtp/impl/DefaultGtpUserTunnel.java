@@ -1,15 +1,10 @@
 package io.snice.networking.gtp.impl;
 
 import io.snice.buffer.Buffer;
-import io.snice.buffer.Buffers;
 import io.snice.codecs.codec.gtp.GtpMessage;
-import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1MessageType;
-import io.snice.codecs.codec.gtp.gtpc.v1.impl.ImmutableGtp1Message;
-import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Paa;
-import io.snice.codecs.codec.transport.UdpMessage;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
-import io.snice.networking.gtp.Bearer;
+import io.snice.networking.gtp.DataTunnel;
 import io.snice.networking.gtp.GtpUserTunnel;
 import io.snice.networking.gtp.conf.GtpAppConfig;
 import io.snice.networking.gtp.event.GtpEvent;
@@ -36,59 +31,11 @@ public class DefaultGtpUserTunnel<C extends GtpAppConfig> implements InternalGtp
     private DefaultGtpUserTunnel(final ConnectionId connectionId, final InternalGtpStack stack) {
         this.connectionId = connectionId;
         this.stack = stack;
-
-        this.paa = null;
-        this.localBearer = null;
-        this.remoteBearer = null;
-    }
-
-    private final Paa paa;
-    private final Bearer localBearer;
-    private final Bearer remoteBearer;
-
-    @Override
-    public String getIPv4Address() {
-        return paa.getValue().getIPv4Address().map(b -> b.toIPv4String(0)).get();
-    }
-
-    @Override
-    public void send(final String remoteIp, final int remotePort, final String msg) {
-        send(remoteIp, remotePort, Buffers.wrap(msg));
-    }
-
-    @Override
-    public void send(final String remoteIp, final int remotePort, final Buffer data) {
-
-        final var ipv4 = UdpMessage.createUdpIPv4(data)
-                .withDestinationPort(remotePort)
-                .withSourcePort(9899)
-                .withTTL(64)
-                .withDestinationIp(remoteIp)
-                .withSourceIp(paa.getValue().getIPv4Address().get())
-                .build();
-
-        final var gtpU = ImmutableGtp1Message.create(Gtp1MessageType.G_PDU)
-                .withTeid(remoteBearer.getTeid())
-                .withPayload(ipv4.getBuffer())
-                // .withRandomSeqNo()
-                .build();
-        send(gtpU);
     }
 
     @Override
     public void send(final GtpMessage msg) {
         stack.send(msg, this);
-    }
-
-
-    @Override
-    public Bearer getDefaultLocalBearer() {
-        return localBearer;
-    }
-
-    @Override
-    public Bearer getDefaultRemoteBearer() {
-        return remoteBearer;
     }
 
     @Override
@@ -179,4 +126,8 @@ public class DefaultGtpUserTunnel<C extends GtpAppConfig> implements InternalGtp
         stack.close(connectionId);
     }
 
+    @Override
+    public <T> DataTunnel.Builder<T> createDataTunnel(final Class<T> type, final String remoteHost, final int port) {
+        return stack.createDataTunnel(this, type, remoteHost, port);
+    }
 }

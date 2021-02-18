@@ -14,10 +14,10 @@ import io.snice.networking.bundles.buffer.BufferEvent;
 import io.snice.networking.bundles.buffer.BufferReadEvent;
 import io.snice.networking.common.ConnectionEndpointId;
 import io.snice.networking.common.Transport;
+import io.snice.networking.core.NetworkInterface;
 import io.snice.networking.gtp.GtpTunnel;
 import io.snice.networking.gtp.PdnSessionContext;
 
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -29,9 +29,9 @@ public class Sgi extends BufferApplication<SgiConfig> {
     private BufferEnvironment<SgiConfig> environment;
     // private final ConcurrentMap<ConnectionEndpointId, NatEntry> nats = new ConcurrentHashMap<>();
 
-    private final ConcurrentMap<Teid, NatEntry> sessions = new ConcurrentHashMap<>();
-
-    private final ConcurrentMap<ConnectionEndpointId, NatEntry> nats = new ConcurrentHashMap<>();
+    // Make sure we don't need to re-hash...
+    private final ConcurrentMap<Teid, NatEntry> sessions = new ConcurrentHashMap(10000, 0.75f);
+    private final ConcurrentMap<ConnectionEndpointId, NatEntry> nats = new ConcurrentHashMap(10000, 0.75f);
 
     @Override
     public void initialize(final NetworkBootstrap<BufferConnection, BufferEvent, SgiConfig> bootstrap) {
@@ -79,34 +79,37 @@ public class Sgi extends BufferApplication<SgiConfig> {
         final var teid = session.getLocalBearerTeid();
 
         final var natEntry = sessions.computeIfAbsent(teid, key -> {
-            final var connection = connect(remoteEndpoint);
+            final var connection = connect(key.toString(), remoteEndpoint);
             final var deviceEndpoint = ConnectionEndpointId.create(Transport.udp, ipv4.getSourceIp(), udp.getSourcePort());
-            System.err.println("Got a new local connection for TEID " + teid + " -> " + connection.id().getLocalConnectionEndpointId());
-            // TODO: also need to store this under this local key...
             final var nat = new NatEntry(session, tunnel, connection, deviceEndpoint, remoteEndpoint);
             nats.put(connection.id().getLocalConnectionEndpointId(), nat);
             return nat;
         });
 
-        // NOTE NOTE NOTE: not thread safe. See comment on this method in general why this
-        // over simplified example is just that, an example...
-        /*
-        if (!natEntry.session.getLocalBearerTeid().equals(teid)) {
-            System.err.println("TEID changed: recalculating");
-            nats.computeIfPresent(remoteEndpoint, (ep, currentEntry) -> {
-                final var deviceEndpoint = ConnectionEndpointId.create(Transport.udp, ipv4.getSourceIp(), udp.getSourcePort());
-                final var newEntry = new NatEntry(session, tunnel, natEntry.externalConnection, deviceEndpoint, ep);
-                return newEntry;
-            });
-        }
-         */
-
         natEntry.externalConnection.send(udp.getPayload());
     }
 
-    private BufferConnection connect(final ConnectionEndpointId remote) {
+    // TODO: allocate new local "NIC" for this mapping...
+    public void onNewPdnSession(final GtpTunnel tunnel, final PdnSessionContext session) {
+
+    }
+
+    public void deleteSession(final PdnSessionContext session) {
+        final var teid = session.getLocalBearerTeid();
+        final var natEntry = sessions.remove(teid);
+        if (natEntry != null) {
+            final var localEndpoint = natEntry.externalConnection.id().getLocalConnectionEndpointId();
+            nats.remove(localEndpoint);
+            environment.getNetworkInterface(teid.toString()).ifPresent(NetworkInterface::down);
+        } else {
+            System.err.println("WTF - wrong TEID");
+        }
+
+    }
+
+    private BufferConnection connect(final String nicName, final ConnectionEndpointId remote) {
         try {
-            return environment.connect(Transport.udp, 0, remote.getAddress()).toCompletableFuture().get();
+            return environment.connect(nicName, Transport.udp, 0, remote.getAddress()).toCompletableFuture().get();
         } catch (final InterruptedException | ExecutionException e) {
             throw new RuntimeException("We are cheating right now but seems like it didn't work", e);
         }
@@ -114,10 +117,12 @@ public class Sgi extends BufferApplication<SgiConfig> {
 
     private void processBuffer(final BufferConnection connection, final BufferReadEvent msg) {
         final var connectionId = msg.getConnectionId();
-        System.err.println("Got back a UDP message over local connection: " + connectionId.getLocalConnectionEndpointId());
         final var remote = connectionId.getRemoteConnectionEndpointId();
         final var local = connectionId.getLocalConnectionEndpointId();
         final var natEntry = nats.get(local);
+        if (natEntry == null) {
+            System.err.println("WTF - the NAT Entry is null. Guess we removed it before we processed the last data???");
+        }
 
         final var content = msg.getBuffer();
         final var udp = UdpMessage.createUdpIPv4(content)
@@ -128,36 +133,11 @@ public class Sgi extends BufferApplication<SgiConfig> {
                 .withTTL(64) // TODO: should probably grab this from the incoming UDP packet.
                 .build();
 
-        System.err.println("using TEID: " + natEntry.session.getLocalBearerTeid());
         final var gtpU = ImmutableGtp1Message.create(Gtp1MessageType.G_PDU)
                 .withTeid(natEntry.session.getLocalBearerTeid())
                 .withPayload(udp.getBuffer())
                 .build();
         natEntry.tunnel.send(gtpU);
-    }
-
-    private static class NatEntryKey {
-        private final Teid teid;
-        private final ConnectionEndpointId remoteEndpoint;
-
-        private NatEntryKey(final Teid teid, final ConnectionEndpointId remoteEndpoint) {
-            this.teid = teid;
-            this.remoteEndpoint = remoteEndpoint;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            final NatEntryKey that = (NatEntryKey) o;
-            return teid.equals(that.teid) &&
-                    remoteEndpoint.equals(that.remoteEndpoint);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(teid, remoteEndpoint);
-        }
     }
 
     private static class NatEntry {

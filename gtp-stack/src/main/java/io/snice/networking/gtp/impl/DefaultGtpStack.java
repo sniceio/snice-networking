@@ -18,6 +18,7 @@ import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
 import io.snice.networking.common.fsm.FsmFactory;
 import io.snice.networking.core.NetworkInterface;
+import io.snice.networking.gtp.DataTunnel;
 import io.snice.networking.gtp.EpsBearer;
 import io.snice.networking.gtp.GtpApplication;
 import io.snice.networking.gtp.GtpBootstrap;
@@ -198,14 +199,14 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
         if (userPlaneConfig.isEnable()) {
             gtpuNic = stack.getNetworkInterface(userPlaneConfig.getNic()).orElseThrow(() ->
                     new IllegalArgumentException("Unable to find the Network Interface to use for the User Plane. " +
-                            "The configuration says to use \"" + userPlaneConfig.getNic() + "\" but no such" +
+                            "The configuration says to use \"" + userPlaneConfig.getNic() + "\" but no such " +
                             "interface exists"));
         }
 
         if (controlPlaneConfig.isEnable()) {
             gtpcNic = stack.getNetworkInterface(controlPlaneConfig.getNic()).orElseThrow(() ->
                     new IllegalArgumentException("Unable to find the Network Interface to use for the Control Plane. " +
-                            "The configuration says to use \"" + controlPlaneConfig.getNic() + "\" but no such" +
+                            "The configuration says to use \"" + controlPlaneConfig.getNic() + "\" but no such " +
                             "interface exists"));
         }
 
@@ -290,6 +291,11 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
         return DefaultTransaction.of(tunnel, this, request);
     }
 
+    @Override
+    public <T> DataTunnel.Builder<T> createDataTunnel(final InternalGtpUserTunnel tunnel, final Class<T> type, final String remoteHost, final int port) {
+        return null;
+    }
+
     private Connection<GtpEvent> findConnection(final GtpMessage msg, final ConnectionId id) {
         final var remoteEndpoint = id.getRemoteConnectionEndpointId();
         final Connection<GtpEvent> connection;
@@ -334,10 +340,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
         assertNotNull(remoteAddress, "The remote address cannot be null");
 
         final var remoteConnectionId = ConnectionEndpointId.create(Transport.udp, remoteAddress);
-        final var tunnel = gtpuTunnels.computeIfAbsent(remoteConnectionId, key -> {
-            // System.err.println("Saving GTP-U tunnel " + remoteConnectionId);
-            return gtpuNic.connectDirect(Transport.udp, remoteAddress);
-        });
+        final var tunnel = gtpuTunnels.computeIfAbsent(remoteConnectionId, key -> gtpuNic.connectDirect(Transport.udp, remoteAddress));
 
         // TODO: to make things more efficient, perhaps should actually store the "actual" tunnel
         // after all. the findConnection of freaking everything seems annoying...
@@ -453,7 +456,7 @@ public class DefaultGtpStack<C extends GtpAppConfig> implements InternalGtpStack
             // System.err.println("The IP Address in the remote bearer is: " + remoteBearer.getIPv4AddressAsString().get());
             final var pgw = "127.0.0.1"; // TODO: have to fix this NAT issue.
             final var remote = new InetSocketAddress(pgw, defaultGtpuPort);
-            final var tunnel = establishUserPlane(remote);
+            final var tunnel = (InternalGtpUserTunnel) establishUserPlane(remote);
             // TODO: need to save it away too...
             return DefaultEpsBearer.create(tunnel, ctx, localPort);
         }

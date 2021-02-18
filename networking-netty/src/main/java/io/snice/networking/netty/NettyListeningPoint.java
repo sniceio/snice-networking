@@ -146,7 +146,11 @@ public abstract class NettyListeningPoint<T> implements ListeningPoint<T> {
 
         @Override
         public CompletableFuture<Void> down() {
-            return null;
+            final var closeFuture = new CompletableFuture<Void>();
+            udpChannel.get().close().addListener(f -> {
+                closeFuture.complete(null);
+            });
+            return closeFuture;
         }
 
         @Override

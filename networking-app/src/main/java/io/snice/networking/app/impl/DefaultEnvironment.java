@@ -6,8 +6,10 @@ import io.snice.networking.app.NetworkStack;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.IllegalTransportException;
 import io.snice.networking.common.Transport;
+import io.snice.networking.core.NetworkInterface;
 
 import java.net.InetSocketAddress;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 public class DefaultEnvironment <K extends Connection<T>, T, C extends NetworkAppConfig> implements Environment<K, T, C> {
@@ -39,5 +41,16 @@ public class DefaultEnvironment <K extends Connection<T>, T, C extends NetworkAp
     public CompletionStage<K> connect(final Transport transport, final int localPort, final InetSocketAddress remoteAddress) throws IllegalTransportException {
         return (CompletionStage<K>) stack.connect(transport, localPort, remoteAddress);
     }
+
+    @Override
+    public CompletionStage<K> connect(final String name, final Transport transport, final int localPort, final InetSocketAddress remoteAddress) throws IllegalTransportException {
+        return (CompletionStage<K>) stack.connect(name, transport, localPort, remoteAddress);
+    }
+
+    @Override
+    public Optional<NetworkInterface<T>> getNetworkInterface(final String name) {
+        return stack.getNetworkInterface(name);
+    }
+
 
 }

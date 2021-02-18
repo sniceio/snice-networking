@@ -41,10 +41,15 @@ public class NettyApplicationLayer<K extends Connection<T>, T, C extends Network
         // TODO: this needs to take place in a different thread pool!
         // TODO: make it configurable and even allow the customer to use the same thread pool with
         //       a big WARNING sign
-        final var bufferingConnection = new BufferingConnection<T>(id);
-        final var appConnection = bundle.wrapConnection(bufferingConnection);
-        appRules.match(appConnection, msg).apply(appConnection, msg);
-        bufferingConnection.processMessage(ctx);
+        try {
+            final var bufferingConnection = new BufferingConnection<T>(id);
+            final var appConnection = bundle.wrapConnection(bufferingConnection);
+            appRules.match(appConnection, msg).apply(appConnection, msg);
+            bufferingConnection.processMessage(ctx);
+        } catch (final Throwable t) {
+            System.err.println("Application threw an exception. Wiill have to deal with it somehow");
+            t.printStackTrace();
+        }
     }
 
     private void invokeApplicationForEvent(final Object event, final ChannelHandlerContext ctx, final ConnectionContext<Connection<T>, T> appRules) {

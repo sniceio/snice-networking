@@ -91,7 +91,7 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
     }
 
     private void log(final String msg) {
-        System.out.println("[ " + uuid + " UDP ]: " + msg);
+        // System.out.println("[ " + uuid + " UDP ]: " + msg);
     }
 
     private void logError(final String msg) {
@@ -150,7 +150,7 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
 
         final var cCtx = channels.computeIfAbsent(id, cId -> {
 
-            System.err.println("NettyUdpInboundAdapter: Compute if absent " + id);
+            // System.err.println("NettyUdpInboundAdapter: Compute if absent " + id);
 
             // if we do not have a connection future then this connection was NOT initiated by
             // the application and as such, this is an "inbound" connection, as opposed to an "outbound"
@@ -299,9 +299,10 @@ public class NettyUdpInboundAdapter<T> extends ChannelDuplexHandler {
      */
     @Override
     public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
-        // TODO: this would be the closing event
-        // TODO:
+        // TODO: this would be the closing event. Need to push an event up the stack
+        // TODO: so everyone can cleanup along the way
         log("Channel in-active " + ctx.channel());
+        channels.clear();
     }
 
     /**

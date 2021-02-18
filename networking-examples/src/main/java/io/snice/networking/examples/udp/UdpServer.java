@@ -2,8 +2,6 @@ package io.snice.networking.examples.udp;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
-import io.snice.networking.common.ConnectionId;
-import io.snice.networking.common.Transport;
 import io.snice.networking.examples.Utils;
 import io.snice.networking.netty.InboundOutboundHandlerAdapter;
 import io.snice.networking.netty.NettyNetworkLayer;
@@ -34,8 +32,8 @@ public class UdpServer extends InboundOutboundHandlerAdapter {
         content.getBytes(0, b);
 
 
-        final var id = ConnectionId.create(Transport.udp, udp.recipient(), udp.sender());
-        logger.info("[{}] Echoing packet back to {}", id, id.getRemoteConnectionEndpointId());
+        // final var id = ConnectionId.create(Transport.udp, udp.recipient(), udp.sender());
+        // logger.info("[{}] Echoing packet back to {}", id, id.getRemoteConnectionEndpointId());
         final DatagramPacket pkt = new DatagramPacket(udp.content(), udp.sender());
         ctx.write(pkt);
     }

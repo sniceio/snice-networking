@@ -45,7 +45,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <snice-commons.version>0.1.8</snice-commons.version>
+        <snice-commons.version>0.1.9-SNAPSHOT</snice-commons.version>
         <snice-codecs.version>0.0.7</snice-codecs.version>
         <hektor.version>0.0.4</hektor.version>
         <netty.version>4.1.43.Final</netty.version>
@@ -53,7 +53,7 @@
         <slf4j.version>1.7.25</slf4j.version>
         <jackson.version>2.11.1</jackson.version>
         <junit.version>4.13.1</junit.version>
-        <mockito.version>2.27.0</mockito.version>
+        <mockito.version>2.28.2</mockito.version>
         <liqp.version>0.7.7</liqp.version>
         <argparse.version>0.8.1</argparse.version>
     </properties>

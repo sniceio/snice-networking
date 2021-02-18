@@ -40,6 +40,8 @@ public interface NetworkLayer<T> {
 
     CompletionStage<Connection<T>> connect(Transport transport, int localPort, InetSocketAddress address);
 
+    CompletionStage<Connection<T>> connect(String name, Transport transport, int localPort, InetSocketAddress address);
+
     // CompletionStage<NetworkInterface<T>> addNetworkInterface()
 
     /**

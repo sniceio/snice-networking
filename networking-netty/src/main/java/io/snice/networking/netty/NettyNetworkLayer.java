@@ -35,7 +35,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,6 +43,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
@@ -77,7 +78,7 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
      */
     private final CountDownLatch latch;
 
-    private final List<NettyNetworkInterface<T>> interfaces;
+    private final ConcurrentMap<String, NettyNetworkInterface<T>> interfaces;
 
     private final NettyNetworkInterface defaultInterface;
 
@@ -88,8 +89,12 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
      */
     private NettyNetworkLayer(final CountDownLatch latch, final Bootstraps bootstraps, final List<NettyNetworkInterface<T>> ifs) {
         this.latch = latch;
-        this.interfaces = ifs;
+        this.interfaces = new ConcurrentHashMap<>();
         this.bootstraps = bootstraps;
+
+        ifs.forEach(nic -> {
+            interfaces.put(nic.getName().toLowerCase(), nic);
+        });
 
         // TODO: make this configurable. For now, it is simply the
         // first one...
@@ -99,14 +104,14 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
     @Override
     public void start() {
         final List<CompletionStage<Void>> futures = new CopyOnWriteArrayList<>();
-        this.interfaces.forEach(i -> futures.add(i.up()));
+        this.interfaces.values().forEach(i -> futures.add(i.up()));
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
     @Override
     public void stop() {
         try {
-            this.interfaces.forEach(NetworkInterface::down);
+            this.interfaces.values().forEach(NetworkInterface::down);
             latch.await();
             shutdownStage.complete(null);
         } catch (final InterruptedException e) {
@@ -121,14 +126,29 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
 
     @Override
     public CompletionStage<Connection<T>> connect(final Transport transport, final int localPort, final InetSocketAddress address) {
-        System.err.println("Trying to connect over " + transport + " from local port: " + localPort + " to " + address);
+        return connect("testing", transport, localPort, address);
+    }
+
+    // Copied from Environment.connect
+    //
+    // TODO: perhaps we should split these two "connect" methods into two separate steps so it is more
+    // obvious that a new NIC is created.
+    // e.g. addNewNetworkInterface
+    //
+    @Override
+    public CompletionStage<Connection<T>> connect(final String name, final Transport transport, final int localPort, final InetSocketAddress address) {
+        // System.err.println("Trying to connect over " + transport + " from local port: " + localPort + " to " + address);
         if (localPort == 0) {
             // TODO: not sure it should go here...
             try {
-                System.err.println("Configuring new NIC");
-                final var nic = configureNewNetworkInterface(transport);
+                final var listen = new URI(transport + "://0.0.0.0:0");
+                final var nic = configureNewNetworkInterface(name, transport, listen);
+                if (interfaces.putIfAbsent(nic.getName().toLowerCase(), nic) != null) {
+                    throw new IllegalArgumentException("A NIC with the given name \"" + name + "\" already exists. These names must be unique");
+                }
+
                 nic.up().toCompletableFuture().get();
-                System.err.println("NIC should be up");
+                // System.err.println("NIC should be up");
                 return nic.connect(transport, address);
             } catch (final Throwable e) {
                 e.printStackTrace();
@@ -144,24 +164,16 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
         throw new RuntimeException("Not yet fully implemented");
     }
 
-    private NettyNetworkInterface<T> configureNewNetworkInterface(final Transport transport) {
-        try {
-            final var name = "testing";
-            final var listen = new URI("blah://0.0.0.0:0");
-            final var ifConfig = new NetworkInterfaceConfiguration(name, listen, null, List.of(transport));
-
-            final NettyNetworkInterface.Builder ifBuilder = NettyNetworkInterface.with(ifConfig);
-            ifBuilder.latch(new CountDownLatch(1)); // this doesn't seem to be used anymore...
-            ifBuilder.udpBootstrap(bootstraps.udpBootstrap);
-            ifBuilder.tcpBootstrap(bootstraps.tcpBootstrap);
-            ifBuilder.tcpServerBootstrap(bootstraps.tcpServerBootstrap);
-            ifBuilder.sctpBootstrap(bootstraps.sctpBootstrap);
-            ifBuilder.sctpServerBootstrap(bootstraps.sctpServerBootstrap);
-            return ifBuilder.build();
-        } catch (final URISyntaxException e) {
-            e.printStackTrace();
-            throw new RuntimeException("oops", e);
-        }
+    private NettyNetworkInterface<T> configureNewNetworkInterface(final String name, final Transport transport, final URI listen) {
+        final var config = new NetworkInterfaceConfiguration(name, listen, null, List.of(transport));
+        final NettyNetworkInterface.Builder builder = NettyNetworkInterface.with(config);
+        builder.latch(new CountDownLatch(1)); // this doesn't seem to be used anymore...
+        builder.udpBootstrap(bootstraps.udpBootstrap);
+        builder.tcpBootstrap(bootstraps.tcpBootstrap);
+        builder.tcpServerBootstrap(bootstraps.tcpServerBootstrap);
+        builder.sctpBootstrap(bootstraps.sctpBootstrap);
+        builder.sctpServerBootstrap(bootstraps.sctpServerBootstrap);
+        return builder.build();
     }
 
     @Override
@@ -176,9 +188,7 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
 
     @Override
     public Optional<? extends NetworkInterface<T>> getNetworkInterface(final String name) {
-        return interfaces.stream()
-                .filter(i -> i.getName().equalsIgnoreCase(name))
-                .findFirst();
+        return Optional.ofNullable(interfaces.get(name.toLowerCase()));
     }
 
     @Override
@@ -188,12 +198,12 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
 
     @Override
     public List<? extends NetworkInterface<T>> getNetworkInterfaces() {
-        return interfaces;
+        return interfaces.values().stream().collect(Collectors.toList());
     }
 
     @Override
     public List<? extends NetworkInterface<T>> getNetworkInterfaces(final Transport transport) {
-        return interfaces.stream().filter(i -> i.isSupportingTransport(transport)).collect(Collectors.toList());
+        return interfaces.values().stream().filter(i -> i.isSupportingTransport(transport)).collect(Collectors.toList());
     }
 
     @Override
@@ -203,10 +213,7 @@ public class NettyNetworkLayer<T> implements NetworkLayer<T> {
 
     @Override
     public Optional<ListeningPoint> getListeningPoint(final String networkInterfaceName, final Transport transport) {
-        return interfaces.stream()
-                .filter(i -> i.getName().equals(networkInterfaceName))
-                .findFirst()
-                .map(i -> i.getListeningPoint(transport));
+        return Optional.ofNullable(interfaces.get(networkInterfaceName).getListeningPoint(transport));
     }
 
     public static Builder with(final List<NetworkInterfaceConfiguration> ifs) throws IllegalArgumentException {

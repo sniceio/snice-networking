@@ -106,6 +106,10 @@ public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connect
         return network.connect(transport, localPort, remoteAddress);
     }
 
+    @Override
+    public CompletionStage<Connection<T>> connect(final String name, final Transport transport, final int localPort, final InetSocketAddress remoteAddress) throws IllegalTransportException {
+        return network.connect(name, transport, localPort, remoteAddress);
+    }
 
     @Override
     public CompletionStage<NetworkInterface<T>> addNetworkInterface(final Transport transport) {

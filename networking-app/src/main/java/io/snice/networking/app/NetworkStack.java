@@ -84,6 +84,9 @@ public interface NetworkStack<K extends Connection<T>, T, C extends NetworkAppCo
     CompletionStage<Connection<T>> connect(Transport transport, int localPort, InetSocketAddress remoteAddress)
             throws IllegalTransportException;
 
+    CompletionStage<Connection<T>> connect(String name, Transport transport, int localPort, InetSocketAddress remoteAddress)
+            throws IllegalTransportException;
+
     /**
      * Add another managed {@link NetworkInterface} that will be configured with the same {@link ProtocolBundle}
      * as this {@link NetworkStack} was originally created/configured with.
@@ -97,7 +100,7 @@ public interface NetworkStack<K extends Connection<T>, T, C extends NetworkAppCo
      */
     CompletionStage<NetworkInterface<T>> addNetworkInterface(Transport transport);
 
-    default CompletionStage<NetworkInterface<T>> bringUpNewNetworkInterface(Transport transport) {
+    default CompletionStage<NetworkInterface<T>> bringUpNewNetworkInterface(final Transport transport) {
         return addNetworkInterface(transport).thenCompose(i -> i.up().thenApply(aVoid -> i));
     }
 

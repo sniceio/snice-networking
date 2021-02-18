@@ -23,10 +23,10 @@ import io.snice.networking.examples.vplmn.fsm.devices.device.DeviceData;
 import io.snice.networking.examples.vplmn.fsm.devices.device.DeviceEvent;
 import io.snice.networking.examples.vplmn.fsm.devices.device.DeviceFsm;
 import io.snice.networking.gtp.Bearer;
+import io.snice.networking.gtp.EpsBearer;
 import io.snice.networking.gtp.GtpControlTunnel;
 import io.snice.networking.gtp.GtpEnvironment;
 import io.snice.networking.gtp.PdnSessionContext;
-import io.snice.networking.gtp.impl.DefaultEpsBearer;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -172,7 +172,7 @@ public class DefaultDeviceManager implements InternalDeviceManager {
             // TODO: if there is a NAT between us and e.g. the PGW, we need to
             // NAT the IP...
             final var tunnel = environment.establishUserPlane(remoteIp, defaultGtpuPort);
-            final var epsBearer = DefaultEpsBearer.create(tunnel, assignedIpAddress, local, remote, localPort);
+            final var epsBearer = EpsBearer.create(tunnel, assignedIpAddress, local, remote, localPort);
             final var evt = new DeviceEvent.EpsBearerEstablished(epsBearer);
             self.tell(evt);
         }
