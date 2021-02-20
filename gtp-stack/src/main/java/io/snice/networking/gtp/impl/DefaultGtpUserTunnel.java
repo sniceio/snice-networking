@@ -28,7 +28,7 @@ public class DefaultGtpUserTunnel<C extends GtpAppConfig> implements InternalGtp
         return new DefaultGtpUserTunnel(connectionId, stack);
     }
 
-    private DefaultGtpUserTunnel(final ConnectionId connectionId, final InternalGtpStack stack) {
+    private DefaultGtpUserTunnel(final ConnectionId connectionId, final InternalGtpStack<C> stack) {
         this.connectionId = connectionId;
         this.stack = stack;
     }

@@ -6,6 +6,10 @@ public class GtpConfig {
 
     private ControlPlaneConfig controlPlane;
 
+    /**
+     * The initial size of the data tunnel storage
+     */
+    private int dataTunnelStorageSize = 10;
 
     public UserPlaneConfig getUserPlane() {
         return userPlane;
@@ -22,4 +26,13 @@ public class GtpConfig {
     public void setControlPlane(final ControlPlaneConfig controlPlane) {
         this.controlPlane = controlPlane;
     }
+
+    public int getDataTunnelStorageSize() {
+        return dataTunnelStorageSize;
+    }
+
+    public void setDataTunnelStorageSize(final int dataTunnelStorageSize) {
+        this.dataTunnelStorageSize = dataTunnelStorageSize;
+    }
+
 }

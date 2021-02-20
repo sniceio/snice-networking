@@ -6,20 +6,31 @@ import io.snice.codecs.codec.gtp.GtpMessage;
 import io.snice.codecs.codec.gtp.Teid;
 import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1Message;
 import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1MessageType;
-import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1Request;
 import io.snice.codecs.codec.gtp.gtpc.v1.impl.ImmutableGtp1Message;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionRequest;
 import io.snice.codecs.codec.gtp.gtpc.v2.messages.tunnel.CreateSessionResponse;
 import io.snice.codecs.codec.transport.UdpMessage;
 import io.snice.networking.app.ConfigUtils;
+import io.snice.networking.common.ConnectionId;
+import io.snice.networking.common.Transport;
 import io.snice.networking.gtp.conf.GtpAppConfig;
 import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Consumer;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+@RunWith(MockitoJUnitRunner.class)
 public class GtpStackTestBase {
 
     protected PdnSessionContext defaultPdnSessionContext;
@@ -47,6 +58,7 @@ public class GtpStackTestBase {
      */
     protected static final int defaultRemotePort = 3333;
 
+
     /**
      * Just a random TEID used with various types of testing.
      */
@@ -60,6 +72,14 @@ public class GtpStackTestBase {
      * we have to actually use it.
      */
     protected static final InetSocketAddress localAddress = new InetSocketAddress("127.0.0.1", 7777);
+
+    protected static final InetSocketAddress remoteAddress = new InetSocketAddress(defaultRemoteAddress, defaultRemotePort);
+
+    /**
+     * Just some default {@link ConnectionId} for those tests that just need one but otherwise don't care too much
+     * about it.
+     */
+    protected static final ConnectionId defaultConnectionId = ConnectionId.create(Transport.udp, localAddress, remoteAddress);
 
     protected static Buffer someData = Buffers.wrap("hello world");
 
@@ -80,12 +100,36 @@ public class GtpStackTestBase {
         return Buffer.of(content);
     }
 
+    public static Gtp1Message somePdu(final String data, final Teid teid) {
+        return somePdu(Buffers.wrap(data), teid);
+    }
+
+    public static Gtp1Message somePdu(final Buffer data, final Teid teid) {
+        return somePdu(data, teid, defaultDeviceIp, defaultDevicePort, defaultRemoteAddress, defaultRemotePort);
+    }
+
     public static Gtp1Message somePdu() {
         return somePdu(someData, defaultTeid, defaultDeviceIp, defaultDevicePort, defaultRemoteAddress, defaultRemotePort);
     }
 
+    /**
+     * Setup the mock for the {@link DataTunnel.Builder}, which is just mocking up
+     * to return the builder for every withXXX method so the code being tested
+     * doesn't blow up since it will typically use the fluent API.
+     *
+     * @return
+     */
+    public static DataTunnel.Builder mockDataTunnelBuilder() {
+        final var builder = mock(DataTunnel.Builder.class);
+        when(builder.withLocalTeid(any())).thenReturn(builder);
+        when(builder.withRemoteTeid(any())).thenReturn(builder);
+        when(builder.withLocalIPv4DeviceIp(any())).thenReturn(builder);
+        when(builder.withLocalPort(anyInt())).thenReturn(builder);
+        return builder;
+    }
+
     public static Gtp1Message somePdu(final Buffer data,
-                                      final Teid remoteTeid,
+                                      final Teid teid,
                                       final String deviceIp, final int devicePort,
                                       final String remoteAddress, final int remotePort) {
         final var ipv4 = UdpMessage.createUdpIPv4(data)
@@ -97,7 +141,7 @@ public class GtpStackTestBase {
                 .build();
 
         return ImmutableGtp1Message.create(Gtp1MessageType.G_PDU)
-                .withTeid(remoteTeid)
+                .withTeid(teid)
                 .withPayload(ipv4.getBuffer())
                 .build();
     }
@@ -111,5 +155,39 @@ public class GtpStackTestBase {
         final var buffer = loadRaw(config);
         return ConfigUtils.loadConfiguration(clz, buffer.getContent());
     }
+
+    /**
+     * Only so that when you run unit test within IntelliJ and selects "run all tests" from the top-level
+     * module, it doesn't complain that this test base doesn't have any tests in it (it's because of the
+     * RunWith annotation and seems it decides to try and run this one too. From Maven, this is not an issue)
+     */
+    @Test
+    public void dumb() {
+    }
+
+    protected static class TestConfig extends GtpAppConfig {
+
+    }
+
+    protected static class GtpTestApplication extends GtpApplication<TestConfig> {
+
+        private final Consumer<GtpBootstrap<TestConfig>> rulesFunction;
+
+        protected GtpTestApplication(final Consumer<GtpBootstrap<TestConfig>> rulesFunction) {
+            this.rulesFunction = rulesFunction;
+        }
+
+
+        @Override
+        public void initialize(final GtpBootstrap<TestConfig> bootstrap) {
+            rulesFunction.accept(bootstrap);
+        }
+
+        @Override
+        public void run(final TestConfig configuration, final GtpEnvironment<TestConfig> environment) {
+            System.err.println("Running!");
+        }
+    }
+
 
 }

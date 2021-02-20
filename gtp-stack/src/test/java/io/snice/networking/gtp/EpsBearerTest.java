@@ -6,8 +6,6 @@ import io.snice.networking.gtp.impl.InternalGtpUserTunnel;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,13 +36,9 @@ public class EpsBearerTest extends GtpStackTestBase {
      */
     @Test
     public void testCreateUserDataTunnelExtractBearerInfo() {
-        final var builder = mock(DataTunnel.Builder.class);
-        when(builder.withLocalTeid(any())).thenReturn(builder);
-        when(builder.withRemoteTeid(any())).thenReturn(builder);
-        when(builder.withLocalIPv4DeviceIp(any())).thenReturn(builder);
-        when(builder.withLocalPort(anyInt())).thenReturn(builder);
-
+        final var builder = mockDataTunnelBuilder();
         when(tunnel.createDataTunnel(String.class, "10.11.12.13", 3333)).thenReturn(builder);
+
         final int localPort = 12345;
         final var bearer = EpsBearer.create(tunnel, defaultPdnSessionContext, localPort);
         bearer.createDataTunnel(String.class, "10.11.12.13", 3333);

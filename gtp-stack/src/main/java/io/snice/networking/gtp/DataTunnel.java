@@ -118,6 +118,9 @@ public interface DataTunnel<T> {
          */
         Builder<T> onData(BiConsumer<DataTunnel<T>, T> f);
 
-        DataTunnel<T> build();
+        /**
+         * @throws IllegalArgumentException in case any values are missing, or otherwise misconfigured.
+         */
+        DataTunnel<T> build() throws IllegalArgumentException;
     }
 }
