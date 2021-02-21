@@ -5,7 +5,9 @@ import io.snice.codecs.codec.gtp.GtpMessage;
 import io.snice.networking.common.ConnectionId;
 import io.snice.networking.common.Transport;
 import io.snice.networking.gtp.DataTunnel;
+import io.snice.networking.gtp.EpsBearer;
 import io.snice.networking.gtp.GtpUserTunnel;
+import io.snice.networking.gtp.PdnSessionContext;
 import io.snice.networking.gtp.conf.GtpAppConfig;
 import io.snice.networking.gtp.event.GtpEvent;
 import io.snice.networking.gtp.event.GtpMessageWriteEvent;
@@ -129,5 +131,10 @@ public class DefaultGtpUserTunnel<C extends GtpAppConfig> implements InternalGtp
     @Override
     public <T> DataTunnel.Builder<T> createDataTunnel(final Class<T> type, final String remoteHost, final int port) {
         return stack.createDataTunnel(this, type, remoteHost, port);
+    }
+
+    @Override
+    public EpsBearer createBearer(final PdnSessionContext ctx, final int localPort) {
+        return EpsBearer.create(this, ctx, localPort);
     }
 }

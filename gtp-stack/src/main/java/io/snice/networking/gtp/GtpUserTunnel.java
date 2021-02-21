@@ -10,4 +10,6 @@ import io.snice.networking.common.Connection;
  */
 public interface GtpUserTunnel extends GtpTunnel {
 
+    EpsBearer createBearer(PdnSessionContext ctx, int localPort);
+
 }
