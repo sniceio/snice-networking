@@ -27,13 +27,6 @@ public class UdpServer extends InboundOutboundHandlerAdapter {
     @Override
     public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
         final var udp = (DatagramPacket) msg;
-        final var content = udp.content();
-        final byte[] b = new byte[content.readableBytes()];
-        content.getBytes(0, b);
-
-
-        // final var id = ConnectionId.create(Transport.udp, udp.recipient(), udp.sender());
-        // logger.info("[{}] Echoing packet back to {}", id, id.getRemoteConnectionEndpointId());
         final DatagramPacket pkt = new DatagramPacket(udp.content(), udp.sender());
         ctx.write(pkt);
     }
@@ -46,6 +39,5 @@ public class UdpServer extends InboundOutboundHandlerAdapter {
     @Override
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) throws Exception {
         System.out.println("oops");
-
     }
 }
