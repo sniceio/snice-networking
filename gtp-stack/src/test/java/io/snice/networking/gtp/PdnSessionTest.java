@@ -1,17 +1,23 @@
 package io.snice.networking.gtp;
 
-import io.snice.codecs.codec.gtp.GtpMessage;
+import io.snice.buffer.Buffers;
+import io.snice.codecs.codec.gtp.Teid;
 import org.junit.Test;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class PdnSessionTest extends GtpStackTestBase {
 
+    /**
+     * ensure tha the {@link PdnSessionContext} is correctly extracting out the necessary
+     * details from the given create session request/response.
+     *
+     * @throws Exception
+     */
     @Test
-    public void testCreatePdnSession() throws Exception {
-        final var req = GtpMessage.frame(loadRaw("create_session_request.raw")).toGtp2Request();
-        final var res = GtpMessage.frame(loadRaw("create_session_response.raw")).toGtp2Response();
-
-        /*
-        final var session = PdnSession.of(req, res);
+    public void testCreatePdnSessionContext() throws Exception {
+        final var session = defaultPdnSessionContext;
 
         final var localBearer = session.getDefaultLocalBearer();
         final var remoteBearer = session.getDefaultRemoteBearer();
@@ -29,6 +35,5 @@ public class PdnSessionTest extends GtpStackTestBase {
         assertThat(remoteBearer.getTeid(), is(Teid.of(0x4c, 0xa4, 0x0c, 0xe5)));
 
         assertThat(session.getPaa().getValue().getIPv4Address().get().toIPv4String(0), is("100.64.12.229"));
-         */
     }
 }

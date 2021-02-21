@@ -1,29 +1,13 @@
 package io.snice.networking.gtp;
 
-import io.snice.buffer.Buffer;
-import io.snice.codecs.codec.gtp.gtpc.v2.tliv.Paa;
 import io.snice.networking.common.Connection;
-import io.snice.networking.common.ConnectionId;
-import io.snice.networking.gtp.event.GtpEvent;
-import io.snice.networking.gtp.impl.DefaultGtpUserTunnel;
 
+/**
+ * The {@link GtpUserTunnel} is representing a GTP-U tunnel between two network elements in the
+ * Elastic Packet Core (EPC), such as the SGW and the PGW. It provides some (well, right now actually
+ * none) convenience methods that are unique to a GTP-U tunnel but in general, it is simply just
+ * a {@link Connection} for exchanging primarily PDUs between the SGW & the PGW.
+ */
 public interface GtpUserTunnel extends GtpTunnel {
 
-    /**
-     * Send the given message across this tunnel.
-     * This will be send as a UDP packet to the given remote host:port.
-     *
-     * @param remoteIp
-     * @param remotePort
-     * @param msg
-     */
-    void send(String remoteIp, int remotePort, String msg);
-
-    void send(String remoteIp, int remotePort, Buffer data);
-
-    String getIPv4Address();
-
-    Bearer getDefaultLocalBearer();
-
-    Bearer getDefaultRemoteBearer();
 }

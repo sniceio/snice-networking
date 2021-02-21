@@ -1,5 +1,6 @@
 package io.snice.networking.examples.gtp;
 
+import io.snice.codecs.codec.gtp.Teid;
 import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1Message;
 import io.snice.codecs.codec.gtp.gtpc.v1.Gtp1MessageType;
 import io.snice.codecs.codec.gtp.gtpc.v1.impl.ImmutableGtp1Message;
@@ -13,6 +14,7 @@ import io.snice.networking.bundles.buffer.BufferEvent;
 import io.snice.networking.bundles.buffer.BufferReadEvent;
 import io.snice.networking.common.ConnectionEndpointId;
 import io.snice.networking.common.Transport;
+import io.snice.networking.core.NetworkInterface;
 import io.snice.networking.gtp.GtpTunnel;
 import io.snice.networking.gtp.PdnSessionContext;
 
@@ -25,7 +27,11 @@ import static io.snice.networking.app.NetworkBootstrap.ACCEPT_ALL;
 public class Sgi extends BufferApplication<SgiConfig> {
 
     private BufferEnvironment<SgiConfig> environment;
-    private final ConcurrentMap<ConnectionEndpointId, NatEntry> nats = new ConcurrentHashMap<>();
+    // private final ConcurrentMap<ConnectionEndpointId, NatEntry> nats = new ConcurrentHashMap<>();
+
+    // Make sure we don't need to re-hash...
+    private final ConcurrentMap<Teid, NatEntry> sessions = new ConcurrentHashMap(10000, 0.75f);
+    private final ConcurrentMap<ConnectionEndpointId, NatEntry> nats = new ConcurrentHashMap(10000, 0.75f);
 
     @Override
     public void initialize(final NetworkBootstrap<BufferConnection, BufferEvent, SgiConfig> bootstrap) {
@@ -45,8 +51,13 @@ public class Sgi extends BufferApplication<SgiConfig> {
      * What we should do, but currently are not, is to allocate a new socket for this tunnel so all
      * traffic associated with it is correctly NAT:ed and tunneled back to it. However, currently this
      * is a simple SGi example and as such, if two different tunnels (and therefore different "NAT" settings)
-     * happen to send traffic to the exact same destination (remote ip:port pair) then we will not
+     * happen to send traffic to the exact same destination (remote ip:port pair) then we will NOT
      * be able to accurately match any responses.
+     * <p>
+     * Also, if the TEID identifying the tunnel over which these messages are coming in (over S5/S8),
+     * we'll calculate a new {@link NatEntry}, which means that, again, if two or more UE's send
+     * traffic to the same remote endpoint, it won't work. However, for testing purposes we want this since
+     * if you keep restarting the UE you want the new "PdnSession" to be remembered and not the old.
      * <p>
      * Again, this is a very simple SGi example so perhaps we'll do the above at some point. Also, we can
      * only do UDP (could use sockraw, a java wrapper for unit raw sockets but don't care for now and
@@ -55,9 +66,6 @@ public class Sgi extends BufferApplication<SgiConfig> {
      * Also note that we are going to be leaking these {@link NatEntry}s right now since we currently
      * do not "listen" to when the {@link GtpTunnel} goes down/is destroyed. But whatever, it's an example.
      * <p>
-     * Rocksaw:
-     * https://www.savarese.com/software/rocksaw/
-     * https://github.com/mlaccetti/rocksaw
      *
      * @param tunnel
      * @param pdu
@@ -68,32 +76,53 @@ public class Sgi extends BufferApplication<SgiConfig> {
         final var udp = UdpMessage.frame(ipv4.getPayload());
         final var remoteEndpoint = ConnectionEndpointId.create(Transport.udp, ipv4.getDestinationIp(), udp.getDestinationPort());
 
-        final var natEntry = nats.computeIfAbsent(remoteEndpoint, ep -> {
-            // NOTE: this is BAD in general but since we know that right now we can only do
-            // UDP and that completes right away, we are cheating here... In a real "SGi"
-            // implementation you really cannot do this since if it e.g. is TCP, this may not
-            // completely in a timely fashion, or at all.
-            System.err.println("New NAT Entry for endpoint: " + remoteEndpoint);
-            final var connection = connect(ep);
+        final var teid = session.getLocalBearerTeid();
+
+        final var natEntry = sessions.computeIfAbsent(teid, key -> {
+            final var connection = connect(key.toString(), remoteEndpoint);
             final var deviceEndpoint = ConnectionEndpointId.create(Transport.udp, ipv4.getSourceIp(), udp.getSourcePort());
-            return new NatEntry(session, tunnel, connection, deviceEndpoint, ep);
+            final var nat = new NatEntry(session, tunnel, connection, deviceEndpoint, remoteEndpoint);
+            nats.put(connection.id().getLocalConnectionEndpointId(), nat);
+            return nat;
         });
 
         natEntry.externalConnection.send(udp.getPayload());
     }
 
-    private BufferConnection connect(final ConnectionEndpointId remote) {
+    // TODO: allocate new local "NIC" for this mapping...
+    public void onNewPdnSession(final GtpTunnel tunnel, final PdnSessionContext session) {
+
+    }
+
+    public void deleteSession(final PdnSessionContext session) {
+        final var teid = session.getLocalBearerTeid();
+        final var natEntry = sessions.remove(teid);
+        if (natEntry != null) {
+            final var localEndpoint = natEntry.externalConnection.id().getLocalConnectionEndpointId();
+            nats.remove(localEndpoint);
+            environment.getNetworkInterface(teid.toString()).ifPresent(NetworkInterface::down);
+        } else {
+            System.err.println("WTF - wrong TEID");
+        }
+
+    }
+
+    private BufferConnection connect(final String nicName, final ConnectionEndpointId remote) {
         try {
-            return environment.connect(remote).toCompletableFuture().get();
+            return environment.connect(nicName, Transport.udp, 0, remote.getAddress()).toCompletableFuture().get();
         } catch (final InterruptedException | ExecutionException e) {
             throw new RuntimeException("We are cheating right now but seems like it didn't work", e);
         }
     }
 
-
     private void processBuffer(final BufferConnection connection, final BufferReadEvent msg) {
-        final var remote = msg.getConnectionId().getRemoteConnectionEndpointId();
-        final var natEntry = nats.get(remote);
+        final var connectionId = msg.getConnectionId();
+        final var remote = connectionId.getRemoteConnectionEndpointId();
+        final var local = connectionId.getLocalConnectionEndpointId();
+        final var natEntry = nats.get(local);
+        if (natEntry == null) {
+            System.err.println("WTF - the NAT Entry is null. Guess we removed it before we processed the last data???");
+        }
 
         final var content = msg.getBuffer();
         final var udp = UdpMessage.createUdpIPv4(content)
@@ -105,7 +134,7 @@ public class Sgi extends BufferApplication<SgiConfig> {
                 .build();
 
         final var gtpU = ImmutableGtp1Message.create(Gtp1MessageType.G_PDU)
-                .withTeid(natEntry.session.getDefaultRemoteBearer().getTeid())
+                .withTeid(natEntry.session.getLocalBearerTeid())
                 .withPayload(udp.getBuffer())
                 .build();
         natEntry.tunnel.send(gtpU);

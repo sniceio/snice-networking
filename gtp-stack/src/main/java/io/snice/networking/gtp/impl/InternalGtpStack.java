@@ -2,6 +2,7 @@ package io.snice.networking.gtp.impl;
 
 import io.snice.codecs.codec.gtp.GtpMessage;
 import io.snice.codecs.codec.gtp.gtpc.v2.Gtp2Request;
+import io.snice.networking.gtp.DataTunnel;
 import io.snice.networking.gtp.GtpStack;
 import io.snice.networking.gtp.IllegalGtpMessageException;
 import io.snice.networking.gtp.Transaction;
@@ -23,6 +24,7 @@ public interface InternalGtpStack<C extends GtpAppConfig> extends GtpStack<C> {
     void send(GtpMessage msg, InternalGtpUserTunnel tunnel);
 
 
-    Transaction.Builder createNewTransaction(final InternalGtpControlTunnel tunnel, final Gtp2Request request) throws IllegalGtpMessageException;
+    Transaction.Builder createNewTransaction(InternalGtpControlTunnel tunnel, Gtp2Request request) throws IllegalGtpMessageException;
 
+    <T> DataTunnel.Builder<T> createDataTunnel(InternalGtpUserTunnel tunnel, Class<T> type, String remoteHost, int port);
 }

@@ -1,7 +1,11 @@
 package io.snice.networking.app.impl;
 
 import io.netty.channel.ChannelHandler;
-import io.snice.networking.app.*;
+import io.snice.networking.app.ConnectionContext;
+import io.snice.networking.app.Environment;
+import io.snice.networking.app.NetworkAppConfig;
+import io.snice.networking.app.NetworkApplication;
+import io.snice.networking.app.NetworkStack;
 import io.snice.networking.bundles.ProtocolBundle;
 import io.snice.networking.common.Connection;
 import io.snice.networking.common.IllegalTransportException;
@@ -16,7 +20,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
-import static io.snice.preconditions.PreConditions.*;
+import static io.snice.preconditions.PreConditions.assertArgument;
+import static io.snice.preconditions.PreConditions.assertNotNull;
+import static io.snice.preconditions.PreConditions.ensureNotNull;
 
 @ChannelHandler.Sharable
 public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connection<T>, T, C extends NetworkAppConfig> implements NetworkStack<K, T, C> {
@@ -93,6 +99,21 @@ public class NettyNetworkStack<E extends Environment<K, T, C>, K extends Connect
     @Override
     public CompletionStage<Connection<T>> connect(final Transport transport, final InetSocketAddress remoteAddress) throws IllegalTransportException {
         return network.connect(transport, remoteAddress);
+    }
+
+    @Override
+    public CompletionStage<Connection<T>> connect(final Transport transport, final int localPort, final InetSocketAddress remoteAddress) throws IllegalTransportException {
+        return network.connect(transport, localPort, remoteAddress);
+    }
+
+    @Override
+    public CompletionStage<Connection<T>> connect(final String name, final Transport transport, final int localPort, final InetSocketAddress remoteAddress) throws IllegalTransportException {
+        return network.connect(name, transport, localPort, remoteAddress);
+    }
+
+    @Override
+    public CompletionStage<NetworkInterface<T>> addNetworkInterface(final Transport transport) {
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override

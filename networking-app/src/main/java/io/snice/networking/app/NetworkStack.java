@@ -81,6 +81,29 @@ public interface NetworkStack<K extends Connection<T>, T, C extends NetworkAppCo
     CompletionStage<Connection<T>> connect(Transport transport, InetSocketAddress remoteAddress)
             throws IllegalTransportException;
 
+    CompletionStage<Connection<T>> connect(Transport transport, int localPort, InetSocketAddress remoteAddress)
+            throws IllegalTransportException;
+
+    CompletionStage<Connection<T>> connect(String name, Transport transport, int localPort, InetSocketAddress remoteAddress)
+            throws IllegalTransportException;
+
+    /**
+     * Add another managed {@link NetworkInterface} that will be configured with the same {@link ProtocolBundle}
+     * as this {@link NetworkStack} was originally created/configured with.
+     *
+     * Note that the {@link NetworkInterface} that is returned is not yet "up" so if you actually
+     * want to "start" it, you have to call {@link NetworkInterface#up()}. You can call the convenience
+     * method {@link #bringUpNewNetworkInterface(Transport)}, which will do it for you.
+     *
+     * @param transport
+     * @return
+     */
+    CompletionStage<NetworkInterface<T>> addNetworkInterface(Transport transport);
+
+    default CompletionStage<NetworkInterface<T>> bringUpNewNetworkInterface(final Transport transport) {
+        return addNetworkInterface(transport).thenCompose(i -> i.up().thenApply(aVoid -> i));
+    }
+
     /**
      * Every Snice Networking stack must have a default network interface configured. If the stack
      * only has a single one configured, that will be default. If there are more than one, one of

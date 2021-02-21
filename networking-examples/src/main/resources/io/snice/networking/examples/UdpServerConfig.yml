@@ -1,5 +1,10 @@
 
 network:
   name: default
-  listen: ws://0.0.0.0:53
+  # Note that the schema currently doesn't matter at all. The idea was to
+  # look at the schema and automatically find the right configuration
+  # etc but that currently isn't true so you can type whatever you want
+  # as the schema (if you type no thing, since I'm using the URI class, it'll blow up
+  # if there is no schema)
+  listen: doesntmatter://0.0.0.0:9999
   transport: udp

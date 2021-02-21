@@ -18,5 +18,4 @@ public interface GtpTunnel extends Connection<GtpEvent> {
     }
 
     void send(GtpMessage msg);
-
 }
