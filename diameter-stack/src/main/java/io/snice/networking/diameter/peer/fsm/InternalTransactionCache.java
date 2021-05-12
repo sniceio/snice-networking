@@ -22,6 +22,7 @@ public class InternalTransactionCache extends LinkedHashMap<HopByHopIdentifier, 
     /**
      * Puts an entry into the transaction cache if it is not already present.
      * If the transaction already exists in the cache, the existing value is returned, otherwise a new entry is created, and null is returned
+     * (this mirrors the behavior of Map.putIfAbsent())
      *
      * @param id          the identifier of the transaction, which is just the hop-by-hop identifier.
      * @param transaction the transaction associated to the specified key
