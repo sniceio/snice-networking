@@ -4,30 +4,26 @@ import io.hektor.fsm.Data;
 import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.DiameterRequest;
 import io.snice.codecs.codec.diameter.HopByHopIdentifier;
-import io.snice.codecs.codec.diameter.TransactionIdentifier;
 import io.snice.networking.common.event.ConnectionActiveIOEvent;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
 import io.snice.networking.diameter.PeerConnection;
-import io.snice.networking.diameter.peer.PeerConfiguration;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
+import static io.snice.preconditions.PreConditions.assertNotNull;
 import static io.snice.preconditions.PreConditions.assertNull;
 
 public class PeerData implements Data {
 
-    private final Map<HopByHopIdentifier, InternalTransaction> oustandingTransactions;
-
-    private final PeerConfiguration config;
+    private final InternalTransactionCache oustandingTransactions;
+    private final int expiryIntervalInSeconds;
 
     private ConnectionAttemptCompletedIOEvent event;
     private ConnectionActiveIOEvent activeEvent;
 
-    public PeerData(final PeerConfiguration config) {
-        this.config = config;
-        oustandingTransactions = new HashMap<>(PeerConfiguration.getPeerTransactionTableInitialSize(), 0.75f);
+    public PeerData(final InternalTransactionCacheConfig cacheConfig) {
+        oustandingTransactions = new InternalTransactionCache(cacheConfig);
+        expiryIntervalInSeconds = cacheConfig.getExpiryIntervalInSeconds();
     }
 
     public boolean hasOutstandingTransaction(final DiameterMessage msg) {
@@ -42,15 +38,15 @@ public class PeerData implements Data {
      * Store a new transaction. Note that the FSM should already have checked that this isn't a
      * re-transmission.
      *
-     * @param req
+     * @param req                 the diameter request for which the entry is to be stored
      * @param isClientTransaction whether or not we are the ones initiating the transaction, meaning, are we
      *                            the ones sending the request (then we are a client) or are we the ones who
      *                            received the request and as such, is processing it as a server.
-     * @return
+     * @return the created {@link InternalTransaction} if does not exist yet or the existing transaction
      */
     public InternalTransaction storeTransaction(final DiameterRequest req, final boolean isClientTransaction) {
-        final var transaction = InternalTransaction.create(req, isClientTransaction);
-        final var previous = oustandingTransactions.put(transaction.getId(), transaction);
+        final var transaction = InternalTransaction.create(req, isClientTransaction, expiryIntervalInSeconds);
+        final var previous = oustandingTransactions.putIfAbsent(transaction.getId(), transaction);
         // TODO: need to handle this in a better way. Also need to check
         // with the application id as a precaution for phishing.
         assertNull(previous, "We overwrote a previous transaction. Something is wrong.");

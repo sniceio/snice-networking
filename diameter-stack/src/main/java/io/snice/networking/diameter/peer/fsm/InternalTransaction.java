@@ -4,6 +4,7 @@ import io.snice.codecs.codec.diameter.DiameterRequest;
 import io.snice.codecs.codec.diameter.HopByHopIdentifier;
 import io.snice.networking.diameter.tx.Transaction;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import static io.snice.preconditions.PreConditions.assertNotNull;
@@ -42,15 +43,21 @@ public class InternalTransaction {
      */
     private Optional<Transaction> transaction = Optional.empty();
 
-    public static InternalTransaction create(final DiameterRequest req, final boolean isClientTransaction) {
+    /**
+     * The timestamp used to check if this transaction is expired.
+     */
+    private final long expiryTimestamp;
+
+    public static InternalTransaction create(final DiameterRequest req, final boolean isClientTransaction, final int expiryIntervalInSeconds) {
         assertNotNull(req, "The diameter request cannot be null");
-        return new InternalTransaction(req, isClientTransaction);
+        return new InternalTransaction(req, isClientTransaction, expiryIntervalInSeconds);
     }
 
-    private InternalTransaction(final DiameterRequest req, final boolean isClientTransaction) {
+    private InternalTransaction(final DiameterRequest req, final boolean isClientTransaction, final int expiryIntervalInSeconds) {
         this.req = req;
         this.id = HopByHopIdentifier.from(req);
         this.isClientTransaction = isClientTransaction;
+        this.expiryTimestamp = System.currentTimeMillis() + (expiryIntervalInSeconds * 1000);
     }
 
     public HopByHopIdentifier getId() {
@@ -67,6 +74,10 @@ public class InternalTransaction {
 
     public void setTransaction(final Transaction transaction) {
         this.transaction = Optional.of(transaction);
+    }
+
+    public boolean isExpired() {
+        return System.currentTimeMillis() >= expiryTimestamp;
     }
 
 }

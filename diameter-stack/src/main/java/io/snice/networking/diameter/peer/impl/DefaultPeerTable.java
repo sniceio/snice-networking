@@ -95,7 +95,7 @@ public class DefaultPeerTable<C extends DiameterAppConfig> implements PeerTable<
 
     @Override
     public PeerData createNewDataBag(final FsmKey key) {
-        return new PeerData(peerConfiguration);
+        return new PeerData(config.getInternalTransactionCacheConfig());
     }
 
     @Override
