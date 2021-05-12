@@ -8,14 +8,6 @@ import static io.snice.preconditions.PreConditions.assertArgument;
 public class InternalTransactionCacheConfig {
 
     /**
-     * Options for configuring the internal cache of outstanding transactions.
-     * In general, we would like to avoid re-hashing the internal tables since
-     * it can be quite costly, specially at larger sizes. Therefore, ideally, we should
-     * figure out an appropriate size so it is highly unlikely that we will ever re-hash.
-     */
-    private final int initialSize;
-
-    /**
      * Max number of transactions that the cache can store
      */
     private final int maxEntries;
@@ -26,8 +18,7 @@ public class InternalTransactionCacheConfig {
      */
     private final int expiryIntervalInSeconds;
 
-    private InternalTransactionCacheConfig(final int initialSize, final int maxEntries, final int expiryIntervalInSeconds) {
-        this.initialSize = initialSize;
+    private InternalTransactionCacheConfig(final int maxEntries, final int expiryIntervalInSeconds) {
         this.maxEntries = maxEntries;
         this.expiryIntervalInSeconds = expiryIntervalInSeconds;
     }
@@ -40,31 +31,20 @@ public class InternalTransactionCacheConfig {
         return expiryIntervalInSeconds;
     }
 
-    public int getInitialSize() {
-        return initialSize;
-    }
-
     public static InternalTransactionCacheConfig.Builder of(final int expiryIntervalInSeconds) {
         return new InternalTransactionCacheConfig.Builder(expiryIntervalInSeconds);
     }
 
     public static class Builder {
 
-        private static final int DEFAULT_INITIAL_SIZE = 100;
         private static final int DEFAULT_MAX_ENTRIES_BASE = 1024;
 
         private final int expiryIntervalInSeconds;
-        private int initialSize;
         private int maxEntries;
 
         private Builder(final int expiryIntervalInSeconds) {
             assertArgument(expiryIntervalInSeconds > 0, "You must specify the Expiry Interval of a transaction. It cannot be < 0");
             this.expiryIntervalInSeconds = expiryIntervalInSeconds;
-        }
-
-        public InternalTransactionCacheConfig.Builder withInitialSize(final int initialSize) {
-            this.initialSize = initialSize;
-            return this;
         }
 
         public InternalTransactionCacheConfig.Builder withMaxEntries(final int maxEntries) {
@@ -76,10 +56,7 @@ public class InternalTransactionCacheConfig {
             if(maxEntries <= 0) {
                 maxEntries = DEFAULT_MAX_ENTRIES_BASE * expiryIntervalInSeconds;
             }
-            if(initialSize <= 0) {
-                initialSize = DEFAULT_INITIAL_SIZE;
-            }
-            return new InternalTransactionCacheConfig(initialSize, maxEntries, expiryIntervalInSeconds);
+            return new InternalTransactionCacheConfig(maxEntries, expiryIntervalInSeconds);
         }
     }
 }

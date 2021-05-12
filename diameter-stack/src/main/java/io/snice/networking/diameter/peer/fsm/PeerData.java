@@ -1,5 +1,7 @@
 package io.snice.networking.diameter.peer.fsm;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import io.hektor.fsm.Data;
 import io.snice.codecs.codec.diameter.DiameterMessage;
 import io.snice.codecs.codec.diameter.DiameterRequest;
@@ -7,23 +9,24 @@ import io.snice.codecs.codec.diameter.HopByHopIdentifier;
 import io.snice.networking.common.event.ConnectionActiveIOEvent;
 import io.snice.networking.common.event.ConnectionAttemptCompletedIOEvent;
 import io.snice.networking.diameter.PeerConnection;
+import static io.snice.preconditions.PreConditions.assertNull;
 
 import java.util.Optional;
-
-import static io.snice.preconditions.PreConditions.assertNotNull;
-import static io.snice.preconditions.PreConditions.assertNull;
+import java.util.concurrent.TimeUnit;
 
 public class PeerData implements Data {
 
-    private final InternalTransactionCache oustandingTransactions;
-    private final int expiryIntervalInSeconds;
+    private final Cache<HopByHopIdentifier, InternalTransaction> oustandingTransactions;
 
     private ConnectionAttemptCompletedIOEvent event;
     private ConnectionActiveIOEvent activeEvent;
 
     public PeerData(final InternalTransactionCacheConfig cacheConfig) {
-        oustandingTransactions = new InternalTransactionCache(cacheConfig);
-        expiryIntervalInSeconds = cacheConfig.getExpiryIntervalInSeconds();
+        oustandingTransactions = CacheBuilder.newBuilder()
+                                             .softValues()
+                                             .maximumSize(cacheConfig.getMaxEntries())
+                                             .expireAfterWrite(cacheConfig.getExpiryIntervalInSeconds(), TimeUnit.SECONDS)
+                                             .build();
     }
 
     public boolean hasOutstandingTransaction(final DiameterMessage msg) {
@@ -31,7 +34,7 @@ public class PeerData implements Data {
     }
 
     public boolean hasOutstandingTransaction(final HopByHopIdentifier id) {
-        return oustandingTransactions.containsKey(id);
+        return oustandingTransactions.asMap().containsKey(id);
     }
 
     /**
@@ -45,16 +48,19 @@ public class PeerData implements Data {
      * @return the created {@link InternalTransaction} if does not exist yet or the existing transaction
      */
     public InternalTransaction storeTransaction(final DiameterRequest req, final boolean isClientTransaction) {
-        final var transaction = InternalTransaction.create(req, isClientTransaction, expiryIntervalInSeconds);
-        final var previous = oustandingTransactions.putIfAbsent(transaction.getId(), transaction);
+        final var id = HopByHopIdentifier.from(req);
+        final var previous = oustandingTransactions.getIfPresent(id);
         // TODO: need to handle this in a better way. Also need to check
         // with the application id as a precaution for phishing.
         assertNull(previous, "We overwrote a previous transaction. Something is wrong.");
+
+        final var transaction = InternalTransaction.create(req, isClientTransaction);
+        oustandingTransactions.put(transaction.getId(), transaction);
         return transaction;
     }
 
     public InternalTransaction getTransaction(final DiameterMessage msg) {
-        return oustandingTransactions.get(HopByHopIdentifier.from(msg));
+        return oustandingTransactions.getIfPresent(HopByHopIdentifier.from(msg));
     }
 
     /**
