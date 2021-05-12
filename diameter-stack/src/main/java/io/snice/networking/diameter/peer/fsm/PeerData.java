@@ -23,7 +23,6 @@ public class PeerData implements Data {
 
     public PeerData(final InternalTransactionCacheConfig cacheConfig) {
         oustandingTransactions = CacheBuilder.newBuilder()
-                                             .softValues()
                                              .maximumSize(cacheConfig.getMaxEntries())
                                              .expireAfterWrite(cacheConfig.getExpiryIntervalInSeconds(), TimeUnit.SECONDS)
                                              .build();
