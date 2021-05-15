@@ -3,10 +3,9 @@ package io.snice.networking.diameter.peer.fsm;
 import io.snice.codecs.codec.diameter.DiameterRequest;
 import io.snice.codecs.codec.diameter.HopByHopIdentifier;
 import io.snice.networking.diameter.tx.Transaction;
+import static io.snice.preconditions.PreConditions.assertNotNull;
 
 import java.util.Optional;
-
-import static io.snice.preconditions.PreConditions.assertNotNull;
 
 /**
  * We will always keep track of a transaction but the user building the application

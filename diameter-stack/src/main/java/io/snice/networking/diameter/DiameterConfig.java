@@ -3,6 +3,7 @@ package io.snice.networking.diameter;
 import io.snice.codecs.codec.diameter.avp.api.ProductName;
 import io.snice.codecs.codec.diameter.avp.api.VendorId;
 import io.snice.networking.diameter.peer.PeerConfiguration;
+import io.snice.networking.diameter.peer.fsm.InternalTransactionCacheConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,7 @@ public class DiameterConfig {
     private ProductName productName;
     private VendorId vendorId;
     private String productVersion;
+    private InternalTransactionCacheConfig internalTransactionCacheConfig;
 
     private List<PeerConfiguration> peers = new ArrayList<>();
 
@@ -35,4 +37,11 @@ public class DiameterConfig {
         this.peers = peers;
     }
 
+    public InternalTransactionCacheConfig getInternalTransactionCacheConfig() {
+        return internalTransactionCacheConfig;
+    }
+
+    public void setInternalTransactionCacheConfig(final InternalTransactionCacheConfig config) {
+        internalTransactionCacheConfig = config;
+    }
 }
